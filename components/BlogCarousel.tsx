@@ -11,6 +11,7 @@ const posts = allPosts.map(p => ({
   title: p.titulo,
   desc: p.desc,
   date: p.data,
+  cover: p.cover ?? null,
   href: `/blog/${p.slug}`,
 }))
 
@@ -109,9 +110,12 @@ export default function BlogCarousel() {
             }}
           >
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: BG, opacity: offset === 0 ? 1 : 0.5 }} />
-            <div style={{ height: offset === 0 ? 160 : 100, background: 'rgba(255,255,255,0.03)', borderRadius: 10, marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-  <div style={{ width: 32, height: 2, borderRadius: 1, background: BG, opacity: 0.6 }} />
-</div>
+            <div style={{ height: offset === 0 ? 160 : 100, background: 'rgba(255,255,255,0.03)', borderRadius: 10, marginBottom: 16, overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {post.cover
+                ? <img src={post.cover} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }} />
+                : <div style={{ width: 32, height: 2, borderRadius: 1, background: BG, opacity: 0.6 }} />
+              }
+            </div>
 
             <div className="blog-tag">{post.tag}</div>
 

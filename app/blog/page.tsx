@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
+import { posts as allPosts } from '@/lib/posts'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -10,57 +11,14 @@ export const metadata: Metadata = {
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
 
-const posts = [
-  {
-    categoria: 'Design Gráfico',
-    titulo: 'Designers Gráficos e a IA: Seremos Substituídos em 2024?',
-    desc: 'Exploramos como a inteligência artificial está moldando o futuro do design gráfico e o que os profissionais precisam fazer para se adaptar e prosperar.',
-    href: '/blog/designers-graficos-e-ia',
-    data: '14 Nov 2023',
-  },
-  {
-    categoria: 'Design Gráfico',
-    titulo: 'Design Gráfico e o Rebranding da RECORD: 3 Tendências 2023',
-    desc: 'Analisamos as escolhas criativas por trás do rebranding da RECORD TV e as 3 tendências de design que dominaram o ano de 2023.',
-    href: '/blog/design-grafico',
-    data: '14 Nov 2023',
-  },
-  {
-    categoria: 'Social Media',
-    titulo: 'TikTok Video Marketing 2023: Dominando Vídeos Curtos nas Redes Sociais',
-    desc: 'Guia completo para criar estratégias de vídeos curtos que engajam, convertem e ampliam seu alcance orgânico no TikTok e Instagram Reels.',
-    href: '/blog/tiktok-video-marketing-2023',
-    data: '12 Nov 2023',
-  },
-  {
-    categoria: 'Social Media',
-    titulo: 'Mídias Sociais: Descubra as Principais Tendências para 2024',
-    desc: 'Do social commerce ao conteúdo gerado por IA: conheça as tendências que vão redefinir o marketing nas redes sociais no próximo ano.',
-    href: '/blog/midias-sociais',
-    data: '10 Nov 2023',
-  },
-  {
-    categoria: 'Social Media',
-    titulo: 'Citações no Instagram: 11 Aplicativos para Experimentar',
-    desc: 'Selecionamos os 11 melhores aplicativos para criar posts de citações visualmente impactantes e aumentar o engajamento no Instagram.',
-    href: '/blog/citacoes-no-instagram',
-    data: '10 Nov 2023',
-  },
-  {
-    categoria: 'Tráfego Pago',
-    titulo: 'Facebook e Instagram Pagos: A 1° Nova Estratégia da Meta',
-    desc: 'A Meta anunciou planos de assinatura paga para usuários europeus. Entenda o impacto para anunciantes e como adaptar sua estratégia.',
-    href: '/blog/facebook-e-instagram-pagos',
-    data: '09 Nov 2023',
-  },
-  {
-    categoria: 'Tráfego Pago',
-    titulo: 'Tráfego Pago em 2023: Ainda é a Chave para o Sucesso no Marketing Digital?',
-    desc: 'Com CPMs em alta e concorrência crescente, analisamos se o tráfego pago ainda compensa e quais plataformas entregam melhor ROI.',
-    href: '/blog/trafego-pago-em-2023',
-    data: '13 Out 2023',
-  },
-]
+const posts = allPosts.map(p => ({
+  categoria: p.categoria,
+  titulo: p.titulo,
+  desc: p.desc,
+  href: `/blog/${p.slug}`,
+  data: p.data,
+  cover: p.cover ?? null,
+}))
 
 const categorias = ['Todos', 'Design Gráfico', 'Notícias', 'Social Media', 'Tráfego Pago']
 
@@ -103,11 +61,14 @@ export default function Blog() {
               style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(160deg,rgba(255,255,255,0.05),rgba(120,70,40,0.06),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,210,160,0.1)', borderRadius: 16, overflow: 'hidden', transition: 'border-color 0.2s, transform 0.2s' }}
             >
               {/* Imagem / placeholder */}
-              <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#333' }}>
-                  {p.categoria}
-                </span>
-                <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 30% 40%, rgba(196,122,74,0.08) 0%, transparent 60%)' }} />
+              <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                {p.cover
+                  ? <img src={p.cover} alt={p.titulo} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <>
+                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#333' }}>{p.categoria}</span>
+                      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 30% 40%, rgba(196,122,74,0.08) 0%, transparent 60%)' }} />
+                    </>
+                }
               </div>
 
               {/* Conteúdo */}
