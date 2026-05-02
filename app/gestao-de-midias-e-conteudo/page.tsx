@@ -75,6 +75,38 @@ export default function SocialMedia() {
         </div>
       </section>
 
+      {/* Portfólio */}
+      <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px' }}>
+        <div style={{ maxWidth: 780, margin: '0 auto' }}>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555', marginBottom: 12 }}>Portfólio</p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.5px', marginBottom: 14 }}>Cases de Social Media</h2>
+          <p style={{ fontSize: 14, fontWeight: 300, color: '#86868b', lineHeight: 1.75, marginBottom: 40 }}>
+            Confira alguns dos projetos de gestão de mídias sociais que desenvolvemos para nossos clientes.
+          </p>
+          <div className="r3" style={{ gap: 12 }}>
+            {[
+              { titulo: 'UPLAY · São Braz', tag: 'Social Media', href: 'https://www.behance.net/gallery/173646747/UPLAY-SAO-BRAZ' },
+              { titulo: 'Nutriblu · Design de Divulgação', tag: 'Social Media', href: 'https://www.behance.net/gallery/163232439/NUTRIBLU-DESIGN-DIVULGACAO' },
+              { titulo: 'Social Media · Advogada Andria', tag: 'Social Media', href: 'https://www.behance.net/gallery/235860779/Social-Media-Advogada-Andria' },
+            ].map((c, i) => (
+              <a key={i} href={c.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,210,160,0.12)', borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,210,160,0.3)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,210,160,0.12)')}
+              >
+                <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555' }}>{c.tag}</span>
+                </div>
+                <div style={{ padding: '14px 16px 16px' }}>
+                  <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c47a4a', marginBottom: 6 }}>{c.tag}</p>
+                  <h3 style={{ fontSize: 13, fontWeight: 600, color: '#f5f5f7', lineHeight: 1.4, marginBottom: 10 }}>{c.titulo}</h3>
+                  <span style={{ fontSize: 12, color: '#c47a4a', fontWeight: 500 }}>Ver no Behance →</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: 26, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.8px', marginBottom: 12 }}>

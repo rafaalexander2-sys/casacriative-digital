@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import ServiceHero from '@/components/ServiceHero'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -41,11 +42,19 @@ export default function QuemSomos() {
 
       {/* Sobre + Stats */}
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div className="r2" style={{ gap: 48, alignItems: 'center', marginBottom: 48 }}>
+            <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', aspectRatio: '4/3', border: '0.5px solid #2a2a2a' }}>
+              <Image src="/quemsomos2.jpeg" alt="Equipe Casa Criative Digital em Curitiba" fill style={{ objectFit: 'cover' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555', marginBottom: 14 }}>Sobre nós</p>
+              <p style={{ fontSize: 15, fontWeight: 300, color: '#86868b', lineHeight: 1.75, marginBottom: 0 }}>
+                Nascemos para provar que agências digitais podem ser honestas, estratégicas e entregar resultados tangíveis. Cada projeto é pensado para destacar sua marca de forma marcante e profissional.
+              </p>
+            </div>
+          </div>
         <div style={{ maxWidth: 780, margin: '0 auto' }}>
-          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555', marginBottom: 14 }}>Sobre nós</p>
-          <p style={{ fontSize: 15, fontWeight: 300, color: '#86868b', lineHeight: 1.75, marginBottom: 40, maxWidth: 600 }}>
-            Nascemos para provar que agências digitais podem ser honestas, estratégicas e entregar resultados tangíveis. Cada projeto é pensado para destacar sua marca de forma marcante e profissional.
-          </p>
 
           {/* Stats */}
           <div className="r3 stats-block" style={{ gap: 0, marginBottom: 40 }}>
@@ -67,6 +76,7 @@ export default function QuemSomos() {
               <span key={t} style={{ fontSize: 12, fontWeight: 500, color: '#86868b', background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '6px 14px' }}>{t}</span>
             ))}
           </div>
+        </div>
         </div>
       </section>
 

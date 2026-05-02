@@ -79,11 +79,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         {/* Featured image */}
         <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px 0', marginBottom: 0 }}>
           <div style={{ width: '100%', aspectRatio: '16/7', background: 'linear-gradient(135deg,#0d0d0d 0%,#1a0f05 40%,#0d0d0d 100%)', borderRadius: 16, border: '0.5px solid rgba(255,210,160,0.1)', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 40% 50%, rgba(196,122,74,0.12) 0%, transparent 60%)' }} />
-            <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c47a4a', marginBottom: 8 }}>{post.categoria}</p>
-              <p style={{ fontSize: 13, color: '#333', maxWidth: 300 }}>{post.titulo.slice(0, 50)}…</p>
-            </div>
+            {post.cover ? (
+              <>
+                <Image src={post.cover} alt={post.titulo} fill style={{ objectFit: 'cover' }} priority />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.5) 100%)' }} />
+                <p style={{ position: 'absolute', bottom: 14, left: 20, fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', zIndex: 1 }}>
+                  {post.titulo}
+                </p>
+              </>
+            ) : (
+              <>
+                <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 40% 50%, rgba(196,122,74,0.12) 0%, transparent 60%)' }} />
+                <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+                  <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#c47a4a', marginBottom: 8 }}>{post.categoria}</p>
+                  <p style={{ fontSize: 13, color: '#333', maxWidth: 300 }}>{post.titulo.slice(0, 50)}…</p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>

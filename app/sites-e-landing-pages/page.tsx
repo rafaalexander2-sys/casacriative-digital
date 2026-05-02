@@ -70,11 +70,25 @@ export default function SitesLandingPages() {
           <p style={{ fontSize: 14, fontWeight: 300, color: '#86868b', lineHeight: 1.75, marginBottom: 40 }}>
             Confira alguns exemplos de sites que desenvolvemos para empreendedores como você, cada um personalizado e otimizado para atingir os melhores resultados.
           </p>
-          <div className="r2" style={{ gap: 12 }}>
-            {[1, 2, 3, 4].map(n => (
-              <div key={n} style={{ aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', borderRadius: 12, border: '0.5px solid #2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 12, color: '#555' }}>Case {n}</span>
-              </div>
+          <div className="r3" style={{ gap: 12 }}>
+            {[
+              { titulo: 'Site – Sistema de Segurança', tag: 'Site Institucional', href: 'https://www.behance.net/gallery/245921369/Site-Sistema-de-Seguranca' },
+              { titulo: 'Landing Page – Odontologia', tag: 'Landing Page', href: 'https://www.behance.net/gallery/245921131/Landing-Page-Odontologia' },
+              { titulo: 'Landing Page – Estética', tag: 'Landing Page', href: 'https://www.behance.net/gallery/245920979/Landing-Page-Esttica' },
+            ].map((c, i) => (
+              <a key={i} href={c.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,210,160,0.12)', borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,210,160,0.3)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,210,160,0.12)')}
+              >
+                <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555' }}>{c.tag}</span>
+                </div>
+                <div style={{ padding: '14px 16px 16px' }}>
+                  <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c47a4a', marginBottom: 6 }}>{c.tag}</p>
+                  <h3 style={{ fontSize: 13, fontWeight: 600, color: '#f5f5f7', lineHeight: 1.4, marginBottom: 10 }}>{c.titulo}</h3>
+                  <span style={{ fontSize: 12, color: '#c47a4a', fontWeight: 500 }}>Ver no Behance →</span>
+                </div>
+              </a>
             ))}
           </div>
         </div>

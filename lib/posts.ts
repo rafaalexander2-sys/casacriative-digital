@@ -13,6 +13,7 @@ export interface Post {
   data: string
   autor: string
   leitura: string
+  cover?: string
   blocks: Block[]
   relacionados: string[]
 }
@@ -270,6 +271,7 @@ export const posts: Post[] = [
   {
     slug: 'trafego-pago-em-2023',
     categoria: 'Tráfego Pago',
+    cover: '/blogtrafego1.png',
     titulo: 'Tráfego Pago em 2026: Ainda Vale a Pena Investir?',
     desc: 'O tráfego pago em 2026 é mais inteligente e automatizado do que nunca. Veja o que mudou com a IA, quanto investir e como montar uma estratégia que funciona.',
     data: '13 Out 2023',
