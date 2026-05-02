@@ -1,11 +1,39 @@
 'use client'
 
+import { useState } from 'react'
+
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
 const BRONZE = { background: BG, WebkitBackgroundClip: 'text' as const, WebkitTextFillColor: 'transparent' as const, backgroundClip: 'text' as const }
+
+// Substitua pela URL do Worker após o deploy
+const WORKER_URL = 'https://casacriative-form.rafaalexander2-sys.workers.dev'
 
 const servicos = ['Tráfego Pago', 'Sites & Landing Pages', 'SEO', 'Social Media', 'Design Gráfico', 'Pacote Completo']
 
 export default function Contact() {
+  const [form, setForm] = useState({ nome: '', email: '', telefone: '', instagram: '', nicho: '', servico: '' })
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm(f => ({ ...f, [field]: e.target.value }))
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.nome || !form.email || !form.servico) return
+    setStatus('loading')
+    try {
+      const res = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      setStatus(data.ok ? 'success' : 'error')
+    } catch {
+      setStatus('error')
+    }
+  }
+
   return (
     <section style={{ background: '#000', padding: '100px 0' }}>
       <style>{`
@@ -44,7 +72,6 @@ export default function Contact() {
           border: 0.5px solid rgba(255,210,160,0.2);
           border-radius: 10px;
           padding: 12px 16px;
-          fontSize: 14px;
           color: #fff;
           outline: none;
           font-family: inherit;
@@ -101,20 +128,39 @@ export default function Contact() {
 
           <div className="glass-form">
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: BG, borderRadius: '20px 20px 0 0' }} />
-            <form onSubmit={e => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column' as const, gap: 10, position: 'relative', zIndex: 1 }}>
-              <input className="form-input" type="text" placeholder="Nome completo" />
-              <input className="form-input" type="email" placeholder="E-mail" />
-              <input className="form-input" type="tel" placeholder="Telefone / WhatsApp" />
-              <input className="form-input" type="text" placeholder="Instagram (@suamarca)" />
-              <input className="form-input" type="text" placeholder="Nicho de atuação" />
-              <select className="form-select">
-                <option value="" disabled selected>Serviço de interesse</option>
-                {servicos.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-              <button type="submit" style={{ background: BG, color: '#fff', border: 'none', borderRadius: 10, padding: '13px 28px', fontSize: 14, fontWeight: 500, cursor: 'pointer', width: '100%', fontFamily: 'inherit', marginTop: 6 }}>
-                Enviar mensagem
-              </button>
-            </form>
+
+            {status === 'success' ? (
+              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '40px 0' }}>
+                <div style={{ fontSize: 36, marginBottom: 16 }}>✓</div>
+                <p style={{ fontSize: 16, fontWeight: 600, color: '#f5f5f7', marginBottom: 8 }}>Mensagem enviada!</p>
+                <p style={{ fontSize: 14, fontWeight: 300, color: '#86868b', marginBottom: 24 }}>Entraremos em contato em breve.</p>
+                <button onClick={() => { setStatus('idle'); setForm({ nome: '', email: '', telefone: '', instagram: '', nicho: '', servico: '' }) }}
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,210,160,0.2)', color: '#86868b', borderRadius: 10, padding: '10px 24px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  Enviar outra mensagem
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' as const, gap: 10, position: 'relative', zIndex: 1 }}>
+                <input className="form-input" type="text" placeholder="Nome completo *" value={form.nome} onChange={set('nome')} required />
+                <input className="form-input" type="email" placeholder="E-mail *" value={form.email} onChange={set('email')} required />
+                <input className="form-input" type="tel" placeholder="Telefone / WhatsApp" value={form.telefone} onChange={set('telefone')} />
+                <input className="form-input" type="text" placeholder="Instagram (@suamarca)" value={form.instagram} onChange={set('instagram')} />
+                <input className="form-input" type="text" placeholder="Nicho de atuação" value={form.nicho} onChange={set('nicho')} />
+                <select className="form-select" value={form.servico} onChange={set('servico')} required>
+                  <option value="" disabled>Serviço de interesse *</option>
+                  {servicos.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+
+                {status === 'error' && (
+                  <p style={{ fontSize: 13, color: '#e05555', textAlign: 'center' }}>Erro ao enviar. Tente novamente.</p>
+                )}
+
+                <button type="submit" disabled={status === 'loading'}
+                  style={{ background: BG, color: '#fff', border: 'none', borderRadius: 10, padding: '13px 28px', fontSize: 14, fontWeight: 500, cursor: status === 'loading' ? 'not-allowed' : 'pointer', width: '100%', fontFamily: 'inherit', marginTop: 6, opacity: status === 'loading' ? 0.7 : 1 }}>
+                  {status === 'loading' ? 'Enviando…' : 'Enviar mensagem'}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>
