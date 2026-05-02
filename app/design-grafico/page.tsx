@@ -92,13 +92,16 @@ export default function DesignGrafico() {
           </p>
           <div className="r3" style={{ gap: 12 }}>
             {[
-              { titulo: 'Branding & Social Media – 4A Studio Feminino', tag: 'Branding', href: 'https://www.behance.net/gallery/191063317/Branding-Social-Media-4A-Studio-Feminino' },
-              { titulo: 'Assessoria de Marketing – DMove', tag: 'Design Gráfico', href: 'https://www.behance.net/gallery/163229265/ASSESSORIA-DE-MARKETING-DMOVE' },
-              { titulo: 'Página Revista', tag: 'Editorial', href: 'https://www.behance.net/gallery/156691977/Pagina-Revista' },
+              { titulo: 'Branding & Social Media – 4A Studio Feminino', tag: 'Branding', img: null, href: 'https://www.behance.net/gallery/191063317/Branding-Social-Media-4A-Studio-Feminino' },
+              { titulo: 'Assessoria de Marketing – DMove', tag: 'Design Gráfico', img: '/portfolio-dmove.png', href: 'https://www.behance.net/gallery/163229265/ASSESSORIA-DE-MARKETING-DMOVE' },
+              { titulo: 'Página Revista', tag: 'Editorial', img: '/portfolio-revista.png', href: 'https://www.behance.net/gallery/156691977/Pagina-Revista' },
             ].map((c, i) => (
               <a key={i} href={c.href} target="_blank" rel="noopener noreferrer" className="portfolio-card" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', borderRadius: 12, overflow: 'hidden' }}>
-                <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555' }}>{c.tag}</span>
+                <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  {c.img
+                    ? <img src={c.img} alt={c.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }} />
+                    : <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555' }}>{c.tag}</span>
+                  }
                 </div>
                 <div style={{ padding: '14px 16px 16px' }}>
                   <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c47a4a', marginBottom: 6 }}>{c.tag}</p>
