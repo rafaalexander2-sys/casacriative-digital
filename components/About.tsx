@@ -1,5 +1,3 @@
-import Image from 'next/image'
-
 
 export default function About() {
   return (
@@ -17,8 +15,8 @@ export default function About() {
             Não fazemos volume. Fazemos impacto. Cada projeto recebe atenção total, do primeiro briefing à última entrega.
           </p>
         </div>
-        <div className="about-img" style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '0.5px solid #3a3a3c', aspectRatio: '4/5' }}>
-          <Image src="/quemsomos.jpeg" alt="Equipe Casa Criative Digital" fill style={{ objectFit: 'cover', objectPosition: 'center top' }} />
+        <div className="about-img" style={{ borderRadius: 10, overflow: 'hidden', border: '0.5px solid #3a3a3c' }}>
+          <img src="/quemsomos.jpeg" alt="Equipe Casa Criative Digital" style={{ width: '100%', height: 'auto', display: 'block' }} />
         </div>
       </div>
     </section>
