@@ -7,16 +7,24 @@ const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
 export default function HeroCity() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [reached, setReached] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     const video = videoRef.current
 
     const onScroll = () => {
       const scrollTop = window.scrollY
-      const sectionHeight = window.innerHeight * 2.2
+      const multiplier = window.innerWidth < 768 ? 1.3 : 2.2
+      const sectionHeight = window.innerHeight * multiplier
       const progress = Math.min(Math.max(scrollTop / sectionHeight, 0), 1)
       setReached(Math.round(progress * 347200))
-      // readyState >= 1 = HAVE_METADATA (funciona mesmo com vídeo em cache)
       if (video && video.readyState >= 1) {
         video.currentTime = progress * video.duration
       }
@@ -26,7 +34,7 @@ export default function HeroCity() {
   }, [])
 
   return (
-    <section style={{ position: 'relative', background: '#000', height: '220vh' }}>
+    <section style={{ position: 'relative', background: '#000', height: isMobile ? '130vh' : '220vh' }}>
       <div style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden' }}>
         <video
           ref={videoRef}
@@ -39,7 +47,7 @@ export default function HeroCity() {
 
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,rgba(0,0,0,0.15) 0%,rgba(0,0,0,0) 20%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.85) 100%)', pointerEvents: 'none' }} />
 
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', textAlign: 'center', padding: '0 24px 80px', zIndex: 10 }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', textAlign: 'center', padding: isMobile ? '0 20px 48px' : '0 24px 80px', zIndex: 10 }}>
           <p style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: '#86868b', marginBottom: 16 }}>
             Agência Digital · Curitiba, PR
           </p>
