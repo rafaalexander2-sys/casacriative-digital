@@ -5,8 +5,7 @@ import { useState } from 'react'
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
 const BRONZE = { background: BG, WebkitBackgroundClip: 'text' as const, WebkitTextFillColor: 'transparent' as const, backgroundClip: 'text' as const }
 
-// Substitua pela URL do Worker após o deploy
-const WORKER_URL = 'https://casacriative-form.rafaalexander2-sys.workers.dev'
+const WORKER_URL = 'https://casacriative-form.rafaalexander2.workers.dev'
 
 const servicos = ['Tráfego Pago', 'Sites & Landing Pages', 'SEO', 'Social Media', 'Design Gráfico', 'Pacote Completo']
 
