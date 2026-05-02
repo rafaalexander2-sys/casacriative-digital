@@ -25,7 +25,7 @@ export const posts: Post[] = [
     titulo: 'Designers Gráficos e a IA: Você Será Substituído?',
     desc: 'A inteligência artificial chegou ao design gráfico. Mas será que os designers serão substituídos? Entenda o que a IA faz, o que não faz — e como se posicionar.',
     data: '14 Nov 2023',
-    autor: 'Rafael Ribeiro',
+    autor: 'Aline Ribeiro',
     leitura: '6 min',
     relacionados: ['design-grafico', 'trafego-pago-em-2023'],
     blocks: [
@@ -75,7 +75,7 @@ export const posts: Post[] = [
     titulo: 'Design Gráfico e o Rebranding da RECORD: 3 Tendências que Marcaram 2023',
     desc: 'O rebranding da Record TV revela tendências poderosas do design moderno. Analisamos 3 lições que qualquer marca pode aplicar.',
     data: '14 Nov 2023',
-    autor: 'Rafael Ribeiro',
+    autor: 'Aline Ribeiro',
     leitura: '5 min',
     relacionados: ['designers-graficos-e-ia', 'citacoes-no-instagram'],
     blocks: [
@@ -105,7 +105,7 @@ export const posts: Post[] = [
     titulo: 'TikTok Video Marketing: O Guia Completo para Dominar Vídeos Curtos',
     desc: 'TikTok, Reels e Shorts dominam as redes sociais. Aprenda como criar uma estratégia de vídeo curto que gera alcance, engajamento e vendas.',
     data: '12 Nov 2023',
-    autor: 'Rafael Ribeiro',
+    autor: 'Aline Ribeiro',
     leitura: '7 min',
     relacionados: ['midias-sociais', 'citacoes-no-instagram'],
     blocks: [
@@ -154,7 +154,7 @@ export const posts: Post[] = [
     titulo: 'Mídias Sociais em 2024: 6 Tendências que Vão Mudar a Sua Estratégia',
     desc: 'Social commerce, IA generativa, micro-influenciadores e social search. Descubra as 6 tendências de mídias sociais para 2024 e como adaptar sua estratégia.',
     data: '10 Nov 2023',
-    autor: 'Rafael Ribeiro',
+    autor: 'Aline Ribeiro',
     leitura: '6 min',
     relacionados: ['tiktok-video-marketing-2023', 'facebook-e-instagram-pagos'],
     blocks: [
@@ -191,7 +191,7 @@ export const posts: Post[] = [
     titulo: 'Citações no Instagram: 11 Aplicativos para Criar Posts que Engajam',
     desc: 'Descubra os 11 melhores aplicativos para criar posts de citações visualmente impactantes no Instagram. Do Canva ao Word Swag — com dicas de engajamento.',
     data: '10 Nov 2023',
-    autor: 'Rafael Ribeiro',
+    autor: 'Aline Ribeiro',
     leitura: '5 min',
     relacionados: ['midias-sociais', 'tiktok-video-marketing-2023'],
     blocks: [
@@ -238,7 +238,7 @@ export const posts: Post[] = [
     titulo: 'Facebook e Instagram Pagos: O Que a Nova Estratégia da Meta Significa para Você',
     desc: 'A Meta lançou assinaturas pagas para usuários europeus. Entenda o impacto real para anunciantes brasileiros e as 3 estratégias para se adaptar agora.',
     data: '09 Nov 2023',
-    autor: 'Rafael Ribeiro',
+    autor: 'Rafael Alexander',
     leitura: '5 min',
     relacionados: ['trafego-pago-em-2023', 'midias-sociais'],
     blocks: [
@@ -275,7 +275,7 @@ export const posts: Post[] = [
     titulo: 'Tráfego Pago em 2026: Ainda Vale a Pena Investir?',
     desc: 'O tráfego pago em 2026 é mais inteligente e automatizado do que nunca. Veja o que mudou com a IA, quanto investir e como montar uma estratégia que funciona.',
     data: '13 Out 2023',
-    autor: 'Rafael Ribeiro',
+    autor: 'Rafael Alexander',
     leitura: '7 min',
     relacionados: ['facebook-e-instagram-pagos', 'designers-graficos-e-ia'],
     blocks: [

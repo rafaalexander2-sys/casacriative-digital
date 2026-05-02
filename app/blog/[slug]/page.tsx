@@ -162,7 +162,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <div>
             <p style={{ fontSize: 14, fontWeight: 600, color: '#f5f5f7', marginBottom: 4 }}>{post.autor}</p>
             <p style={{ fontSize: 13, fontWeight: 300, color: '#555', lineHeight: 1.6 }}>
-              Fundador da Casa Criative Digital. Especialista em tráfego pago, criação de sites e marketing digital em Curitiba desde 2021.
+              {post.autor === 'Aline Ribeiro'
+                ? 'Co-fundadora da Casa Criative Digital. Especialista em Social Media, Design Gráfico e criação de conteúdo estratégico.'
+                : 'Fundador da Casa Criative Digital. Especialista em Tráfego Pago, criação de sites e marketing digital em Curitiba desde 2021.'
+              }
             </p>
           </div>
         </div>
