@@ -1,0 +1,192 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =====================
+   DESIGN TOKENS
+   ===================== */
+:root {
+  --bronze-light: oklch(0.78 0.11 55);
+  --bronze:       oklch(0.62 0.13 48);
+  --bronze-dark:  oklch(0.42 0.10 40);
+
+  --gradient-bronze:      linear-gradient(135deg, oklch(0.78 0.11 55), oklch(0.42 0.10 40));
+  --gradient-bronze-soft: linear-gradient(135deg, oklch(0.62 0.13 48 / 0.25), oklch(0.42 0.10 40 / 0.05));
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #fff;
+  color: #1d1d1f;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* =====================
+   GLASS
+   ===================== */
+.glass {
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.05), oklch(1 0 0 / 0.015));
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid oklch(1 0 0 / 0.08);
+}
+
+.glass-light {
+  position: relative;
+}
+
+.glass-light::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(80% 50% at 20% 0%, oklch(0.78 0.11 55 / 0.18), transparent 60%),
+    radial-gradient(60% 40% at 100% 100%, oklch(0.62 0.13 48 / 0.12), transparent 70%);
+  z-index: 1;
+}
+
+/* =====================
+   GRAIN
+   ===================== */
+.grain {
+  position: relative;
+}
+
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  z-index: 2;
+}
+
+/* =====================
+   REVEAL (scroll fade-in)
+   ===================== */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =====================
+   TEXT BRONZE GRADIENT
+   ===================== */
+.text-bronze {
+  background: var(--gradient-bronze);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (min-width: 768px) {
+  .hide-mobile { display: flex !important; }
+  .show-mobile { display: none !important; }
+}
+
+@media (max-width: 767px) {
+  .hide-mobile { display: none !important; }
+  .show-mobile { display: flex !important; }
+}
+
+/* =========================
+   🔥 BOTÕES GLASS (NOVO)
+   ========================= */
+
+.btn-glass {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 10px 22px;
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+
+  color: #f5e6d8;
+  text-decoration: none;
+
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  position: relative;
+  overflow: hidden;
+
+  transition: all .3s ease;
+}
+
+/* 🔥 BOTÃO PRINCIPAL (Fale Conosco) */
+.btn-glass.primary {
+  background: linear-gradient(
+    145deg,
+    rgba(200,120,70,0.35) 0%,
+    rgba(120,70,40,0.45) 40%,
+    rgba(40,20,10,0.55) 85%
+  );
+
+  border: 1px solid rgba(255,200,150,0.25);
+
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.6),
+    inset 0 1px 1px rgba(255,255,255,0.08);
+}
+
+/* 🔹 BOTÃO SECUNDÁRIO (Ver Serviços) */
+.btn-glass.secondary {
+  background: linear-gradient(
+    145deg,
+    rgba(255,255,255,0.06),
+    rgba(120,70,40,0.12),
+    rgba(0,0,0,0.3)
+  );
+
+  border: 1px solid rgba(255,210,160,0.25);
+}
+
+/* ✨ REFLEXO SUAVE (SEM QUEBRAR JSX) */
+.btn-glass::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.22),
+    transparent
+  );
+
+  transform: skewX(-20deg);
+  transition: 0.6s;
+}
+
+.btn-glass:hover::after {
+  left: 120%;
+}
