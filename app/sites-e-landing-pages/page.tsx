@@ -51,7 +51,7 @@ export default function SitesLandingPages() {
 
       {/* Diferenciais */}
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <div className="r4" style={{ maxWidth: 900, margin: '0 auto', gap: 12 }}>
           {diferenciais.map((d, i) => (
             <div key={i} style={{ background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,210,160,0.12)', borderRadius: 14, padding: '22px 18px', textAlign: 'center' }}>
               <div style={{ width: 24, height: 1.5, background: BG, borderRadius: 1, margin: '0 auto 14px' }} />
@@ -70,7 +70,7 @@ export default function SitesLandingPages() {
           <p style={{ fontSize: 14, fontWeight: 300, color: '#86868b', lineHeight: 1.75, marginBottom: 40 }}>
             Confira alguns exemplos de sites que desenvolvemos para empreendedores como você, cada um personalizado e otimizado para atingir os melhores resultados.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+          <div className="r2" style={{ gap: 12 }}>
             {[1, 2, 3, 4].map(n => (
               <div key={n} style={{ aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', borderRadius: 12, border: '0.5px solid #2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontSize: 12, color: '#555' }}>Case {n}</span>

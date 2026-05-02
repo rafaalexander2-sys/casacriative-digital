@@ -36,7 +36,8 @@ export default function ServiceHero({
   return (
     <section
       ref={sectionRef}
-      style={{ padding: compact ? '48px 24px 80px' : '140px 24px 96px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}
+      className={compact ? 'sh-compact' : 'sh-full'}
+      style={{ textAlign: 'center', position: 'relative', overflow: 'hidden' }}
     >
       <style>{`
         @keyframes orb-center {

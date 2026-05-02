@@ -73,7 +73,7 @@ export default function Contact() {
       <div style={{ maxWidth: 780, margin: '0 auto', padding: '0 24px' }}>
         <div style={{ height: 1, background: 'linear-gradient(90deg,transparent,#c47a4a,#f0d5b0,#c47a4a,transparent)', marginBottom: 64 }} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
+        <div className="r2" style={{ gap: 40, alignItems: 'start' }}>
           <div>
             <p style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: '#555', marginBottom: 16 }}>Contato</p>
             <h2 style={{ fontSize: 28, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.8px', lineHeight: 1.15, marginBottom: 12 }}>
@@ -111,7 +111,7 @@ export default function Contact() {
                 <option value="" disabled selected>Serviço de interesse</option>
                 {servicos.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
-              <button type="submit" style={{ background: BG, color: '#fff', border: 'none', borderRadius: 10, padding: '13px 28px', fontSize: 14, fontWeight: 500, cursor: 'pointer', alignSelf: 'flex-start' as const, fontFamily: 'inherit', marginTop: 6 }}>
+              <button type="submit" style={{ background: BG, color: '#fff', border: 'none', borderRadius: 10, padding: '13px 28px', fontSize: 14, fontWeight: 500, cursor: 'pointer', width: '100%', fontFamily: 'inherit', marginTop: 6 }}>
                 Enviar mensagem
               </button>
             </form>

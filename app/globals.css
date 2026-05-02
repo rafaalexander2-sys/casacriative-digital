@@ -111,6 +111,140 @@ h1, h2, h3, h4, h5, h6 {
   .show-mobile { display: flex !important; }
 }
 
+/* =====================
+   MOBILE-FIRST RESPONSIVE
+   ===================== */
+
+/* Grids */
+.r2        { display: grid; grid-template-columns: 1fr; }
+.r3        { display: grid; grid-template-columns: 1fr; }
+.r4        { display: grid; grid-template-columns: repeat(2, 1fr); }
+.r-contact { display: grid; grid-template-columns: 1fr; align-items: start; }
+.r-related { display: grid; grid-template-columns: 1fr; }
+
+@media (min-width: 768px) {
+  .r2        { grid-template-columns: repeat(2, 1fr); }
+  .r3        { grid-template-columns: repeat(3, 1fr); }
+  .r4        { grid-template-columns: repeat(4, 1fr); }
+  .r-contact { grid-template-columns: 1fr 1.4fr; }
+  .r-related { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+}
+
+/* Hero sections */
+.hero-section { padding: 100px 20px 56px !important; text-align: center; }
+@media (min-width: 768px) {
+  .hero-section { padding: 140px 24px 80px !important; }
+}
+
+/* ServiceHero compact/full responsive */
+.sh-compact { padding: 48px 20px 56px !important; }
+.sh-full    { padding: 100px 20px 64px !important; }
+@media (min-width: 768px) {
+  .sh-compact { padding: 48px 24px 80px !important; }
+  .sh-full    { padding: 140px 24px 96px !important; }
+}
+
+/* Responsive H1 */
+.h1-xl { font-size: 30px !important; letter-spacing: -1px !important; line-height: 1.1 !important; }
+.h1-lg { font-size: 24px !important; letter-spacing: -0.5px !important; line-height: 1.15 !important; }
+@media (min-width: 768px) {
+  .h1-xl { font-size: 48px !important; letter-spacing: -2px !important; }
+  .h1-lg { font-size: 36px !important; letter-spacing: -1px !important; }
+}
+
+/* CTA button row */
+.cta-row { display: flex !important; flex-direction: column !important; gap: 12px !important; align-items: stretch !important; max-width: 320px; margin-left: auto; margin-right: auto; }
+@media (min-width: 768px) {
+  .cta-row { flex-direction: row !important; align-items: center !important; max-width: none; }
+}
+
+/* Stats block (quem somos) */
+@media (max-width: 767px) {
+  .stats-block { display: flex !important; flex-direction: column !important; gap: 24px !important; }
+  .stats-block > div { border-left: none !important; padding-left: 0 !important; border-top: 0.5px solid #1d1d1f; padding-top: 20px; }
+  .stats-block > div:first-child { border-top: none; padding-top: 0; }
+}
+
+/* Navbar mobile padding */
+@media (max-width: 767px) {
+  .nav-header { padding-left: 16px !important; padding-right: 16px !important; }
+}
+
+/* General section responsive padding */
+@media (max-width: 767px) {
+  .rps { padding-left: 16px !important; padding-right: 16px !important; padding-top: 56px !important; padding-bottom: 56px !important; }
+}
+
+/* Blog post meta bar: wrap on mobile */
+@media (max-width: 767px) {
+  .post-meta { flex-wrap: wrap; gap: 10px !important; }
+  .post-meta .meta-sep { display: none; }
+}
+
+/* Blog categories: horizontal scroll on mobile */
+@media (max-width: 767px) {
+  .cats-wrap { flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; justify-content: flex-start !important; padding-bottom: 8px; }
+  .cats-wrap::-webkit-scrollbar { display: none; }
+}
+
+/* Blog newsletter: stack input+button */
+@media (max-width: 767px) {
+  .newsletter-row { flex-direction: column !important; }
+  .newsletter-row input, .newsletter-row button { width: 100%; }
+}
+
+/* Blog card image: shorter on mobile */
+@media (max-width: 767px) {
+  .blog-card-img { aspect-ratio: 16/6 !important; }
+}
+
+/* Contact section padding */
+@media (max-width: 767px) {
+  .contact-body { padding-bottom: 60px !important; padding-left: 16px !important; padding-right: 16px !important; }
+  .glass-card-contact { padding: 24px 20px !important; }
+}
+
+/* Footer: reduce padding */
+@media (max-width: 767px) {
+  .footer-inner { padding: 48px 20px 24px !important; }
+}
+
+/* Stats: empilhar no mobile */
+@media (max-width: 767px) {
+  .stats-row { flex-direction: column !important; padding: 0 20px !important; }
+  .stats-row > div { flex: none !important; width: 100% !important; border-right: none !important; border-bottom: 0.5px solid #e0e0e5; padding: 28px 0 !important; }
+  .stats-row > div:last-child { border-bottom: none; }
+}
+
+/* Glass form: padding menor no mobile */
+@media (max-width: 767px) {
+  .glass-form { padding: 24px 20px !important; }
+  .glass-card-contact { padding: 24px 20px !important; }
+}
+
+/* About section: altura do placeholder no mobile */
+@media (max-width: 767px) {
+  .about-img { height: 200px !important; }
+}
+
+/* HeroCity CTA: botões full-width no mobile */
+@media (max-width: 767px) {
+  .cta-row .btn-glass { width: 100%; justify-content: center; }
+  .cta-row { max-width: 280px !important; }
+}
+
+/* Seção About: reduzir padding no mobile */
+@media (max-width: 767px) {
+  .about-section { padding: 60px 0 !important; }
+}
+
+/* BlogCarousel: ajustar card sizes no mobile */
+@media (max-width: 480px) {
+  .blog-carousel-card-center { flex: 0 0 200px !important; }
+  .blog-carousel-card-side { flex: 0 0 140px !important; }
+  .blog-carousel-card-outer { flex: 0 0 110px !important; }
+}
+
 /* =========================
    🔥 BOTÕES GLASS (NOVO)
    ========================= */

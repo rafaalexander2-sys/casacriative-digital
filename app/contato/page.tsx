@@ -71,11 +71,11 @@ export default function Contato() {
       <Navbar />
 
       {/* Hero */}
-      <section style={{ padding: '140px 24px 80px', textAlign: 'center' }}>
+      <section className="hero-section">
         <p style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c47a4a', marginBottom: 16 }}>
           Contato
         </p>
-        <h1 style={{ fontSize: 48, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-2px', lineHeight: 1.05, maxWidth: 600, margin: '0 auto 20px' }}>
+        <h1 className="h1-xl" style={{ fontWeight: 700, color: '#f5f5f7', maxWidth: 600, margin: '0 auto 20px' }}>
           Vamos fazer sua<br />
           <span style={{ background: BG, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
             marca crescer.
@@ -88,7 +88,7 @@ export default function Contato() {
 
       {/* Formulário + Info */}
       <section style={{ padding: '0 24px 100px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 40, alignItems: 'start' }}>
+        <div className="r-contact" style={{ maxWidth: 900, margin: '0 auto', gap: 40 }}>
 
           {/* Info */}
           <div>

@@ -52,7 +52,7 @@ export default function HeroCity() {
           <p style={{ fontSize: 15, fontWeight: 300, color: '#86868b', lineHeight: 1.55, marginBottom: 24, maxWidth: 460 }}>
             Estratégias personalizadas que atraem clientes e geram resultado real.
           </p>
-          <div style={{ display: 'flex', gap: 12, marginBottom: 32 }}>
+          <div className="cta-row" style={{ gap: 12, marginBottom: 32 }}>
             <a href="https://wa.me/5541998170428" className="btn-glass primary">Fale Conosco</a>
             <a href="#servicos" className="btn-glass secondary">Ver Serviços</a>
           </div>

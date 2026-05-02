@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRef, useEffect } from 'react'
 
 const services = [
   { tag: 'Tráfego Pago',          title: 'Performance que converte.',      desc: 'Google Ads e Meta Ads otimizados para máximo ROI.',   img: '/trafego.png' },
@@ -11,30 +10,6 @@ const services = [
   { tag: 'Social Media',           title: 'Conteúdo que conecta.',          desc: 'Estratégia editorial, design e produção.',            img: '/social.png' },
 ]
 
-function ParallaxImage({ src, alt }: { src: string; alt: string }) {
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const innerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const update = () => {
-      if (!wrapRef.current || !innerRef.current) return
-      const rect = wrapRef.current.getBoundingClientRect()
-      const progress = (window.innerHeight / 2 - (rect.top + rect.height / 2)) / window.innerHeight
-      innerRef.current.style.transform = `translateY(${progress * 28}px)`
-    }
-    window.addEventListener('scroll', update, { passive: true })
-    update()
-    return () => window.removeEventListener('scroll', update)
-  }, [])
-
-  return (
-    <div ref={wrapRef} style={{ position: 'absolute', inset: '-14px' }}>
-      <div ref={innerRef} style={{ position: 'relative', width: '100%', height: '100%', willChange: 'transform' }}>
-        <Image src={src} alt={alt} fill sizes="(max-width: 768px) 100vw, 50vw" style={{ objectFit: 'cover' }} />
-      </div>
-    </div>
-  )
-}
 
 export default function Services() {
   return (
@@ -76,13 +51,7 @@ export default function Services() {
         </div>
 
         {/* Grade de cards */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 16,
-          maxWidth: 1100,
-          margin: '0 auto',
-        }}>
+        <div className="r2" style={{ gap: 16, maxWidth: 1100, margin: '0 auto' }}>
           {services.map((s, i) => (
             <article
               key={i}
@@ -92,9 +61,9 @@ export default function Services() {
                 overflow: 'hidden',
               }}
             >
-              {/* Imagem com parallax */}
-              <div style={{ aspectRatio: '16/7', overflow: 'hidden', position: 'relative' }}>
-                <ParallaxImage src={s.img} alt={s.title} />
+              {/* Imagem */}
+              <div style={{ height: 180, background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 16px' }}>
+                <Image src={s.img} alt={s.title} width={480} height={156} style={{ width: 'auto', height: '100%', maxWidth: '100%', objectFit: 'contain' }} />
               </div>
 
               {/* Texto */}

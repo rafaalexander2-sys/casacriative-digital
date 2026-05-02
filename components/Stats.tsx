@@ -117,7 +117,7 @@ export default function Stats() {
           50%       { opacity: 1;   transform: scale(1.08); }
         }
       `}</style>
-      <div style={{
+      <div className="stats-row" style={{
         maxWidth: 780,
         margin: '0 auto',
         padding: '0 24px',

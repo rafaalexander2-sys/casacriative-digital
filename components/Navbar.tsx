@@ -35,7 +35,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header style={{
+      <header className="nav-header" style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
         height: 52, display: 'flex', alignItems: 'center',
         justifyContent: 'space-between', padding: '0 32px',

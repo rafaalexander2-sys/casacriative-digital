@@ -71,7 +71,7 @@ export default function TrafegoPago() {
 
       {/* Features */}
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        <div className="r3" style={{ maxWidth: 900, margin: '0 auto', gap: 12 }}>
           {features.map((f, i) => (
             <div key={i} style={{ background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,210,160,0.12)', borderRadius: 16, padding: '24px 20px' }}>
               <div style={{ width: 24, height: 1.5, background: BG, borderRadius: 1, marginBottom: 16 }} />
@@ -89,7 +89,7 @@ export default function TrafegoPago() {
           <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.5px', textAlign: 'center', marginBottom: 40 }}>
             O que dizem nossos clientes.
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+          <div className="r2" style={{ gap: 12 }}>
             {reviews.map((r, i) => (
               <div key={i} style={{ background: 'linear-gradient(140deg,rgba(255,255,255,0.04),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '22px' }}>
                 <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>

@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { posts as allPosts } from '@/lib/posts'
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
 
-const posts = [
-  { tag: 'Tráfego Pago', title: 'Como dobrar seu ROI no Google Ads em 30 dias', desc: 'Estratégias práticas para otimizar campanhas e reduzir custo por clique.', date: '28 Abr 2025', href: '/blog/roi-google-ads' },
-  { tag: 'SEO', title: 'SEO local: como aparecer no Google Meu Negócio', desc: 'Guia completo para dominar as buscas locais em Curitiba.', date: '20 Abr 2025', href: '/blog/seo-local' },
-  { tag: 'Sites', title: '5 elementos que fazem um site converter mais', desc: 'Design, velocidade e copywriting que transformam visitantes em clientes.', date: '10 Abr 2025', href: '/blog/site-conversao' },
-  { tag: 'Social Media', title: 'Instagram em 2025: o que funciona de verdade', desc: 'Formatos, frequência e estratégias para crescer com consistência.', date: '02 Abr 2025', href: '/blog/instagram-2025' },
-  { tag: 'Design', title: 'Identidade visual que vende: guia para PMEs', desc: 'Como criar uma marca profissional mesmo com orçamento reduzido.', date: '25 Mar 2025', href: '/blog/identidade-visual' },
-  { tag: 'Marketing', title: 'Funil de vendas digital: da atração à conversão', desc: 'Entenda cada etapa e como otimizar para gerar mais clientes.', date: '15 Mar 2025', href: '/blog/funil-vendas' },
-]
+const posts = allPosts.map(p => ({
+  tag: p.categoria,
+  title: p.titulo,
+  desc: p.desc,
+  date: p.data,
+  href: `/blog/${p.slug}`,
+}))
 
 const cfgMap: Record<number, { scale: number; opacity: number; width: string; blur: string; zIndex: number }> = {
   0:  { scale: 1.06, opacity: 1,    width: '260px', blur: 'none', zIndex: 5 },
@@ -92,7 +92,7 @@ export default function BlogCarousel() {
         </h2>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', padding: '0 24px 8px' }}>
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', padding: '0 24px 8px', overflow: 'hidden' }}>
         {visible.map(({ post, offset, cfg }) => (
           <Link
             key={post.href + offset}

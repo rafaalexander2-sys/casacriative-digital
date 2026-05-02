@@ -12,8 +12,9 @@ export async function generateStaticParams() {
   return posts.map(p => ({ slug: p.slug }))
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const post = getPost(params.slug)
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const post = getPost(slug)
   if (!post) return {}
   return {
     title: `${post.titulo} | Blog Casa Criative Digital`,
@@ -21,8 +22,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = getPost(params.slug)
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const post = getPost(slug)
   if (!post) notFound()
 
   const related = getRelated(post.relacionados)
@@ -34,8 +36,8 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
       <Navbar />
 
       {/* Hero do artigo */}
-      <section style={{ paddingTop: 100, paddingBottom: 0, background: '#000' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 24px' }}>
+      <section style={{ paddingTop: 72, paddingBottom: 0, background: '#000' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px' }}>
           {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
             <Link href="/blog" style={{ fontSize: 12, color: '#555', textDecoration: 'none' }}>Blog</Link>
@@ -49,7 +51,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
           </span>
 
           {/* Título */}
-          <h1 style={{ fontSize: 36, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-1px', lineHeight: 1.15, marginBottom: 20, maxWidth: 640 }}>
+          <h1 className="h1-lg" style={{ fontWeight: 700, color: '#f5f5f7', marginBottom: 20, maxWidth: 640 }}>
             {post.titulo}
           </h1>
 
@@ -59,7 +61,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
           </p>
 
           {/* Meta: autor, data, leitura */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 40, flexWrap: 'wrap' }}>
+          <div className="post-meta" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 40, flexWrap: 'wrap' }}>
             <div style={{ width: 36, height: 36, borderRadius: '50%', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{post.autor[0]}</span>
             </div>
@@ -87,7 +89,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
       </section>
 
       {/* Conteúdo */}
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '56px 24px 0' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px 0' }}>
 
         {/* Article body */}
         <article>
@@ -159,7 +161,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
         <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '56px 24px 80px' }}>
           <div style={{ maxWidth: 900, margin: '0 auto' }}>
             <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555', marginBottom: 28, textAlign: 'center' }}>Continue lendo</p>
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${related.length}, 1fr)`, gap: 16 }}>
+            <div className="r-related" style={{ gap: 16 }}>
               {related.map(r => (
                 <Link key={r.slug} href={`/blog/${r.slug}`} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(160deg,rgba(255,255,255,0.04),rgba(120,70,40,0.06),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,210,160,0.1)', borderRadius: 14, overflow: 'hidden' }}>
                   <div style={{ width: '100%', aspectRatio: '16/7', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

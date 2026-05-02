@@ -48,7 +48,7 @@ export default function QuemSomos() {
           </p>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, marginBottom: 40 }}>
+          <div className="r3 stats-block" style={{ gap: 0, marginBottom: 40 }}>
             {[
               { valor: '+700k', label: 'em anúncios gerenciados' },
               { valor: '+50', label: 'clientes satisfeitos' },
@@ -98,7 +98,7 @@ export default function QuemSomos() {
       {/* Missão, Visão, Valores */}
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <div className="r3" style={{ gap: 12 }}>
             {mvv.map((m, i) => (
               <div key={i} style={{ background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,210,160,0.12)', borderRadius: 16, padding: '28px 22px' }}>
                 <p style={{ fontSize: 10, fontWeight: 700, color: '#c47a4a', letterSpacing: '0.1em', marginBottom: 14 }}>{m.num}</p>
@@ -114,9 +114,9 @@ export default function QuemSomos() {
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: 26, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.8px', marginBottom: 10 }}>Pronto para ir ao topo?</h2>
         <p style={{ fontSize: 14, fontWeight: 300, color: '#86868b', marginBottom: 28 }}>Entre em contato e descubra como podemos transformar a presença digital do seu negócio.</p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <a href="https://wa.me/5541998170428" style={{ display: 'inline-block', background: BG, color: '#fff', borderRadius: 10, padding: '12px 28px', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>WhatsApp</a>
-          <a href="/gestao-de-anuncios-pagos" style={{ display: 'inline-block', background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,210,160,0.2)', color: '#f5f5f7', borderRadius: 10, padding: '12px 28px', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>Nossos Serviços</a>
+        <div className="cta-row" style={{ gap: 12, justifyContent: 'center' }}>
+          <a href="https://wa.me/5541998170428" style={{ display: 'block', background: BG, color: '#fff', borderRadius: 10, padding: '12px 28px', fontSize: 14, fontWeight: 500, textDecoration: 'none', textAlign: 'center' }}>WhatsApp</a>
+          <a href="/gestao-de-anuncios-pagos" style={{ display: 'block', background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,210,160,0.2)', color: '#f5f5f7', borderRadius: 10, padding: '12px 28px', fontSize: 14, fontWeight: 500, textDecoration: 'none', textAlign: 'center' }}>Nossos Serviços</a>
         </div>
       </section>
 

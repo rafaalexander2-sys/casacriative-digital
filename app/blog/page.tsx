@@ -70,11 +70,11 @@ export default function Blog() {
       <Navbar />
 
       {/* Hero */}
-      <section style={{ padding: '140px 24px 80px', textAlign: 'center' }}>
+      <section className="hero-section">
         <p style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c47a4a', marginBottom: 16 }}>
           Casa Criative
         </p>
-        <h1 style={{ fontSize: 48, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-2px', lineHeight: 1.05, maxWidth: 600, margin: '0 auto 20px' }}>
+        <h1 className="h1-xl" style={{ fontWeight: 700, color: '#f5f5f7', maxWidth: 600, margin: '0 auto 20px' }}>
           Blog
         </h1>
         <p style={{ fontSize: 17, fontWeight: 300, color: '#86868b', lineHeight: 1.65, maxWidth: 520, margin: '0 auto' }}>
@@ -84,7 +84,7 @@ export default function Blog() {
 
       {/* Categorias */}
       <section style={{ padding: '0 24px 56px' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div className="cats-wrap" style={{ maxWidth: 960, margin: '0 auto', display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
           {categorias.map((c, i) => (
             <span key={c} style={{ fontSize: 13, fontWeight: i === 0 ? 600 : 400, color: i === 0 ? '#f5f5f7' : '#86868b', background: i === 0 ? 'rgba(255,210,160,0.1)' : 'rgba(255,255,255,0.04)', border: `0.5px solid ${i === 0 ? 'rgba(255,210,160,0.3)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 10, padding: '7px 18px', cursor: 'pointer' }}>
               {c}
@@ -95,7 +95,7 @@ export default function Blog() {
 
       {/* Cards de posts */}
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '60px 24px 80px' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="r3" style={{ maxWidth: 960, margin: '0 auto', gap: 16 }}>
           {posts.map((p, i) => (
             <Link
               key={i}
@@ -135,7 +135,7 @@ export default function Blog() {
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: 28, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.8px', marginBottom: 12 }}>Receba novos artigos por e-mail.</h2>
         <p style={{ fontSize: 15, fontWeight: 300, color: '#86868b', marginBottom: 28 }}>Sem spam. Conteúdo prático sobre marketing digital, uma vez por semana.</p>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', maxWidth: 420, margin: '0 auto' }}>
+        <div className="newsletter-row" style={{ display: 'flex', gap: 8, justifyContent: 'center', maxWidth: 420, margin: '0 auto' }}>
           <input type="email" placeholder="seu@email.com" style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,210,160,0.2)', borderRadius: 10, padding: '12px 16px', fontSize: 14, color: '#fff', outline: 'none', fontFamily: 'inherit' }} />
           <button style={{ background: BG, color: '#fff', border: 'none', borderRadius: 10, padding: '12px 24px', fontSize: 14, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
             Assinar

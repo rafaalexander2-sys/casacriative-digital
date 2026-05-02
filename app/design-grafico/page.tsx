@@ -51,7 +51,7 @@ export default function DesignGrafico() {
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555', marginBottom: 12, textAlign: 'center' }}>O que criamos</p>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.5px', textAlign: 'center', marginBottom: 40 }}>Design para todas as frentes.</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="r2" style={{ gap: 12 }}>
             {servicos.map((s, i) => (
               <div key={i} style={{ background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,210,160,0.12)', borderRadius: 16, padding: '24px 20px' }}>
                 <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#c47a4a', marginBottom: 8 }}>{s.tag}</p>

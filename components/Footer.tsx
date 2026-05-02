@@ -21,9 +21,9 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer style={{ background: '#000', borderTop: '0.5px solid #1d1d1f', padding: '64px 40px 32px' }}>
+    <footer className="footer-inner" style={{ background: '#000', borderTop: '0.5px solid #1d1d1f', padding: '64px 40px 32px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 48, marginBottom: 48 }}>
+        <div className="r3" style={{ gap: 40, marginBottom: 48 }}>
           <div>
             <Link href="/" style={{ textDecoration: 'none', display: 'inline-block', marginBottom: 14 }}>
               <Image src="/logo.webp" alt="Casa Criative Digital" width={110} height={30} style={{ objectFit: 'contain' }} />
