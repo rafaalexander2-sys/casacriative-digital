@@ -76,10 +76,7 @@ export default function SitesLandingPages() {
               { titulo: 'Landing Page – Odontologia', tag: 'Landing Page', href: 'https://www.behance.net/gallery/245921131/Landing-Page-Odontologia' },
               { titulo: 'Landing Page – Estética', tag: 'Landing Page', href: 'https://www.behance.net/gallery/245920979/Landing-Page-Esttica' },
             ].map((c, i) => (
-              <a key={i} href={c.href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,210,160,0.12)', borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s' }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,210,160,0.3)')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,210,160,0.12)')}
-              >
+              <a key={i} href={c.href} target="_blank" rel="noopener noreferrer" className="portfolio-card" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', borderRadius: 12, overflow: 'hidden' }}>
                 <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555' }}>{c.tag}</span>
                 </div>

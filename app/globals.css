@@ -324,3 +324,5 @@ h1, h2, h3, h4, h5, h6 {
 .btn-glass:hover::after {
   left: 120%;
 }
+.portfolio-card { border: 0.5px solid rgba(255,210,160,0.12); transition: border-color 0.2s; }
+.portfolio-card:hover { border-color: rgba(255,210,160,0.35); }
