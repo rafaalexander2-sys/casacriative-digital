@@ -117,10 +117,10 @@ export default function SocialMedia() {
           </p>
           <div className="r3" style={{ gap: 12 }}>
             {[
-              { titulo: 'UPLAY · São Braz', tag: 'Social Media', img: '/portfolio-uplay.png', href: 'https://www.behance.net/gallery/173646747/UPLAY-SAO-BRAZ' },
-              { titulo: 'Nutriblu · Design de Divulgação', tag: 'Social Media', img: '/portfolio-nutriblu.png', href: 'https://www.behance.net/gallery/163232439/NUTRIBLU-DESIGN-DIVULGACAO' },
-              { titulo: 'Social Media · Advogada Andria', tag: 'Social Media', img: '/portfolio-andria.png', href: 'https://www.behance.net/gallery/235860779/Social-Media-Advogada-Andria' },
-              { titulo: 'Apresentação · Maco\'s Porções', tag: 'Social Media', img: '/portfolio-porcoes.png', href: 'https://www.behance.net/gallery/191970475/Apresentacao-Macos-Porcoes' },
+              { titulo: 'UPLAY · São Braz', tag: 'Social Media', img: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/61efbc173646747.6493a09f30bd4.png', href: 'https://www.behance.net/gallery/173646747/UPLAY-SAO-BRAZ' },
+              { titulo: 'Nutriblu · Design de Divulgação', tag: 'Social Media', img: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/b181c4163232439.681e6866de54f.jpg', href: 'https://www.behance.net/gallery/163232439/NUTRIBLU-DESIGN-DIVULGACAO' },
+              { titulo: 'Social Media · Advogada Andria', tag: 'Social Media', img: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/fea4c4235860779.68dfc1f892a5a.png', href: 'https://www.behance.net/gallery/235860779/Social-Media-Advogada-Andria' },
+              { titulo: 'Apresentação · Maco\'s Porções', tag: 'Social Media', img: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/0ef78a191970475.65d48cba9bd53.png', href: 'https://www.behance.net/gallery/191970475/Apresentacao-Macos-Porcoes' },
             ].map((c, i) => (
               <a key={i} href={c.href} target="_blank" rel="noopener noreferrer" className="portfolio-card" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', borderRadius: 12, overflow: 'hidden' }}>
                 <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>

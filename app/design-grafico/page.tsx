@@ -133,8 +133,8 @@ export default function DesignGrafico() {
           </p>
           <div className="r3" style={{ gap: 12 }}>
             {[
-              { titulo: 'Branding & Social Media – 4A Studio Feminino', tag: 'Branding', img: '/portfolio-4a.png', href: 'https://www.behance.net/gallery/191063317/Branding-Social-Media-4A-Studio-Feminino' },
-              { titulo: 'Apresentação · Maco\'s Porções', tag: 'Design Gráfico', img: '/portfolio-porcoes.png', href: 'https://www.behance.net/gallery/191970475/Apresentacao-Macos-Porcoes' },
+              { titulo: 'Branding & Social Media – 4A Studio Feminino', tag: 'Branding', img: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/ae4e52191063317.65c4dd441efba.png', href: 'https://www.behance.net/gallery/191063317/Branding-Social-Media-4A-Studio-Feminino' },
+              { titulo: 'Apresentação · Maco\'s Porções', tag: 'Design Gráfico', img: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/0ef78a191970475.65d48cba9bd53.png', href: 'https://www.behance.net/gallery/191970475/Apresentacao-Macos-Porcoes' },
               { titulo: 'Assessoria de Marketing – DMove', tag: 'Design Gráfico', img: '/portfolio-dmove.png', href: 'https://www.behance.net/gallery/163229265/ASSESSORIA-DE-MARKETING-DMOVE' },
               { titulo: 'Página Revista', tag: 'Editorial', img: '/portfolio-revista.png', href: 'https://www.behance.net/gallery/156691977/Pagina-Revista' },
             ].map((c, i) => (
