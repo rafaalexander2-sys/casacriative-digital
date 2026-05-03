@@ -16,7 +16,6 @@ const servicos = [
 
 const links = [
   { label: 'Quem Somos', href: '/quem-somos' },
-  { label: 'Cases', href: '#cases' },
   { label: 'Blog', href: '/blog' },
 ]
 
