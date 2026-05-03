@@ -160,7 +160,7 @@ export default function SEO() {
           </p>
           <div className="r3" style={{ gap: 12 }}>
             {[
-              { titulo: 'Blog – Estratégia de Conteúdo SEO', tag: 'SEO', img: '/portfolio-blog-seo.png', href: 'https://www.behance.net/gallery/242480505/Blog' },
+              { titulo: 'Blog – Estratégia de Conteúdo SEO', tag: 'SEO', img: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/cb3278242480505.696e3f0b8bd95.png', href: 'https://www.behance.net/gallery/242480505/Blog' },
             ].map((c, i) => (
               <a key={i} href={c.href} target="_blank" rel="noopener noreferrer" className="portfolio-card" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', borderRadius: 12, overflow: 'hidden' }}>
                 <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
