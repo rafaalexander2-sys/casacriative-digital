@@ -15,8 +15,8 @@ export default function About() {
             Não fazemos volume. Fazemos impacto. Cada projeto recebe atenção total, do primeiro briefing à última entrega.
           </p>
         </div>
-        <div className="about-img" style={{ borderRadius: 10, overflow: 'hidden', border: '0.5px solid #3a3a3c', minHeight: 300 }}>
-          <img src="/quemsomos.jpeg" alt="Equipe Casa Criative Digital" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center bottom', display: 'block' }} />
+        <div className="about-img" style={{ borderRadius: 10, overflow: 'hidden', border: '0.5px solid #3a3a3c' }}>
+          <img src="/quemsomos.jpeg" alt="Equipe Casa Criative Digital" style={{ width: '100%', height: 'auto', display: 'block' }} />
         </div>
       </div>
     </section>
