@@ -14,28 +14,44 @@ interface CarouselPost {
   href: string
 }
 
-const cfgMap: Record<number, { scale: number; opacity: number; width: string; blur: string; zIndex: number }> = {
-  0:  { scale: 1.06, opacity: 1,    width: '260px', blur: 'none', zIndex: 5 },
-  1:  { scale: 0.95, opacity: 0.85, width: '200px', blur: 'none', zIndex: 4 },
-  2:  { scale: 0.84, opacity: 0.45, width: '160px', blur: '1.5px', zIndex: 3 },
+const cfgDesktop: Record<number, { scale: number; opacity: number; width: string; blur: string; zIndex: number }> = {
+  0: { scale: 1.06, opacity: 1,    width: '260px', blur: 'none',   zIndex: 5 },
+  1: { scale: 0.95, opacity: 0.85, width: '200px', blur: 'none',   zIndex: 4 },
+  2: { scale: 0.84, opacity: 0.45, width: '160px', blur: '1.5px',  zIndex: 3 },
+}
+
+const cfgMobile: Record<number, { scale: number; opacity: number; width: string; blur: string; zIndex: number }> = {
+  0: { scale: 1.04, opacity: 1,    width: '220px', blur: 'none',   zIndex: 5 },
+  1: { scale: 0.90, opacity: 0.6,  width: '140px', blur: '1px',    zIndex: 4 },
 }
 
 export default function BlogCarousel({ posts }: { posts: CarouselPost[] }) {
   const [active, setActive] = useState(2)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     const t = setInterval(() => setActive(a => (a + 1) % posts.length), 4000)
     return () => clearInterval(t)
   }, [posts.length])
 
-  const visible = [-2, -1, 0, 1, 2].map(offset => ({
+  const offsets = isMobile ? [-1, 0, 1] : [-2, -1, 0, 1, 2]
+  const cfgMap = isMobile ? cfgMobile : cfgDesktop
+
+  const visible = offsets.map(offset => ({
     post: posts[(active + offset + posts.length) % posts.length],
     offset,
     cfg: cfgMap[Math.abs(offset)],
   }))
 
   return (
-    <section style={{ background: '#000', paddingTop: 80 }}>
+    <section style={{ background: '#000', paddingTop: 80, overflow: 'hidden' }}>
       <style>{`
         .glass-card {
           position: relative;
@@ -92,7 +108,7 @@ export default function BlogCarousel({ posts }: { posts: CarouselPost[] }) {
         </h2>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', padding: '0 24px 8px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', padding: '0 0 8px' }}>
         {visible.map(({ post, offset, cfg }) => (
           <Link
             key={post.href + offset}
