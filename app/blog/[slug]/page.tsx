@@ -183,7 +183,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             // WordPress HTML content
             <div
               className="wp-content"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: wpPost!.content }}
             />
           ) : (
             // Local blocks
