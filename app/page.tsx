@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { getWPPosts } from '@/lib/wp-posts'
+import { posts as localPosts } from '@/lib/posts'
 
 export const metadata: Metadata = {
   title: 'Agência de Marketing Digital em Curitiba | Tráfego Pago, Sites e SEO',
@@ -22,7 +24,18 @@ import BlogCarousel from '@/components/BlogCarousel'
 import Contact from '@/components/Contact'
 import Footer from '@/components/Footer'
 
-export default function Home() {
+export default async function Home() {
+  const wpPosts = await getWPPosts()
+  const source = wpPosts.length > 0 ? wpPosts : localPosts
+  const carouselPosts = source.map(p => ({
+    tag: p.categoria,
+    title: p.titulo,
+    desc: p.desc,
+    date: p.data,
+    cover: p.cover ?? null,
+    href: 'href' in p ? p.href : `/blog/${p.slug}`,
+  }))
+
   return (
     <main>
       <Navbar />
@@ -31,7 +44,7 @@ export default function Home() {
       <Services />
       <About />
       <Reviews />
-      <BlogCarousel />
+      <BlogCarousel posts={carouselPosts} />
       <Contact />
       <Footer />
     </main>

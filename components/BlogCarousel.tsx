@@ -2,18 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { posts as allPosts } from '@/lib/posts'
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
 
-const posts = allPosts.map(p => ({
-  tag: p.categoria,
-  title: p.titulo,
-  desc: p.desc,
-  date: p.data,
-  cover: p.cover ?? null,
-  href: `/blog/${p.slug}`,
-}))
+interface CarouselPost {
+  tag: string
+  title: string
+  desc: string
+  date: string
+  cover: string | null
+  href: string
+}
 
 const cfgMap: Record<number, { scale: number; opacity: number; width: string; blur: string; zIndex: number }> = {
   0:  { scale: 1.06, opacity: 1,    width: '260px', blur: 'none', zIndex: 5 },
@@ -21,13 +20,13 @@ const cfgMap: Record<number, { scale: number; opacity: number; width: string; bl
   2:  { scale: 0.84, opacity: 0.45, width: '160px', blur: '1.5px', zIndex: 3 },
 }
 
-export default function BlogCarousel() {
+export default function BlogCarousel({ posts }: { posts: CarouselPost[] }) {
   const [active, setActive] = useState(2)
 
   useEffect(() => {
     const t = setInterval(() => setActive(a => (a + 1) % posts.length), 4000)
     return () => clearInterval(t)
-  }, [])
+  }, [posts.length])
 
   const visible = [-2, -1, 0, 1, 2].map(offset => ({
     post: posts[(active + offset + posts.length) % posts.length],
