@@ -5,8 +5,16 @@ import { posts as allPosts } from '@/lib/posts'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Blog | Casa Criative Digital',
-  description: 'Dicas sobre Criação de Sites Profissionais, Tráfego Pago, Marketing Digital, Design Gráfico e muito mais.',
+  title: 'Blog de Marketing Digital em Curitiba',
+  description: 'Artigos sobre Tráfego Pago, SEO, Criação de Sites, Design Gráfico e Social Media. Conteúdo prático para empreendedores que querem crescer no digital.',
+  keywords: ['blog marketing digital curitiba', 'tráfego pago dicas', 'seo para pequenas empresas', 'social media estratégia', 'design gráfico tendências'],
+  alternates: { canonical: 'https://casacriative.com.br/blog' },
+  openGraph: {
+    title: 'Blog | Casa Criative Digital — Marketing Digital em Curitiba',
+    description: 'Artigos práticos sobre Tráfego Pago, SEO, Sites e Social Media para empreendedores.',
+    url: 'https://casacriative.com.br/blog',
+    type: 'website',
+  },
 }
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'

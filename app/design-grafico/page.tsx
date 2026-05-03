@@ -5,8 +5,11 @@ import BrandReveal from '@/components/BrandReveal'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Design Gráfico e Identidade Visual | Casa Criative Digital',
-  description: 'Criação de identidade visual, logotipo, materiais gráficos e design para redes sociais. Marca que vende em Curitiba.',
+  title: 'Design Gráfico e Identidade Visual em Curitiba',
+  description: 'Criação de identidade visual, logotipo, materiais gráficos e design para redes sociais em Curitiba. Design estratégico que comunica valor, gera reconhecimento e faz sua marca vender mais.',
+  keywords: ['design gráfico curitiba', 'identidade visual curitiba', 'criação de logo curitiba', 'branding curitiba', 'designer gráfico curitiba'],
+  alternates: { canonical: 'https://casacriative.com.br/design-grafico' },
+  openGraph: { title: 'Design Gráfico e Identidade Visual em Curitiba | Casa Criative', description: 'Logotipo, identidade visual e materiais gráficos em Curitiba. Design que vende.', url: 'https://casacriative.com.br/design-grafico', type: 'website' },
 }
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
@@ -25,6 +28,44 @@ const etapas = [
   { num: '04', titulo: 'Refinamento', desc: 'Ajustamos com base no feedback até o resultado ser exatamente o que você precisa.' },
   { num: '05', titulo: 'Entrega dos arquivos', desc: 'Todos os formatos: PNG, SVG, PDF, AI e pacote completo de marca.' },
 ]
+
+const faq = [
+  { q: 'O que está incluso na criação de identidade visual completa?', a: 'A identidade visual completa inclui logotipo (com versões positivo, negativo, colorido e monocromático), paleta de cores, tipografia selecionada, ícones de suporte, manual de marca e aplicações básicas nos principais materiais.' },
+  { q: 'Quantas propostas de logo são apresentadas?', a: 'Apresentamos 2 a 3 propostas conceituais diferentes, cada uma com justificativa criativa e de posicionamento de marca. Após a escolha, realizamos rodadas de ajustes até a aprovação final.' },
+  { q: 'Em quanto tempo fica pronta a identidade visual?', a: 'O prazo médio é de 7 a 14 dias úteis a partir da aprovação do briefing, dependendo da complexidade do projeto e das rodadas de ajuste. Projetos urgentes podem ser negociados.' },
+  { q: 'Em que formatos são entregues os arquivos finais?', a: 'Entregamos todos os formatos necessários: PNG com fundo transparente, SVG vetorial escalável, PDF, AI (Adobe Illustrator) e JPG. O pacote vem organizado por tipo de uso para facilitar a aplicação.' },
+  { q: 'Posso solicitar apenas o logotipo sem a identidade visual completa?', a: 'Sim. Trabalhamos com projetos modulares — desde a criação apenas do logotipo até a identidade visual completa com manual de marca. Entre em contato para um orçamento personalizado.' },
+]
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Service',
+      name: 'Design Gráfico e Identidade Visual em Curitiba',
+      description: 'Criação de logotipo, identidade visual completa, materiais gráficos e design para redes sociais em Curitiba.',
+      provider: { '@id': 'https://casacriative.com.br/#organization' },
+      areaServed: { '@type': 'Country', name: 'Brasil' },
+      url: 'https://casacriative.com.br/design-grafico',
+      serviceType: 'Design Gráfico',
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: faq.map(f => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://casacriative.com.br' },
+        { '@type': 'ListItem', position: 2, name: 'Design Gráfico', item: 'https://casacriative.com.br/design-grafico' },
+      ],
+    },
+  ],
+}
 
 export default function DesignGrafico() {
   return (
@@ -114,6 +155,22 @@ export default function DesignGrafico() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px' }}>
+        <div style={{ maxWidth: 780, margin: '0 auto' }}>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555', marginBottom: 12 }}>FAQ</p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.5px', marginBottom: 32 }}>Perguntas frequentes sobre design gráfico</h2>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {faq.map((item, i) => (
+              <div key={i} style={{ padding: '22px 0', borderBottom: i < faq.length - 1 ? '0.5px solid #1d1d1f' : 'none' }}>
+                <h3 style={{ fontSize: 15, fontWeight: 600, color: '#f5f5f7', marginBottom: 8 }}>{item.q}</h3>
+                <p style={{ fontSize: 14, fontWeight: 300, color: '#86868b', lineHeight: 1.7, margin: 0 }}>{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: 26, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.8px', marginBottom: 12 }}>Sua marca profissional começa aqui.</h2>
@@ -123,6 +180,7 @@ export default function DesignGrafico() {
         </a>
       </section>
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Footer />
     </main>
   )

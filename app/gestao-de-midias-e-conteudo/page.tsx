@@ -5,26 +5,58 @@ import SocialFeed from '@/components/SocialFeed'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Gestão de Mídias Sociais e Conteúdo | Casa Criative Digital',
-  description: 'Agência de Social Media especializada em Curitiba. Estratégias inteligentes, design de qualidade e conteúdos envolventes para fortalecer sua presença online.',
+  title: 'Gestão de Redes Sociais em Curitiba | Social Media',
+  description: 'Agência de Social Media em Curitiba: gestão profissional de Instagram, Facebook e TikTok. Conteúdo estratégico, design de qualidade e crescimento real de seguidores e vendas.',
+  keywords: ['social media curitiba', 'gestão de redes sociais curitiba', 'agência de instagram curitiba', 'criação de conteúdo curitiba', 'marketing de conteúdo curitiba'],
+  alternates: { canonical: 'https://casacriative.com.br/gestao-de-midias-e-conteudo' },
+  openGraph: { title: 'Gestão de Redes Sociais em Curitiba | Casa Criative', description: 'Instagram, Facebook e TikTok gerenciados por especialistas em Curitiba. Conteúdo que engaja e vende.', url: 'https://casacriative.com.br/gestao-de-midias-e-conteudo', type: 'website' },
 }
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
 
 const servicos = [
-  {
-    titulo: 'Planejamento Estratégico',
-    desc: 'Um calendário robusto de conteúdos alinhado aos seus objetivos de negócio.',
-  },
-  {
-    titulo: 'Criação de Conteúdo de Alto Impacto',
-    desc: 'Postagens criativas, vídeos, carrosséis e reels que captam a essência da sua marca.',
-  },
-  {
-    titulo: 'Campanhas de Engajamento',
-    desc: 'Estratégias para aumentar curtidas, comentários e compartilhamentos, conectando sua marca ao público certo.',
-  },
+  { titulo: 'Planejamento Estratégico', desc: 'Um calendário robusto de conteúdos alinhado aos seus objetivos de negócio.' },
+  { titulo: 'Criação de Conteúdo de Alto Impacto', desc: 'Postagens criativas, vídeos, carrosséis e reels que captam a essência da sua marca.' },
+  { titulo: 'Campanhas de Engajamento', desc: 'Estratégias para aumentar curtidas, comentários e compartilhamentos, conectando sua marca ao público certo.' },
 ]
+
+const faq = [
+  { q: 'O que está incluso na gestão de redes sociais?', a: 'A gestão inclui planejamento estratégico mensal, criação de conteúdo (artes, textos e legendas), agendamento das publicações, monitoramento de comentários e mensagens, e relatório mensal de desempenho.' },
+  { q: 'Qual a frequência de postagens incluída no plano?', a: 'A frequência varia conforme o plano contratado. Trabalhamos com pacotes de 3 a 5 posts semanais por plataforma, sempre alinhados ao calendário editorial estratégico.' },
+  { q: 'A agência cria o conteúdo ou apenas agenda posts que eu envio?', a: 'Criamos todo o conteúdo. Nossa equipe de designers e copywriters cria artes, textos e legendas otimizados para cada plataforma, sem que o cliente precise se preocupar com isso.' },
+  { q: 'A Casa Criative gerencia TikTok além de Instagram e Facebook?', a: 'Sim. Gerenciamos Instagram, Facebook, TikTok e LinkedIn, com estratégias personalizadas para cada plataforma conforme o perfil do negócio e o público-alvo.' },
+  { q: 'Com que frequência recebo relatórios de desempenho?', a: 'Enviamos relatórios mensais detalhados com as principais métricas: alcance, engajamento, crescimento de seguidores e resultados das campanhas. Reuniões de acompanhamento são agendadas conforme o plano.' },
+]
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Service',
+      name: 'Gestão de Redes Sociais em Curitiba',
+      description: 'Gestão profissional de Instagram, Facebook, TikTok e LinkedIn em Curitiba. Planejamento estratégico, criação de conteúdo e relatórios de desempenho.',
+      provider: { '@id': 'https://casacriative.com.br/#organization' },
+      areaServed: { '@type': 'Country', name: 'Brasil' },
+      url: 'https://casacriative.com.br/gestao-de-midias-e-conteudo',
+      serviceType: 'Social Media',
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: faq.map(f => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://casacriative.com.br' },
+        { '@type': 'ListItem', position: 2, name: 'Gestão de Redes Sociais', item: 'https://casacriative.com.br/gestao-de-midias-e-conteudo' },
+      ],
+    },
+  ],
+}
 
 export default function SocialMedia() {
   return (
@@ -104,6 +136,22 @@ export default function SocialMedia() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px' }}>
+        <div style={{ maxWidth: 780, margin: '0 auto' }}>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555', marginBottom: 12 }}>FAQ</p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.5px', marginBottom: 32 }}>Perguntas frequentes sobre gestão de redes sociais</h2>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {faq.map((item, i) => (
+              <div key={i} style={{ padding: '22px 0', borderBottom: i < faq.length - 1 ? '0.5px solid #1d1d1f' : 'none' }}>
+                <h3 style={{ fontSize: 15, fontWeight: 600, color: '#f5f5f7', marginBottom: 8 }}>{item.q}</h3>
+                <p style={{ fontSize: 14, fontWeight: 300, color: '#86868b', lineHeight: 1.7, margin: 0 }}>{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: 26, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.8px', marginBottom: 12 }}>
@@ -117,6 +165,7 @@ export default function SocialMedia() {
         </a>
       </section>
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Footer />
     </main>
   )

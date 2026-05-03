@@ -5,11 +5,56 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Quem Somos | Casa Criative Digital',
-  description: 'Agência digital de Curitiba especializada em Tráfego Pago, Sites e SEO. Desde 2021 conectamos marcas ao público certo com estratégia, design e dados.',
+  title: 'Quem Somos | Agência de Marketing Digital em Curitiba',
+  description: 'Conheça a Casa Criative Digital, agência de marketing digital em Curitiba desde 2021. +50 clientes satisfeitos, +R$700k em anúncios gerenciados. Uma equipe apaixonada por resultado.',
+  alternates: { canonical: 'https://casacriative.com.br/quem-somos' },
+  openGraph: { title: 'Quem Somos | Casa Criative Digital Curitiba', description: 'Desde 2021 conectamos marcas ao público certo em Curitiba com tráfego pago, sites e SEO.', url: 'https://casacriative.com.br/quem-somos' },
 }
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': ['MarketingAgency', 'LocalBusiness'],
+  '@id': 'https://casacriative.com.br/#organization',
+  name: 'Casa Criative Digital',
+  description: 'Agência de marketing digital em Curitiba especializada em Tráfego Pago, Criação de Sites, SEO, Social Media e Design Gráfico. Fundada em 2021 por Rafael Alexander e Aline Ribeiro.',
+  url: 'https://casacriative.com.br',
+  logo: 'https://casacriative.com.br/logo.webp',
+  image: 'https://casacriative.com.br/quemsomos2.jpeg',
+  telephone: '+55-41-99817-0428',
+  email: 'contato@casacriative.com.br',
+  foundingDate: '2021',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Curitiba',
+    addressRegion: 'Paraná',
+    addressCountry: 'BR',
+  },
+  areaServed: { '@type': 'Country', name: 'Brasil' },
+  numberOfEmployees: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 10 },
+  founders: [
+    { '@type': 'Person', name: 'Rafael Alexander', jobTitle: 'Fundador e Especialista em Tráfego Pago' },
+    { '@type': 'Person', name: 'Aline Ribeiro', jobTitle: 'Co-fundadora e Especialista em Design e Social Media' },
+  ],
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: 'Serviços de Marketing Digital',
+    itemListElement: [
+      { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Gestão de Tráfego Pago', url: 'https://casacriative.com.br/gestao-de-anuncios-pagos' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Criação de Sites e Landing Pages', url: 'https://casacriative.com.br/sites-e-landing-pages' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'SEO e Google Meu Negócio', url: 'https://casacriative.com.br/seo-e-otimizacao-local' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Gestão de Redes Sociais', url: 'https://casacriative.com.br/gestao-de-midias-e-conteudo' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Design Gráfico e Identidade Visual', url: 'https://casacriative.com.br/design-grafico' } },
+    ],
+  },
+  sameAs: [
+    'https://www.instagram.com/casacriativedigital/',
+    'https://www.facebook.com/casacriativedigital',
+    'https://www.linkedin.com/company/casa-criative-digital/',
+    'https://www.behance.net/casacriative',
+  ],
+}
 
 const tags = ['Landing Pages', 'Tráfego Pago', 'Branding', 'Social Media', 'SEO', 'Design Gráfico']
 
@@ -130,6 +175,7 @@ export default function QuemSomos() {
         </div>
       </section>
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Footer />
     </main>
   )

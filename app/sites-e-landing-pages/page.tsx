@@ -5,8 +5,11 @@ import NotebookOpen from '@/components/NotebookOpen'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Sites e Landing Pages Sob Medida | Casa Criative Digital',
-  description: 'Sites profissionais e landing pages de alta conversão em Curitiba. Hospedagem inclusa, domínio grátis e entrega em 48h.',
+  title: 'Criação de Sites e Landing Pages em Curitiba',
+  description: 'Criação de sites profissionais e landing pages de alta conversão em Curitiba. Design exclusivo, SEO incluído, hospedagem grátis por 1 ano, e-mail profissional e entrega em 48h.',
+  keywords: ['criação de sites curitiba', 'landing page curitiba', 'desenvolvimento de sites curitiba', 'site profissional curitiba', 'site para empresa curitiba'],
+  alternates: { canonical: 'https://casacriative.com.br/sites-e-landing-pages' },
+  openGraph: { title: 'Criação de Sites e Landing Pages em Curitiba | Casa Criative', description: 'Sites profissionais e landing pages de alta conversão. Hospedagem grátis e entrega em 48h.', url: 'https://casacriative.com.br/sites-e-landing-pages', type: 'website' },
 }
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
@@ -29,6 +32,49 @@ const beneficios = [
   'Mobile First — Otimizado para dispositivos móveis',
   'E-mail profissional',
 ]
+
+const faq = [
+  { q: 'Quanto custa criar um site profissional em Curitiba?', a: 'Sites profissionais na Casa Criative Digital são entregues com hospedagem e domínio gratuitos por 1 ano. O valor varia conforme o número de páginas e funcionalidades. Entre em contato pelo WhatsApp (41) 99817-0428 para um orçamento sem compromisso.' },
+  { q: 'Em quanto tempo meu site fica pronto?', a: 'Entregamos landing pages em até 48h. Sites institucionais completos são entregues conforme a complexidade do projeto, sempre com prazo acordado no início do contrato.' },
+  { q: 'O site é otimizado para o Google (SEO)?', a: 'Sim. Todos os sites desenvolvidos pela Casa Criative já saem com SEO técnico configurado: URLs amigáveis, meta tags otimizadas, imagens comprimidas, estrutura de headings, sitemap e integração com Google Search Console.' },
+  { q: 'O site funciona bem no celular?', a: 'Sim. Todos os nossos sites são desenvolvidos com abordagem Mobile First — projetados primeiro para smartphones e depois adaptados para desktop, garantindo a melhor experiência em qualquer dispositivo.' },
+  { q: 'Preciso pagar hospedagem após o primeiro ano?', a: 'No primeiro ano a hospedagem e o domínio são gratuitos. A partir do segundo ano, a renovação é por conta do cliente junto à empresa de hospedagem, com todo o suporte necessário da nossa equipe.' },
+]
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Service',
+      name: 'Criação de Sites e Landing Pages em Curitiba',
+      description: 'Desenvolvimento de sites profissionais e landing pages de alta conversão com SEO, hospedagem e domínio inclusos por 1 ano.',
+      provider: { '@id': 'https://casacriative.com.br/#organization' },
+      areaServed: { '@type': 'Country', name: 'Brasil' },
+      url: 'https://casacriative.com.br/sites-e-landing-pages',
+      serviceType: 'Criação de Sites',
+      offers: {
+        '@type': 'Offer',
+        description: 'Site profissional com hospedagem e domínio grátis por 1 ano + e-mail profissional',
+        availability: 'https://schema.org/InStock',
+      },
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: faq.map(f => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://casacriative.com.br' },
+        { '@type': 'ListItem', position: 2, name: 'Sites e Landing Pages', item: 'https://casacriative.com.br/sites-e-landing-pages' },
+      ],
+    },
+  ],
+}
 
 export default function SitesLandingPages() {
   return (
@@ -62,7 +108,7 @@ export default function SitesLandingPages() {
         </div>
       </section>
 
-      {/* Sites que transformaram */}
+      {/* Portfólio */}
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px' }}>
         <div style={{ maxWidth: 780, margin: '0 auto' }}>
           <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555', marginBottom: 12 }}>Portfólio</p>
@@ -109,6 +155,22 @@ export default function SitesLandingPages() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px' }}>
+        <div style={{ maxWidth: 780, margin: '0 auto' }}>
+          <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555', marginBottom: 12 }}>FAQ</p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.5px', marginBottom: 32 }}>Perguntas frequentes sobre criação de sites</h2>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {faq.map((item, i) => (
+              <div key={i} style={{ padding: '22px 0', borderBottom: i < faq.length - 1 ? '0.5px solid #1d1d1f' : 'none' }}>
+                <h3 style={{ fontSize: 15, fontWeight: 600, color: '#f5f5f7', marginBottom: 8 }}>{item.q}</h3>
+                <p style={{ fontSize: 14, fontWeight: 300, color: '#86868b', lineHeight: 1.7, margin: 0 }}>{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '80px 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: 26, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.8px', marginBottom: 14 }}>
@@ -122,6 +184,7 @@ export default function SitesLandingPages() {
         </a>
       </section>
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Footer />
     </main>
   )

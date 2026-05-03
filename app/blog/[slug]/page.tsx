@@ -16,9 +16,27 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const post = getPost(slug)
   if (!post) return {}
+  const url = `https://casacriative.com.br/blog/${slug}`
   return {
-    title: `${post.titulo} | Blog Casa Criative Digital`,
+    title: post.titulo,
     description: post.desc,
+    authors: [{ name: post.autor }],
+    alternates: { canonical: url },
+    openGraph: {
+      title: post.titulo,
+      description: post.desc,
+      url,
+      type: 'article',
+      publishedTime: post.data,
+      authors: [post.autor],
+      images: post.cover ? [{ url: post.cover }] : [{ url: '/logo.webp' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.titulo,
+      description: post.desc,
+      images: post.cover ? [post.cover] : ['/logo.webp'],
+    },
   }
 }
 
@@ -31,8 +49,49 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const wordCount = post.blocks.filter(b => b.type === 'p').reduce((acc, b) => acc + (b as any).text.split(' ').length, 0)
   const readMin = Math.ceil(wordCount / 200)
 
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    '@id': `https://casacriative.com.br/blog/${post.slug}`,
+    headline: post.titulo,
+    description: post.desc,
+    datePublished: post.data,
+    dateModified: post.data,
+    inLanguage: 'pt-BR',
+    url: `https://casacriative.com.br/blog/${post.slug}`,
+    image: post.cover ? `https://casacriative.com.br${post.cover}` : 'https://casacriative.com.br/logo.webp',
+    author: {
+      '@type': 'Person',
+      name: post.autor,
+      url: 'https://casacriative.com.br/quem-somos',
+      worksFor: { '@type': 'Organization', name: 'Casa Criative Digital', url: 'https://casacriative.com.br' },
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Casa Criative Digital',
+      url: 'https://casacriative.com.br',
+      logo: { '@type': 'ImageObject', url: 'https://casacriative.com.br/logo.webp' },
+    },
+    isPartOf: { '@type': 'Blog', name: 'Blog Casa Criative Digital', url: 'https://casacriative.com.br/blog' },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `https://casacriative.com.br/blog/${post.slug}` },
+    articleSection: post.categoria,
+    wordCount,
+  }
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://casacriative.com.br' },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://casacriative.com.br/blog' },
+      { '@type': 'ListItem', position: 3, name: post.titulo, item: `https://casacriative.com.br/blog/${post.slug}` },
+    ],
+  }
+
   return (
     <main style={{ background: '#000', minHeight: '100vh' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <Navbar />
 
       {/* Hero do artigo */}
