@@ -135,7 +135,7 @@ export default function DesignGrafico() {
             {[
               { titulo: 'Branding & Social Media – 4A Studio Feminino', tag: 'Branding', img: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/ae4e52191063317.65c4dd441efba.png', href: 'https://www.behance.net/gallery/191063317/Branding-Social-Media-4A-Studio-Feminino' },
               { titulo: 'Apresentação · Maco\'s Porções', tag: 'Design Gráfico', img: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/0ef78a191970475.65d48cba9bd53.png', href: 'https://www.behance.net/gallery/191970475/Apresentacao-Macos-Porcoes' },
-              { titulo: 'Assessoria de Marketing – DMove', tag: 'Design Gráfico', img: '/portfolio-dmove.png', href: 'https://www.behance.net/gallery/163229265/ASSESSORIA-DE-MARKETING-DMOVE' },
+              { titulo: 'Assessoria de Marketing – DMove', tag: 'Design Gráfico', img: 'https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/a4c389163229265.63e27fada59e4.png', href: 'https://www.behance.net/gallery/163229265/ASSESSORIA-DE-MARKETING-DMOVE' },
               { titulo: 'Página Revista', tag: 'Editorial', img: '/portfolio-revista.png', href: 'https://www.behance.net/gallery/156691977/Pagina-Revista' },
             ].map((c, i) => (
               <a key={i} href={c.href} target="_blank" rel="noopener noreferrer" className="portfolio-card" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', borderRadius: 12, overflow: 'hidden' }}>
