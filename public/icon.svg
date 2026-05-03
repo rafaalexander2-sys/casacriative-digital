@@ -9,29 +9,10 @@
       <stop offset="0%" stop-color="#f0d5b0"/>
       <stop offset="100%" stop-color="#c47a4a"/>
     </linearGradient>
-    <clipPath id="inner">
-      <circle cx="50" cy="50" r="44"/>
-    </clipPath>
   </defs>
-
-  <!-- Outer glow ring -->
   <circle cx="50" cy="50" r="50" fill="url(#border)" opacity="0.25"/>
-  <!-- Bronze border ring -->
   <circle cx="50" cy="50" r="48" fill="url(#border)"/>
-  <!-- Dark background -->
   <circle cx="50" cy="50" r="44" fill="#080808"/>
-  <!-- Subtle inner glow -->
   <circle cx="50" cy="50" r="44" fill="url(#border)" opacity="0.06"/>
-
-  <!-- Letter C -->
-  <text
-    x="52"
-    y="67"
-    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
-    font-size="52"
-    font-weight="700"
-    fill="url(#letter)"
-    text-anchor="middle"
-    letter-spacing="-2"
-  >C</text>
+  <text x="52" y="67" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="52" font-weight="700" fill="url(#letter)" text-anchor="middle" letter-spacing="-2">C</text>
 </svg>

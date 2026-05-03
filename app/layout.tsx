@@ -26,8 +26,9 @@ export const metadata: Metadata = {
     'gestão de anúncios curitiba',
   ],
   icons: {
-    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }, { url: '/favicon.ico' }],
-    apple: '/favicon.ico',
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }, { url: '/favicon.ico', sizes: 'any' }],
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
   },
   authors: [{ name: 'Casa Criative Digital', url: BASE }],
   creator: 'Casa Criative Digital',
