@@ -25,7 +25,7 @@ export default {
         },
         body: JSON.stringify({
           from: 'Site Casa Criative <onboarding@resend.dev>',
-          to: ['rafaalexander2@gmail.com'],
+          to: ['rafaalexander2@gmail.com', 'santosaline2802@gmail.com'],
           reply_to: email,
           subject: `Novo contato: ${nome} — ${servico}`,
           html: `
@@ -47,7 +47,7 @@ export default {
       if (!res.ok) {
         const err = await res.text()
         console.error('Resend error:', err)
-        return new Response(JSON.stringify({ ok: false }), {
+        return new Response(JSON.stringify({ ok: false, detail: err }), {
           status: 500,
           headers: { ...CORS, 'Content-Type': 'application/json' },
         })
