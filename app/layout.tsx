@@ -25,6 +25,10 @@ export const metadata: Metadata = {
     'landing page curitiba',
     'gestão de anúncios curitiba',
   ],
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }, { url: '/favicon.ico' }],
+    apple: '/favicon.ico',
+  },
   authors: [{ name: 'Casa Criative Digital', url: BASE }],
   creator: 'Casa Criative Digital',
   publisher: 'Casa Criative Digital',
