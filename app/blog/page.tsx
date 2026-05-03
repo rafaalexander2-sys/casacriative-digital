@@ -1,7 +1,8 @@
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
-import { posts as allPosts } from '@/lib/posts'
+import { posts as localPosts } from '@/lib/posts'
+import { getWPPosts } from '@/lib/wp-posts'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -18,19 +19,30 @@ export const metadata: Metadata = {
 }
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
-
-const posts = allPosts.map(p => ({
-  categoria: p.categoria,
-  titulo: p.titulo,
-  desc: p.desc,
-  href: `/blog/${p.slug}`,
-  data: p.data,
-  cover: p.cover ?? null,
-}))
-
 const categorias = ['Todos', 'Design Gráfico', 'Notícias', 'Social Media', 'Tráfego Pago']
 
-export default function Blog() {
+export default async function Blog() {
+  // Tenta WP primeiro; se vazio usa posts locais
+  const wpPosts = await getWPPosts()
+
+  const posts = wpPosts.length > 0
+    ? wpPosts.map(p => ({
+        categoria: p.categoria,
+        titulo: p.titulo,
+        desc: p.desc,
+        href: `/blog/${p.slug}`,
+        data: p.data,
+        cover: p.cover,
+      }))
+    : localPosts.map(p => ({
+        categoria: p.categoria,
+        titulo: p.titulo,
+        desc: p.desc,
+        href: `/blog/${p.slug}`,
+        data: p.data,
+        cover: p.cover ?? null,
+      }))
+
   return (
     <main style={{ background: '#000', minHeight: '100vh' }}>
       <Navbar />
@@ -68,7 +80,6 @@ export default function Blog() {
               href={p.href}
               style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(160deg,rgba(255,255,255,0.05),rgba(120,70,40,0.06),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,210,160,0.1)', borderRadius: 16, overflow: 'hidden', transition: 'border-color 0.2s, transform 0.2s' }}
             >
-              {/* Imagem / placeholder */}
               <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
                 {p.cover
                   ? <img src={p.cover} alt={p.titulo} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -78,8 +89,6 @@ export default function Blog() {
                     </>
                 }
               </div>
-
-              {/* Conteúdo */}
               <div style={{ padding: '20px 20px 22px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                 <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c47a4a', background: 'rgba(196,122,74,0.1)', border: '0.5px solid rgba(196,122,74,0.2)', borderRadius: 10, padding: '3px 10px', display: 'inline-block', marginBottom: 12, alignSelf: 'flex-start' }}>
                   {p.categoria}
