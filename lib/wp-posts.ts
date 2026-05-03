@@ -10,7 +10,7 @@ export interface WPPost {
   content: string
 }
 
-const WP_API = process.env.NEXT_PUBLIC_WP_API ?? 'https://cms.casacriative.com.br/wp-json/wp/v2'
+const WP_API = process.env.NEXT_PUBLIC_WP_API ?? 'https://casacriative.com.br/wp-json/wp/v2'
 
 function formatDate(dateString: string): string {
   const d = new Date(dateString)
