@@ -121,6 +121,8 @@ export default function SitesLandingPages() {
               { titulo: 'Site – Sistema de Segurança', tag: 'Site Institucional', img: '/portfolio-seguranca.png', href: 'https://www.behance.net/gallery/245921369/Site-Sistema-de-Seguranca' },
               { titulo: 'Landing Page – Odontologia', tag: 'Landing Page', img: '/portfolio-odontologia.png', href: 'https://www.behance.net/gallery/245921131/Landing-Page-Odontologia' },
               { titulo: 'Landing Page – Estética', tag: 'Landing Page', img: '/portfolio-estetica.png', href: 'https://www.behance.net/gallery/245920979/Landing-Page-Esttica' },
+              { titulo: 'Landing Page – Odontológico', tag: 'Landing Page', img: '/portfolio-odonto1.png', href: 'https://www.behance.net/gallery/242480249/Landing-Page-Odontologico' },
+              { titulo: 'Landing Page – Odontologia 2', tag: 'Landing Page', img: '/portfolio-odonto2.png', href: 'https://www.behance.net/gallery/244029633/LandingPage-Odontologia' },
             ].map((c, i) => (
               <a key={i} href={c.href} target="_blank" rel="noopener noreferrer" className="portfolio-card" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', borderRadius: 12, overflow: 'hidden' }}>
                 <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden', position: 'relative' }}>

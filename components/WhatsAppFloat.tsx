@@ -97,7 +97,7 @@ export default function WhatsAppFloat() {
 
       <a
         className="wa-btn"
-        href="https://wa.me/55419898687489"
+        href="https://wa.me/5541998687489"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Fale conosco no WhatsApp"

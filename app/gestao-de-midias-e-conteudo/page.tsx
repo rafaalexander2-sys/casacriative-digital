@@ -117,13 +117,14 @@ export default function SocialMedia() {
           </p>
           <div className="r3" style={{ gap: 12 }}>
             {[
-              { titulo: 'UPLAY · São Braz', tag: 'Social Media', href: 'https://www.behance.net/gallery/173646747/UPLAY-SAO-BRAZ' },
-              { titulo: 'Nutriblu · Design de Divulgação', tag: 'Social Media', href: 'https://www.behance.net/gallery/163232439/NUTRIBLU-DESIGN-DIVULGACAO' },
-              { titulo: 'Social Media · Advogada Andria', tag: 'Social Media', href: 'https://www.behance.net/gallery/235860779/Social-Media-Advogada-Andria' },
+              { titulo: 'UPLAY · São Braz', tag: 'Social Media', img: '/portfolio-uplay.png', href: 'https://www.behance.net/gallery/173646747/UPLAY-SAO-BRAZ' },
+              { titulo: 'Nutriblu · Design de Divulgação', tag: 'Social Media', img: '/portfolio-nutriblu.png', href: 'https://www.behance.net/gallery/163232439/NUTRIBLU-DESIGN-DIVULGACAO' },
+              { titulo: 'Social Media · Advogada Andria', tag: 'Social Media', img: '/portfolio-andria.png', href: 'https://www.behance.net/gallery/235860779/Social-Media-Advogada-Andria' },
+              { titulo: 'Apresentação · Maco\'s Porções', tag: 'Social Media', img: '/portfolio-porcoes.png', href: 'https://www.behance.net/gallery/191970475/Apresentacao-Macos-Porcoes' },
             ].map((c, i) => (
               <a key={i} href={c.href} target="_blank" rel="noopener noreferrer" className="portfolio-card" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(140deg,rgba(255,255,255,0.05),rgba(120,70,40,0.08),rgba(0,0,0,0.5))', borderRadius: 12, overflow: 'hidden' }}>
-                <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555' }}>{c.tag}</span>
+                <div style={{ width: '100%', aspectRatio: '16/9', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                  {c.img ? <img src={c.img} alt={c.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }} /> : <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#555' }}>{c.tag}</span>}
                 </div>
                 <div style={{ padding: '14px 16px 16px' }}>
                   <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c47a4a', marginBottom: 6 }}>{c.tag}</p>
