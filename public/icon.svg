@@ -1,18 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <linearGradient id="border" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#e8c49a"/>
-      <stop offset="45%" stop-color="#c47a4a"/>
-      <stop offset="100%" stop-color="#8b4513"/>
-    </linearGradient>
-    <linearGradient id="letter" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f0d5b0"/>
-      <stop offset="100%" stop-color="#c47a4a"/>
-    </linearGradient>
+    <radialGradient id="bg" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="70%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#c47a4a" stop-opacity="0.5"/>
+    </radialGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="#c47a4a" flood-opacity="0.4"/>
+    </filter>
   </defs>
-  <circle cx="50" cy="50" r="50" fill="url(#border)" opacity="0.25"/>
-  <circle cx="50" cy="50" r="48" fill="url(#border)"/>
-  <circle cx="50" cy="50" r="44" fill="#080808"/>
-  <circle cx="50" cy="50" r="44" fill="url(#border)" opacity="0.06"/>
-  <text x="52" y="67" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="52" font-weight="700" fill="url(#letter)" text-anchor="middle" letter-spacing="-2">C</text>
+
+  <!-- Outer glow ring (subtle, like Apple) -->
+  <circle cx="50" cy="50" r="49" fill="none" stroke="#c47a4a" stroke-width="0.8" opacity="0.5"/>
+  <!-- Dark background -->
+  <circle cx="50" cy="50" r="47" fill="url(#bg)"/>
+  <!-- Inner subtle rim -->
+  <circle cx="50" cy="50" r="47" fill="none" stroke="rgba(255,210,160,0.15)" stroke-width="1"/>
+
+  <!-- Letter C -->
+  <text
+    x="53"
+    y="68"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="56"
+    font-weight="300"
+    fill="#ffffff"
+    text-anchor="middle"
+    filter="url(#shadow)"
+  >C</text>
 </svg>
