@@ -62,7 +62,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   const related = !isWP ? getRelated((localPost as any).relacionados) : []
   const wordCount = isWP
-    ? Math.round(post.content.replace(/<[^>]*>/g, '').split(' ').length)
+    ? Math.round(wpPost!.content.replace(/<[^>]*>/g, '').split(' ').length)
     : (localPost as any).blocks.filter((b: any) => b.type === 'p').reduce((acc: number, b: any) => acc + b.text.split(' ').length, 0)
   const readMin = Math.ceil(wordCount / 200)
 
