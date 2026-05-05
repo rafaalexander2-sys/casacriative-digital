@@ -1,27 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bronze-dark:  #3d1f0d;
+  --bronze:       #8b4513;
+  --bronze-mid:   #c47a4a;
+  --bronze-light: #e8c49a;
+  --bronze-pearl: #f0d5b0;
+  --cc-black:     #000000;
+  --cc-dark:      #1d1d1f;
+  --cc-gray1:     #3a3a3c;
+  --cc-gray2:     #86868b;
+  --cc-gray3:     #d2d2d7;
+  --cc-gray4:     #f5f5f7;
+  --cc-white:     #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+html { scroll-behavior: smooth; }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'DM Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: #fff;
+  color: #1d1d1f;
+  -webkit-font-smoothing: antialiased;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+h1, h2, h3, h4 {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
+
+.text-bronze-pearl {
+  background: linear-gradient(105deg, #3d1f0d 0%, #8b4513 15%, #c47a4a 30%, #f0d5b0 45%, #fff8f0 50%, #f0d5b0 55%, #c47a4a 70%, #8b4513 85%, #3d1f0d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-bronze-pearl {
+  background: linear-gradient(135deg, #3d1f0d 0%, #8b4513 20%, #c47a4a 40%, #e8c49a 60%, #c47a4a 80%, #8b4513 100%);
+}
+
+.bronze-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c47a4a, #f0d5b0, #c47a4a, transparent);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #3a3a3c; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #c47a4a; }
