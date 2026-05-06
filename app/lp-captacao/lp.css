@@ -268,8 +268,8 @@
 
 /* nav + hero mobile */
 @media (max-width: 600px) {
-  /* centro o logo */
-  .lp-wrap .nav-wrap .nav { justify-content: center; padding: 10px 16px; }
+  /* centro o logo e tiro o fundo do pill */
+  .lp-wrap .nav-wrap .nav { justify-content: center; padding: 10px 16px; background: transparent; border-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
   .lp-wrap .nav-wrap .nav-cta { display: none; }
 
   /* breathing room na hero */
