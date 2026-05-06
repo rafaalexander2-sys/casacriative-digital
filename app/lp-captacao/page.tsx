@@ -162,7 +162,7 @@ export default function LandingPage() {
       <div className="nav-wrap">
         <nav className="nav">
           <a href="#" style={{ display: "flex", alignItems: "center" }}>
-            <Image src="/logo.webp" alt="Casa Criative Digital" width={120} height={34} style={{ height: 34, width: "auto" }} />
+            <Image src="/logo.webp" alt="Casa Criative Digital" width={108} height={31} style={{ height: 31, width: "auto" }} />
           </a>
           <div className="nav-links">
             <a href="#beneficios">Benefícios</a>
