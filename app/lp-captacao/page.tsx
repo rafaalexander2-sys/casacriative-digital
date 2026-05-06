@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import "./lp.css";
 
+const WORKER_URL = "https://casacriative-form.rafaalexander2.workers.dev";
+
 export default function LandingPage() {
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const [form, setForm] = useState({ nome: "", email: "", whatsapp: "", instagram: "", projeto: "" });
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
@@ -25,6 +29,26 @@ export default function LandingPage() {
     return () => observerRef.current?.disconnect();
   }, []);
 
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.nome || !form.email || !form.projeto) return;
+    setStatus("loading");
+    try {
+      const res = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, servico: form.projeto }),
+      });
+      const data = await res.json();
+      setStatus(data.ok ? "success" : "error");
+    } catch {
+      setStatus("error");
+    }
+  }
+
   const benefits = [
     { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>, title: "Performance 95+", desc: "Lighthouse máximo em todas as métricas. Velocidade é credibilidade." },
     { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>, title: "Copy estratégico", desc: "Texto que vende. Cada parágrafo revisado para conversão." },
@@ -41,24 +65,48 @@ export default function LandingPage() {
   ];
 
   const cases = [
-    { tag: "E-commerce", title: "Northwave Store", desc: "Conversão saltou de 1.8% para 6.4% em 3 semanas.", url: "#" },
-    { tag: "SaaS", title: "Plata Dashboard", desc: "LP de captação com 38% de taxa de opt-in.", url: "#" },
-    { tag: "Serviços", title: "Volt Growth", desc: "Site institucional + 2 LPs de performance.", url: "#" },
-    { tag: "E-commerce", title: "DMove Agency", desc: "Identidade visual completa aplicada ao digital.", url: "#" },
-    { tag: "Portfólio", title: "Studio Behance", desc: "Portfólio premium com cases interativos.", url: "#" },
-    { tag: "Landing Page", title: "Captação LP", desc: "Landing page focada em geração de leads qualificados.", url: "#" },
+    {
+      tag: "Sites & LPs",
+      title: "Casa Criative Digital",
+      desc: "Site institucional com animações, SEO e alta performance.",
+      behance: true,
+    },
+    { tag: "SaaS", title: "Plata Dashboard", desc: "LP de captação com 38% de taxa de opt-in.", behance: false },
+    { tag: "Serviços", title: "Volt Growth", desc: "Site institucional + 2 LPs de performance.", behance: false },
+    { tag: "E-commerce", title: "DMove Agency", desc: "Identidade visual completa aplicada ao digital.", behance: false },
+    { tag: "Portfólio", title: "Studio Behance", desc: "Portfólio premium com cases interativos.", behance: false },
+    { tag: "Landing Page", title: "Captação LP", desc: "Landing page focada em geração de leads qualificados.", behance: false },
   ];
 
   const testimonials = [
-    { q: "Em 3 semanas o site novo já tinha pago o projeto. Conversão saltou de 1.8% para 6.4%.", n: "Marina Costa", r: "CMO, Northwave", a: "M" },
-    { q: "Profissionalismo absurdo. Zero retrabalho, comunicação cirúrgica. Recomendo de olho fechado.", n: "Rafael Lima", r: "Founder, Plata", a: "R" },
-    { q: "Dos 5 fornecedores que testei, foi o único que entregou no prazo — e com o melhor design.", n: "Beatriz Andrade", r: "Head Growth, Volt", a: "B" },
+    { q: "Criativos incríveis, atendimento excelente e resultado acima das expectativas. Recomendo muito!", n: "Hugo Klem", r: "Cliente Casa Criative", a: "H" },
+    { q: "Todas as vezes que precisei falar com eles, Rafael sempre me atendeu prontamente, coisa difícil de se ver hoje em dia. Conversar e ter acesso direto ao desenvolvedor foi fundamental para mim e pro meu site.", n: "Juliana Silva", r: "Cliente Casa Criative", a: "J" },
+    { q: "Minha parceria com a Casa Criative Digital já é bem longa. O trabalho deles é sempre entregue no prazo e com excelência. Super impecáveis em tudo que fazem.", n: "Alessandra Wendy", r: "Cliente Casa Criative", a: "A" },
+    { q: "Contamos com os serviços da Casa Criative por mais de uma vez e o trabalho sempre foi de excelência. Entrega no prazo, qualidade impecável. Super indico!", n: "Cássio Miranda", r: "Cliente Casa Criative", a: "C" },
   ];
 
   const plans = [
-    { name: "Essencial", price: "1.800", desc: "Landing page única, focada em conversão.", feats: ["1 página premium", "Copy estratégico", "Hospedagem 1º ano", "Entrega em 7 dias", "Garantia 30 dias"], featured: false },
-    { name: "Studio", price: "4.900", desc: "Site institucional completo + landing.", feats: ["Até 6 páginas premium", "Copy estratégico + SEO", "Identidade aplicada", "Animações & microinterações", "Entrega em 14 dias", "Suporte estendido 60 dias"], featured: true },
-    { name: "Performance+", price: "9.800", desc: "Pacote completo com otimização e A/B testing.", feats: ["Site + 3 landing pages", "Pesquisa & estratégia de conversão", "Integrações (CRM, analytics)", "A/B testing pós-lançamento", "Suporte 90 dias", "Sprint mensal opcional"], featured: false },
+    {
+      name: "Essencial",
+      price: "749",
+      desc: "LP premium de alta conversão.",
+      feats: ["1 landing page premium", "Copy estratégico", "Entrega em 7 dias", "Garantia 30 dias"],
+      featured: false,
+    },
+    {
+      name: "Studio",
+      price: "1.479",
+      desc: "Site institucional premium com animações.",
+      feats: ["Até 6 páginas premium", "Copy estratégico + SEO", "Identidade aplicada", "Animações & microinterações", "Entrega em 14 dias", "Suporte estendido 60 dias"],
+      featured: true,
+    },
+    {
+      name: "Performance+",
+      price: "1.987",
+      desc: "Site com Blog — mais de 10 páginas, SEO sinistro.",
+      feats: ["Site completo + blog 10+ páginas", "SEO técnico avançado", "Pesquisa & estratégia de conversão", "Integrações (CRM, analytics)", "Suporte 90 dias", "Sprint mensal opcional"],
+      featured: false,
+    },
   ];
 
   const faqs = [
@@ -70,7 +118,44 @@ export default function LandingPage() {
     { q: "E se eu não gostar do resultado?", a: "Você tem 2 rodadas de revisão por etapa. Após o lançamento, 30 dias de ajustes inclusos. Sem letra miúda." },
   ];
 
-  const WA_LINK = "https://wa.me/5541998687489?text=Ol%C3%A1%2C+quero+saber+mais+sobre+os+planos";
+  const diffCards = [
+    {
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="diff-icon-svg">
+          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+      ),
+      title: "Copy estratégico.",
+      desc: "Texto que vende — não enche linguiça. Cada parágrafo passa por revisão de conversão.",
+    },
+    {
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="diff-icon-svg">
+          <path d="M5 12h14M13 5l7 7-7 7"/>
+        </svg>
+      ),
+      title: "Entrega em 14 dias.",
+      desc: "Sem prazos elásticos. Sprint enxuto, comunicação direta, deploy no prazo combinado.",
+    },
+    {
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="diff-icon-svg">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      ),
+      title: "Garantia real.",
+      desc: "30 dias de ajustes pós-lançamento sem custo. Confiança não é argumento — é prática.",
+    },
+    {
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="diff-icon-svg">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      ),
+      title: "Sem templates.",
+      desc: "Cada projeto desenhado do zero, sob medida. Você não vai parecer com mais ninguém.",
+    },
+  ];
 
   return (
     <div className="lp-wrap">
@@ -91,8 +176,8 @@ export default function LandingPage() {
             <a href="#precos">Preços</a>
             <a href="#faq">FAQ</a>
           </div>
-          <a href={WA_LINK} className="btn btn-primary" style={{ padding: "10px 18px", fontSize: 14 }}>
-            Falar no WhatsApp
+          <a href="#cta" className="btn btn-primary nav-cta" style={{ padding: "10px 18px", fontSize: 14 }}>
+            Solicitar orçamento
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="arrow"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
           </a>
         </nav>
@@ -107,9 +192,9 @@ export default function LandingPage() {
               <h1 className="hero-headline">Sites que <em>vendem</em><br />como nunca antes.</h1>
               <p className="hero-sub">Criamos sites e landing pages de alta performance — com design premium, código limpo e copy estratégico que transformam visitas em clientes.</p>
               <div className="hero-cta">
-                <a href={WA_LINK} className="btn btn-primary">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                  Falar no WhatsApp
+                <a href="#cta" className="btn btn-primary">
+                  Solicitar orçamento
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="arrow"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                 </a>
                 <a href="#portfolio" className="btn btn-ghost">Ver projetos
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="arrow"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
@@ -150,9 +235,9 @@ export default function LandingPage() {
                   ))}
                 </div>
               </div>
-              <span className="hero-tag t-1"><span className="pulse" />conversion +312%</span>
+              <span className="hero-tag t-1"><span className="pulse" />conversão +312%</span>
               <span className="hero-tag t-2"><span className="pulse" />lighthouse 100/100</span>
-              <span className="hero-tag t-3"><span className="pulse" />load &lt; 0.8s</span>
+              <span className="hero-tag t-3"><span className="pulse" />carregamento &lt; 0.8s</span>
             </div>
           </div>
 
@@ -224,8 +309,8 @@ export default function LandingPage() {
           </div>
           <div className="diff-grid">
             <div className="glass diff diff-big">
-              <div className="diff-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <div className="diff-icon-wrap">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="diff-icon-svg"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
               </div>
               <h3>Performance medida em milissegundos.</h3>
               <p>Cada projeto sai do nosso estúdio com Lighthouse 95+ em todas as métricas. Velocidade não é detalhe — é o primeiro filtro de credibilidade.</p>
@@ -239,14 +324,9 @@ export default function LandingPage() {
                 ))}
               </div>
             </div>
-            {[
-              { icon: "✍️", title: "Copy estratégico.", desc: "Texto que vende — não enche linguiça. Cada parágrafo passa por revisão de conversão." },
-              { icon: "🚀", title: "Entrega em 14 dias.", desc: "Sem prazos elásticos. Sprint enxuto, comunicação direta, deploy no prazo combinado." },
-              { icon: "🛡️", title: "Garantia real.", desc: "30 dias de ajustes pós-lançamento sem custo. Confiança não é argumento — é prática." },
-              { icon: "✨", title: "Sem templates.", desc: "Cada projeto desenhado do zero, sob medida. Você não vai parecer com mais ninguém." },
-            ].map((d) => (
+            {diffCards.map((d) => (
               <div key={d.title} className="glass diff">
-                <div className="diff-icon" style={{ fontSize: 18 }}>{d.icon}</div>
+                <div className="diff-icon-wrap">{d.icon}</div>
                 <h3>{d.title}</h3>
                 <p>{d.desc}</p>
               </div>
@@ -265,14 +345,29 @@ export default function LandingPage() {
           </div>
           <div className="portfolio-grid">
             {cases.map((c) => (
-              <a key={c.title} href={c.url} className="case">
-                <div className="case-thumb">🖥️</div>
+              <div key={c.title} className="case">
+                <div className="case-thumb">
+                  {c.behance ? (
+                    <iframe
+                      src="https://www.behance.net/embed/project/245921369?ilo0=1"
+                      style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+                      allowFullScreen
+                      loading="lazy"
+                      allow="clipboard-write"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  ) : (
+                    <div className="case-placeholder">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.25 }}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                    </div>
+                  )}
+                </div>
                 <div className="case-body">
                   <div className="case-tag">{c.tag}</div>
                   <h3>{c.title}</h3>
                   <p>{c.desc}</p>
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         </div>
@@ -285,7 +380,7 @@ export default function LandingPage() {
             <span className="eyebrow"><span className="dot" />Depoimentos</span>
             <h2 className="h-section">Quem trabalha com a gente,<br /><span className="grad-text">volta</span>.</h2>
           </div>
-          <div className="testi-grid">
+          <div className="testi-grid testi-grid-4">
             {testimonials.map((t) => (
               <div key={t.n} className="testi">
                 <div className="stars">★★★★★</div>
@@ -326,7 +421,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <a href={WA_LINK} className={`btn ${p.featured ? "btn-primary" : "btn-ghost"}`}>Falar no WhatsApp</a>
+                <a href="#cta" className={`btn ${p.featured ? "btn-primary" : "btn-ghost"}`}>Solicitar orçamento</a>
               </div>
             ))}
           </div>
@@ -361,18 +456,60 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA FINAL */}
+      {/* FORM FINAL */}
       <section className="cta-final fade-up" id="cta">
         <div className="container">
           <div className="cta-card">
             <span className="eyebrow"><span className="dot" />Pronto para começar?</span>
             <h2 style={{ marginTop: 24 }}>Seu próximo site<br /><span className="grad-text">começa aqui</span>.</h2>
-            <p className="lead" style={{ maxWidth: 560, margin: "0 auto 32px" }}>Vagas limitadas. Atendemos poucos projetos por vez para garantir qualidade máxima em cada entrega.</p>
-            <a href={WA_LINK} className="btn btn-primary" style={{ fontSize: 16, padding: "16px 32px" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Quero meu site agora
-            </a>
-            <div className="urgency"><span className="pulse" />3 vagas disponíveis em maio</div>
+            <p className="lead" style={{ maxWidth: 560, margin: "12px auto 40px" }}>Vagas limitadas. Atendemos poucos projetos por vez para garantir qualidade máxima em cada entrega.</p>
+
+            <div className="lp-form-wrap">
+              {status === "success" ? (
+                <div className="lp-form-success">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "rgb(var(--accent))" }}><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                  <p style={{ fontSize: 18, fontWeight: 500, color: "var(--text)", marginTop: 16 }}>Mensagem enviada!</p>
+                  <p style={{ fontSize: 14, color: "var(--text-soft)", marginTop: 8 }}>Entraremos em contato em breve.</p>
+                  <button
+                    onClick={() => { setStatus("idle"); setForm({ nome: "", email: "", whatsapp: "", instagram: "", projeto: "" }); }}
+                    className="btn btn-ghost"
+                    style={{ marginTop: 24, fontSize: 13 }}
+                  >
+                    Enviar outra mensagem
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="lp-form">
+                  <div className="lp-form-row">
+                    <input className="lp-input" type="text" placeholder="Nome completo *" value={form.nome} onChange={set("nome")} required />
+                    <input className="lp-input" type="email" placeholder="E-mail *" value={form.email} onChange={set("email")} required />
+                  </div>
+                  <div className="lp-form-row">
+                    <input className="lp-input" type="tel" placeholder="WhatsApp" value={form.whatsapp} onChange={set("whatsapp")} />
+                    <input className="lp-input" type="text" placeholder="Instagram (@suamarca)" value={form.instagram} onChange={set("instagram")} />
+                  </div>
+                  <select className="lp-select" value={form.projeto} onChange={set("projeto")} required>
+                    <option value="" disabled>Tipo de projeto *</option>
+                    <option value="Landing Page Premium">Landing Page Premium</option>
+                    <option value="Site Institucional">Site Institucional</option>
+                    <option value="Site com Blog">Site com Blog</option>
+                    <option value="E-commerce">E-commerce</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                  {status === "error" && (
+                    <p style={{ fontSize: 13, color: "#e05555", textAlign: "center" }}>Erro ao enviar. Tente novamente.</p>
+                  )}
+                  <button type="submit" disabled={status === "loading"} className="btn btn-primary lp-submit">
+                    {status === "loading" ? "Enviando…" : "Solicitar orçamento"}
+                    {status !== "loading" && (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="arrow"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                    )}
+                  </button>
+                </form>
+              )}
+            </div>
+
+            <div className="urgency" style={{ marginTop: 28 }}><span className="pulse" />3 vagas disponíveis em maio</div>
           </div>
         </div>
       </section>
