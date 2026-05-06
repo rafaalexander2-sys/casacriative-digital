@@ -263,31 +263,28 @@
 .footer-links { display: flex; gap: 22px; }
 .footer-links a:hover { color: var(--text); }
 
-/* nav mobile — hide cta, center logo */
-@media (max-width: 560px) {
-  .nav-cta { display: none; }
-  .nav { justify-content: center; }
-}
-
 /* hero visual */
 @media (max-width: 960px) { .hero-visual { max-width: 440px; margin: 0 auto; } }
 
-/* hero tags mobile — reposition to stay inside container */
+/* nav + hero mobile */
 @media (max-width: 600px) {
+  /* centro o logo */
+  .lp-wrap .nav-wrap .nav { justify-content: center; padding: 10px 16px; }
+  .lp-wrap .nav-wrap .nav-cta { display: none; }
+
+  /* breathing room na hero */
+  .lp-wrap .hero { padding: 80px 0 64px; }
+  .lp-wrap .eyebrow { font-size: 11px; letter-spacing: 0.12em; margin-bottom: 20px; }
+  .lp-wrap .hero-headline { margin: 0 0 20px; font-size: clamp(28px, 8vw, 40px); }
+  .lp-wrap .hero-sub { font-size: 15px; line-height: 1.65; margin-bottom: 8px; }
+  .lp-wrap .hero-cta { gap: 10px; margin-top: 28px; }
+  .lp-wrap .hero-meta { gap: 12px; flex-direction: column; align-items: center; margin-top: 20px; }
+
+  /* hero tags — ficam dentro do container */
   .hero-tag { font-size: 10px; padding: 6px 10px; gap: 5px; }
   .hero-tag.t-1 { left: 0; }
   .hero-tag.t-2 { right: 0; }
   .hero-tag.t-3 { left: 0; }
-}
-
-/* hero text spacing mobile */
-@media (max-width: 560px) {
-  .hero { padding: 64px 0 56px; }
-  .hero-headline { margin: 20px 0 16px; }
-  .hero-sub { font-size: 15px; line-height: 1.6; }
-  .hero-meta { gap: 14px; flex-direction: column; align-items: center; }
-  .hero-cta { gap: 10px; }
-  .eyebrow { font-size: 11px; letter-spacing: 0.12em; }
 }
 
 /* diff icons animated */
