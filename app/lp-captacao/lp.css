@@ -303,10 +303,9 @@
 @media (max-width: 720px) { .testi-grid-4 { grid-template-columns: 1fr; } }
 
 /* lp form */
-.lp-form-wrap { max-width: 640px; margin: 0 auto; }
+.lp-form-wrap { max-width: 440px; margin: 0 auto; }
 .lp-form { display: flex; flex-direction: column; gap: 12px; }
-.lp-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media (max-width: 560px) { .lp-form-row { grid-template-columns: 1fr; } }
+.lp-form-row { display: grid; grid-template-columns: 1fr; gap: 12px; }
 .lp-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 13px 16px; color: var(--text); outline: none; font-family: inherit; font-size: 14px; transition: border-color 0.2s; }
 .lp-input:focus { border-color: rgb(var(--accent) / 0.5); }
 .lp-input::placeholder { color: var(--text-mute); }
@@ -314,3 +313,7 @@
 .lp-select option { background: #1a1a22; color: #fff; }
 .lp-submit { width: 100%; margin-top: 4px; padding: 15px 24px; font-size: 15px; }
 .lp-form-success { display: flex; flex-direction: column; align-items: center; padding: 40px 0; }
+
+/* oculta botão WA flutuante nesta página */
+.lp-wrap ~ .wa-pulse,
+.lp-wrap ~ .wa-btn { display: none !important; }

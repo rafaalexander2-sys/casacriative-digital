@@ -55,12 +55,12 @@ export default function LandingPage() {
     { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>, title: "Mobile-first", desc: "Responsivo em todos os dispositivos, testado antes da entrega." },
     { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>, title: "SEO otimizado", desc: "Estrutura técnica e semântica para ranquear desde o lançamento." },
     { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, title: "Garantia 30 dias", desc: "Ajustes pós-lançamento inclusos. Sem letra miúda." },
-    { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>, title: "Entrega em 14 dias", desc: "Sprint enxuto. Comunicação direta. Deploy no prazo." },
+    { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>, title: "Entrega em 5 dias", desc: "Sprint enxuto. Comunicação direta. Deploy no prazo." },
   ];
 
   const steps = [
     { n: "01", title: "Briefing", desc: "Entendemos seu negócio, público e objetivos em uma reunião focada." },
-    { n: "02", title: "Design & Dev", desc: "Criamos do zero — layout, copy e código — com revisões abertas." },
+    { n: "02", title: "Design & Dev", desc: "Criamos do zero, layout, copy e código, com revisões abertas." },
     { n: "03", title: "Lançamento", desc: "Deploy, testes finais e 30 dias de suporte inclusos." },
   ];
 
@@ -92,7 +92,7 @@ export default function LandingPage() {
       name: "Studio",
       price: "1.479",
       desc: "Site institucional premium com animações.",
-      feats: ["Até 6 páginas premium", "Copy estratégico + SEO", "Identidade visual aplicada", "Animações & microinterações", "Entrega em 14 dias", "Suporte 60 dias"],
+      feats: ["Até 6 páginas premium", "Copy estratégico + SEO", "Identidade visual aplicada", "Animações & microinterações", "Entrega em 5 dias", "Suporte 60 dias"],
       featured: true,
     },
     {
@@ -105,8 +105,8 @@ export default function LandingPage() {
   ];
 
   const faqs = [
-    { q: "Quanto tempo leva para meu site ficar pronto?", a: "Entre 7 e 14 dias úteis, dependendo do plano. Pacotes maiores podem chegar a 21 dias com cronograma claro desde o briefing." },
-    { q: "Vocês fazem o copy ou eu preciso entregar pronto?", a: "Cuidamos do copy estratégico. Você participa do briefing e revisões — nós escrevemos com foco em conversão." },
+    { q: "Quanto tempo leva para meu site ficar pronto?", a: "Entre 3 e 5 dias úteis, dependendo do plano. Projetos maiores podem chegar a 14 dias com cronograma claro desde o briefing." },
+    { q: "Vocês fazem o copy ou eu preciso entregar pronto?", a: "Cuidamos do copy estratégico. Você participa do briefing e revisões, nós escrevemos com foco em conversão." },
     { q: "O site fica responsivo em celular e tablet?", a: "Sempre. Construímos mobile-first e testamos em múltiplos dispositivos antes de entregar." },
     { q: "Posso editar o site depois de pronto?", a: "Sim. Entregamos um painel simples ou treinamento gravado para você atualizar textos, imagens e blocos." },
     { q: "Quais formas de pagamento?", a: "PIX, cartão em até 12x ou boleto. 50% no início, 50% na entrega." },
@@ -121,7 +121,7 @@ export default function LandingPage() {
         </svg>
       ),
       title: "Copy estratégico.",
-      desc: "Texto que vende — não enche linguiça. Cada parágrafo passa por revisão de conversão.",
+      desc: "Texto que vende, não enche linguiça. Cada parágrafo revisado para conversão.",
     },
     {
       icon: (
@@ -129,7 +129,7 @@ export default function LandingPage() {
           <path d="M5 12h14M13 5l7 7-7 7"/>
         </svg>
       ),
-      title: "Entrega em 14 dias.",
+      title: "Entrega em 5 dias.",
       desc: "Sem prazos elásticos. Sprint enxuto, comunicação direta, deploy no prazo combinado.",
     },
     {
@@ -139,7 +139,7 @@ export default function LandingPage() {
         </svg>
       ),
       title: "Garantia real.",
-      desc: "30 dias de ajustes pós-lançamento sem custo. Confiança não é argumento — é prática.",
+      desc: "30 dias de ajustes pós-lançamento sem custo. Confiança não é argumento, é prática.",
     },
     {
       icon: (
@@ -185,7 +185,7 @@ export default function LandingPage() {
             <div>
               <span className="eyebrow"><span className="dot" />Disponível para 3 projetos em maio</span>
               <h1 className="hero-headline">Sites que <em>vendem</em><br />como nunca antes.</h1>
-              <p className="hero-sub">Criamos sites e landing pages de alta performance — com design premium, código limpo e copy estratégico que transformam visitas em clientes.</p>
+              <p className="hero-sub">Criamos sites e landing pages de alta performance, com design premium, código limpo e copy estratégico que transforma visitas em clientes.</p>
               <div className="hero-cta">
                 <a href="#cta" className="btn btn-primary">
                   Solicitar orçamento
@@ -196,7 +196,7 @@ export default function LandingPage() {
                 </a>
               </div>
               <div className="hero-meta">
-                <span className="check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Entrega em até 14 dias</span>
+                <span className="check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Entrega em até 5 dias</span>
                 <span className="check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Garantia de 30 dias</span>
                 <span className="check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Suporte direto</span>
               </div>
@@ -249,7 +249,7 @@ export default function LandingPage() {
               <div className="metric"><div className="metric-val">+120</div><div className="metric-label">Projetos entregues</div></div>
               <div className="metric"><div className="metric-val">98%</div><div className="metric-label">Clientes satisfeitos</div></div>
               <div className="metric"><div className="metric-val">3.4×</div><div className="metric-label">Conversão média</div></div>
-              <div className="metric"><div className="metric-val">14d</div><div className="metric-label">Tempo de entrega</div></div>
+              <div className="metric"><div className="metric-val">5d</div><div className="metric-label">Tempo de entrega</div></div>
             </div>
           </div>
         </div>
@@ -261,7 +261,7 @@ export default function LandingPage() {
           <div className="section-head">
             <span className="eyebrow"><span className="dot" />Benefícios</span>
             <h2 className="h-section">Tudo que um site de alto valor<br /><span className="grad-text">precisa entregar</span>.</h2>
-            <p className="lead">Não é só bonito. É rápido, claro, mensurável — e construído para gerar resultado.</p>
+            <p className="lead">Não é só bonito. É rápido, claro, mensurável e construído para gerar resultado.</p>
           </div>
           <div className="bene-grid">
             {benefits.map((b) => (
@@ -308,7 +308,7 @@ export default function LandingPage() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="diff-icon-svg"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
               </div>
               <h3>Performance medida em milissegundos.</h3>
-              <p>Cada projeto sai do nosso estúdio com Lighthouse 95+ em todas as métricas. Velocidade não é detalhe — é o primeiro filtro de credibilidade.</p>
+              <p>Cada projeto sai do nosso estúdio com Lighthouse 95+ em todas as métricas. Velocidade não é detalhe, é o primeiro filtro de credibilidade.</p>
               <div className="diff-visual">
                 {[{ l: "Performance", v: 98 }, { l: "SEO", v: 100 }, { l: "A11y", v: 96 }, { l: "Best Pract.", v: 100 }].map((b) => (
                   <div key={b.l} className="bar">
@@ -336,7 +336,7 @@ export default function LandingPage() {
           <div className="section-head">
             <span className="eyebrow"><span className="dot" />Portfólio</span>
             <h2 className="h-section">Projetos recentes,<br /><span className="grad-text">resultados reais</span>.</h2>
-            <p className="lead">Uma seleção de cases entregues nos últimos meses. Cada um com sua identidade — todos com a mesma régua de qualidade.</p>
+            <p className="lead">Uma seleção de cases entregues nos últimos meses. Cada um com sua identidade, todos com a mesma régua de qualidade.</p>
           </div>
           <div className="portfolio-grid">
             {cases.map((c) => (
