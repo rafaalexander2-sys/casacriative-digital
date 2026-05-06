@@ -240,7 +240,7 @@ export default function LandingPage() {
             <div className="proof">
               <div className="proof-label">Confiança de marcas em crescimento</div>
               <div className="proof-row">
-                {["Northwave", "Plata", "Volt Growth", "DMove", "Studio BR", "Captação"].map((b) => (
+                {["DMove", "Nutriblu", "Lenon", "JS Trade Tech", "UPLAY", "4A Studio"].map((b) => (
                   <span key={b} className="proof-logo">{b}</span>
                 ))}
               </div>
