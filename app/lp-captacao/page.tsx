@@ -65,17 +65,12 @@ export default function LandingPage() {
   ];
 
   const cases = [
-    {
-      tag: "Sites & LPs",
-      title: "Casa Criative Digital",
-      desc: "Site institucional com animações, SEO e alta performance.",
-      behance: true,
-    },
-    { tag: "SaaS", title: "Plata Dashboard", desc: "LP de captação com 38% de taxa de opt-in.", behance: false },
-    { tag: "Serviços", title: "Volt Growth", desc: "Site institucional + 2 LPs de performance.", behance: false },
-    { tag: "E-commerce", title: "DMove Agency", desc: "Identidade visual completa aplicada ao digital.", behance: false },
-    { tag: "Portfólio", title: "Studio Behance", desc: "Portfólio premium com cases interativos.", behance: false },
-    { tag: "Landing Page", title: "Captação LP", desc: "Landing page focada em geração de leads qualificados.", behance: false },
+    { tag: "Site Institucional", title: "Site – Sistema de Segurança", img: "https://mir-s3-cdn-cf.behance.net/project_modules/1400_webp/8bde88245921369.69b85f6d447f4.png", href: "https://www.behance.net/gallery/245921369/Site-Sistema-de-Seguranca" },
+    { tag: "Landing Page", title: "Landing Page – Odontologia", img: "/portfolio-odontologia.png", href: "https://www.behance.net/gallery/245921131/Landing-Page-Odontologia" },
+    { tag: "Landing Page", title: "Landing Page – Estética", img: "/portfolio-estetica.png", href: "https://www.behance.net/gallery/245920979/Landing-Page-Esttica" },
+    { tag: "Landing Page", title: "Landing Page – Odontológico", img: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/c59561242480249.696e3e2bd04f8.png", href: "https://www.behance.net/gallery/242480249/Landing-Page-Odontologico" },
+    { tag: "Landing Page", title: "Landing Page – Odontologia 2", img: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/bf3fc0244029633.698dea0a7b92a.png", href: "https://www.behance.net/gallery/244029633/LandingPage-Odontologia" },
+    { tag: "Site Institucional", title: "Assessoria de Marketing – DMove", img: "/portfolio-dmove.png", href: "https://www.behance.net/gallery/163229265/ASSESSORIA-DE-MARKETING-DMOVE" },
   ];
 
   const testimonials = [
@@ -89,7 +84,7 @@ export default function LandingPage() {
     {
       name: "Essencial",
       price: "749",
-      desc: "LP premium de alta conversão.",
+      desc: "Landing page de alta conversão.",
       feats: ["1 landing page premium", "Copy estratégico", "Entrega em 7 dias", "Garantia 30 dias"],
       featured: false,
     },
@@ -97,14 +92,14 @@ export default function LandingPage() {
       name: "Studio",
       price: "1.479",
       desc: "Site institucional premium com animações.",
-      feats: ["Até 6 páginas premium", "Copy estratégico + SEO", "Identidade aplicada", "Animações & microinterações", "Entrega em 14 dias", "Suporte estendido 60 dias"],
+      feats: ["Até 6 páginas premium", "Copy estratégico + SEO", "Identidade visual aplicada", "Animações & microinterações", "Entrega em 14 dias", "Suporte 60 dias"],
       featured: true,
     },
     {
       name: "Performance+",
       price: "1.987",
-      desc: "Site com Blog — mais de 10 páginas, SEO sinistro.",
-      feats: ["Site completo + blog 10+ páginas", "SEO técnico avançado", "Pesquisa & estratégia de conversão", "Integrações (CRM, analytics)", "Suporte 90 dias", "Sprint mensal opcional"],
+      desc: "Site completo com blog integrado, mais de 10 páginas.",
+      feats: ["Site + blog com 10+ páginas", "SEO técnico avançado", "Estratégia de conversão", "Integrações (CRM, analytics)", "Suporte 90 dias", "Sprint mensal opcional"],
       featured: false,
     },
   ];
@@ -345,29 +340,17 @@ export default function LandingPage() {
           </div>
           <div className="portfolio-grid">
             {cases.map((c) => (
-              <div key={c.title} className="case">
+              <a key={c.title} href={c.href} target="_blank" rel="noopener noreferrer" className="case">
                 <div className="case-thumb">
-                  {c.behance ? (
-                    <iframe
-                      src="https://www.behance.net/embed/project/245921369?ilo0=1"
-                      style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-                      allowFullScreen
-                      loading="lazy"
-                      allow="clipboard-write"
-                      referrerPolicy="strict-origin-when-cross-origin"
-                    />
-                  ) : (
-                    <div className="case-placeholder">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.25 }}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-                    </div>
-                  )}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={c.img} alt={c.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
                 <div className="case-body">
                   <div className="case-tag">{c.tag}</div>
                   <h3>{c.title}</h3>
-                  <p>{c.desc}</p>
+                  <span className="case-link">Ver no Behance →</span>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>
