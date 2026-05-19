@@ -66,9 +66,17 @@
 |---|---|---|---|
 | Google Tag Manager | ✅ | GTM-P4SC6LFQ | — |
 | Google Analytics 4 | — | G- | — |
-| Google Ads | — | AW- | — |
-| WhatsApp event | — | — | — |
-| Formulário event | — | — | — |
+| Google Ads (conta nova) | ✅ ID confirmado | AW-18158039335 | ❌ precisa criar |
+| Google Ads (tag GTM) | ⚠️ desatualizada | AW-11505193511 (antiga) → atualizar | — |
+| WhatsApp event | ✅ tag existe no GTM | — | ⚠️ aponta para conta antiga |
+| Formulário event | ✅ tag existe no GTM | — | ⚠️ aponta para conta antiga |
+
+### Próximos passos
+1. [ ] Abrir tag "Google Tag AW-11505193511" no GTM e trocar ID para `AW-18158039335`
+2. [ ] Criar conversão `Lead_WhatsApp` no Google Ads (conta nova)
+3. [ ] Criar conversão `Lead_Formulario` no Google Ads (conta nova)
+4. [ ] Atualizar tags de conversão no GTM com os novos rótulos
+5. [ ] Publicar GTM e testar via Preview Mode
 
 ---
 
