@@ -16,7 +16,7 @@
 | Campo | Valor |
 |---|---|
 | **ID da conta** | 698-365-3545 |
-| **Orçamento mensal** | R$ 10.000,00 |
+| **Orçamento mensal** | R$ 14.000,00 |
 | **Canais** | Google Search + Performance Max |
 | **Status da conta** | Pausada — verificação pendente (mai/2026) |
 | **Número DUNS** | — (opcional, não obrigatório) |
