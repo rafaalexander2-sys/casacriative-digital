@@ -259,14 +259,38 @@ microsoft copilot
 
 ## Checklist — Antes de Publicar
 
-- [ ] Rastreamento verificado (ver `checklist-rastreamento.md`)
-- [ ] Evento de conversão WhatsApp disparando no GTM
-- [ ] Lista de negativos aplicada em todas as campanhas
-- [ ] Todas as keywords em correspondência frase ou exata (zero broad match)
-- [ ] "Microsoft" presente em pelo menos 1 título de cada anúncio
-- [ ] URL de destino configurada (não a home)
-- [ ] Extensões de anúncio adicionadas
-- [ ] Região: Sul e Sudeste (SP, RJ, MG, ES, PR, SC, RS)
-- [ ] Idioma: Português
-- [ ] Rotação de anúncios: Otimizar (melhor desempenho)
-- [ ] Início: campanhas ativas após aprovação do Google (24–48h)
+- [x] Rastreamento verificado (ver `checklist-rastreamento.md`)
+- [x] Evento de conversão WhatsApp disparando no GTM
+- [x] Lista de negativos aplicada em todas as campanhas
+- [x] Todas as keywords em correspondência frase ou exata (zero broad match)
+- [x] "Microsoft" presente em pelo menos 1 título de cada anúncio
+- [x] URL de destino configurada (não a home)
+- [x] Sitelinks configurados (4 links com descrições)
+- [x] Callouts configurados (8 frases de destaque)
+- [x] Snippets configurados (Serviços: Office 365, Azure, DevOps, Hospedagem, Consultoria de TI, FinOps)
+- [x] Região: Sul e Sudeste (SP, RJ, MG, ES, PR, SC, RS)
+- [x] Idioma: Português
+- [x] Rotação de anúncios: Otimizar (melhor desempenho)
+- [ ] Campanhas aprovadas pelo Google (aguardando 24–48h)
+
+---
+
+## Status de Publicação — 19/05/2026
+
+| Campanha | Orçamento diário | Status |
+|---|---|---|
+| Azure / Infraestrutura Microsoft | R$ 250/dia | ⏳ Aguardando aprovação |
+| Office 365 / Microsoft 365 | R$ 107/dia | ⏳ Aguardando aprovação |
+| Consultoria Microsoft | R$ 143/dia | ⏳ Aguardando aprovação |
+
+---
+
+## Próximos passos — Após 14 dias
+
+1. **Dividir grupos de anúncios** — cada tema (1A, 1B, 1C) vira grupo separado com keywords específicas
+2. **Criar variações de anúncio** — testar títulos e descrições diferentes por grupo
+3. **Migrar estratégia de lance** — Maximizar Cliques → Maximizar Conversões
+4. **Definir CPA alvo** (somente após 30–50 conversões por campanha)
+   - Azure / Infraestrutura: R$ 130
+   - Office 365 / M365: R$ 90
+   - Consultoria Microsoft: R$ 120
