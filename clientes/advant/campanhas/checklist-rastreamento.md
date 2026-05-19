@@ -26,7 +26,8 @@
 
 ### Google Ads — Tag de Conversão
 - [ ] Tag de conversão do Google Ads instalada via GTM
-- [ ] ID da conta: `AW-_______` ← preencher
+- [ ] ID da conta: `AW-18158039335`
+- [ ] Caminho no Google Ads: **Metas → Conversão** (não Ferramentas)
 - [ ] **Conversões configuradas:**
   - [ ] Clique no botão WhatsApp → evento de conversão
   - [ ] Envio de formulário de contato (se houver) → evento de conversão
