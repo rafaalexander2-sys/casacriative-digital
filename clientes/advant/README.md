@@ -85,8 +85,13 @@
 
 > "Todo nosso esforço de marketing deve ser focado em produtos e soluções Microsoft, sempre associando a campanha como **Advant Tecnologia + Microsoft**."
 
+## Regra Obrigatória — Anúncios
+
+> O nome **"Microsoft"** deve aparecer em **todos** os anúncios. Posicionamento sempre: **Advant Tecnologia + Microsoft**.
+
 ## Arquivos deste cliente
 
 - [`briefing.md`](./briefing.md) — briefing completo preenchido pelo cliente
 - [`analise-google-ads.md`](./analise-google-ads.md) — diagnóstico da conta anterior + plano de implementação
+- [`orcamento-30-dias.md`](./orcamento-30-dias.md) — esquema de orçamento por fase (30 dias)
 - [`historico/2026-05.md`](./historico/2026-05.md) — histórico de atividades maio 2026

@@ -171,6 +171,8 @@ www.office.com, office.com, microsoft.com login, suporte microsoft telefone pess
 
 Tom: **profissional e formal**. Os 3 USPs centrais devem aparecer nos **títulos**, não só nas descrições.
 
+> **Regra obrigatória:** O nome **"Microsoft"** deve aparecer em **todos** os anúncios — título ou descrição. Posicionamento sempre como **Advant Tecnologia + Microsoft**.
+
 ### Headlines Recomendados
 
 | Grupo | Títulos sugeridos (3 por anúncio responsivo) |
