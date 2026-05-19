@@ -101,7 +101,7 @@ Nenhum anúncio no ar. Semana dedicada a estruturação.
 
 | Campanha | Orçamento diário | 9 dias |
 |---|---|---|
-| Azure / Infraestrutura Microsoft | R$ 233 | R$ 2.100 |
+| Azure / Infraestrutura Microsoft | R$ 250 | R$ 2.250 |
 | Office 365 / Microsoft 365 | R$ 100 | R$ 900 |
 | Consultoria Microsoft | R$ 133 | R$ 1.200 |
 | **Total diário** | **~R$ 466** | **R$ 4.200** |
