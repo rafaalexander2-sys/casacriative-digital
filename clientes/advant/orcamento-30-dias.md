@@ -16,14 +16,30 @@
 
 ---
 
-## Visão Geral por Fase
+## ⚠️ Atenção — Conta Nova
 
-| Fase | Período | Dias ativos | Total da fase |
-|---|---|---|---|
-| **Fundação** (setup) | Dias 1–7 | 0 | R$ 0 |
-| **Lançamento** (70%) | Dias 8–21 | 14 | R$ 9.800 |
-| **Otimização** (ajuste) | Dias 22–30 | 9 | R$ 4.200 |
-| **TOTAL** | | 23 | **R$ 14.000** |
+Conta nova no Google Ads tem implicações diretas no orçamento e estratégia:
+
+- **Sem quality score:** CPCs iniciais serão mais altos até o Google aprender
+- **Sem histórico:** algoritmo não tem dados — demora mais para otimizar
+- **Limite de gasto:** Google pode limitar gastos nas primeiras semanas automaticamente
+- **Verificação pendente:** conta precisa ser verificada antes de qualquer veiculação
+- **Sem listas de remarketing:** PMax vai rodar sem sinais de audiência no início
+- **Estratégia de lances:** começar com Maximizar Cliques, não Maximizar Conversões
+
+**Recomendação:** nos primeiros 14 dias, trabalhar com 40–50% da verba planejada enquanto o algoritmo aprende e o quality score sobe.
+
+---
+
+## Visão Geral por Fase — Ajustada para Conta Nova
+
+| Fase | Período | Dias ativos | Verba | Obs |
+|---|---|---|---|---|
+| **Verificação + Setup** | Dias 1–7 | 0 | R$ 0 | Conta pausada até aprovação |
+| **Aprendizado** (40%) | Dias 8–14 | 7 | R$ 1.960 | Maximizar Cliques, construir QS |
+| **Escala** (70%) | Dias 15–21 | 7 | R$ 4.900 | Migrar para Maximizar Conversões |
+| **Otimização** | Dias 22–30 | 9 | R$ 4.200 | Ajuste por performance |
+| **TOTAL** | | 23 | **~R$ 11.060** | Saldo de ~R$ 2.940 passa pro mês 2 |
 
 ---
 
@@ -39,33 +55,49 @@ Nenhum anúncio no ar. Semana dedicada a estruturação.
 
 ---
 
-## Fase 2 — Lançamento (Dias 8–21) · R$ 9.800
-
-Campanhas rodando a **70%** do orçamento planejado.
+## Fase 2 — Aprendizado (Dias 8–14) · R$ 1.960
+**Estratégia:** Maximizar Cliques · **Meta:** construir quality score e primeiros dados
 
 ### Budget diário
 
-| Campanha | Orçamento diário | 14 dias |
+| Campanha | Orçamento diário | 7 dias |
 |---|---|---|
-| Azure / Infraestrutura Microsoft | R$ 350 | R$ 4.900 |
-| Office 365 / Microsoft 365 | R$ 150 | R$ 2.100 |
-| Consultoria Microsoft | R$ 200 | R$ 2.800 |
-| **Total diário** | **R$ 700** | **R$ 9.800** |
+| Azure / Infraestrutura Microsoft | R$ 140 | R$ 980 |
+| Office 365 / Microsoft 365 | R$ 60 | R$ 420 |
+| Consultoria Microsoft | R$ 80 | R$ 560 |
+| **Total diário** | **R$ 280** | **R$ 1.960** |
 
-### Rotina de monitoramento (diária nas 2 primeiras semanas)
+### Monitoramento diário nesta fase
+- Verificar quais keywords estão gerando impressões e cliques
+- Negativar termos irrelevantes que aparecerem
+- Checar quality score por keyword (meta: acima de 5)
+- Confirmar que eventos de conversão estão disparando no GTM
 
-- Revisar termos de pesquisa e negativar irrelevantes
+---
+
+## Fase 3 — Escala (Dias 15–21) · R$ 4.900
+**Estratégia:** Migrar para Maximizar Conversões (sem CPA alvo)
+
+### Budget diário
+
+| Campanha | Orçamento diário | 7 dias |
+|---|---|---|
+| Azure / Infraestrutura Microsoft | R$ 350 | R$ 2.450 |
+| Office 365 / Microsoft 365 | R$ 150 | R$ 1.050 |
+| Consultoria Microsoft | R$ 200 | R$ 1.400 |
+| **Total diário** | **R$ 700** | **R$ 4.900** |
+
+### Monitoramento nesta fase
 - Checar qualidade dos leads via WhatsApp (PF ou B2B?)
 - Monitorar CTR por grupo — mínimo esperado: 5%
 - Pausar anúncios com CTR abaixo de 3% após 300 impressões
 
 ---
 
-## Fase 3 — Otimização (Dias 22–30) · R$ 4.200
+## Fase 4 — Otimização (Dias 22–30) · R$ 4.200
+**Estratégia:** Ajuste por performance. Redistribuir para o que converteu melhor.
 
-Ajuste baseado nos dados reais. Redistribuir para o que performou melhor.
-
-### Budget diário (base — ajustar conforme performance)
+### Budget diário (base — ajustar conforme dados reais)
 
 | Campanha | Orçamento diário | 9 dias |
 |---|---|---|
@@ -75,12 +107,11 @@ Ajuste baseado nos dados reais. Redistribuir para o que performou melhor.
 | **Total diário** | **~R$ 466** | **R$ 4.200** |
 
 ### Checklist de otimização (semana 4)
-
 - [ ] Pausar keywords com 0 conversões após R$ 300 gastos
 - [ ] Aumentar lances nas top 3 keywords por conversão
-- [ ] Ajustar distribuição entre os 3 canais com base no CPA real
-- [ ] Levantar ticket médio real com Alysson → calibrar CPA máximo aceitável
-- [ ] Preparar relatório da semana 4 para reunião com o cliente
+- [ ] Redistribuir verba entre campanhas com base no CPA real
+- [ ] Levantar ticket médio real com Alysson → calibrar CPA máximo
+- [ ] Preparar relatório para reunião com o cliente
 
 ---
 

@@ -240,15 +240,20 @@ microsoft copilot
 
 ---
 
-## Configuração de Lances
+## Configuração de Lances — Conta Nova
 
-| Campanha | Estratégia inicial | CPA alvo (após 30 dias) |
-|---|---|---|
-| Azure / Infraestrutura | Maximizar conversões | R$ 130 |
-| Office 365 / M365 | Maximizar conversões | R$ 90 |
-| Consultoria Microsoft | Maximizar conversões | R$ 120 |
+> **Atenção: conta nova.** Sem histórico, sem quality score, sem listas de remarketing. Estratégia de lances precisa ser diferente de uma conta com dados.
 
-> Não configurar CPA alvo no início — deixar o algoritmo aprender por 30 dias antes de restringir.
+| Fase | Período | Estratégia | Motivo |
+|---|---|---|---|
+| Fase 0 | Dias 1–14 | **Maximizar cliques** (CPC manual se necessário) | Construir quality score e primeiros dados |
+| Fase 1 | Dias 15–30 | **Maximizar conversões** (sem CPA alvo) | Algoritmo aprendendo com as primeiras conversões |
+| Fase 2 | Mês 2 em diante | **CPA desejado** | Só após 30–50 conversões por campanha |
+
+**CPA alvo (definir no mês 2):**
+- Azure / Infraestrutura: R$ 130
+- Office 365 / M365: R$ 90
+- Consultoria Microsoft: R$ 120
 
 ---
 
