@@ -64,7 +64,7 @@
 
 | Tag | Instalada? | ID | Conversões configuradas? |
 |---|---|---|---|
-| Google Tag Manager | — | GTM- | — |
+| Google Tag Manager | ✅ | GTM-P4SC6LFQ | — |
 | Google Analytics 4 | — | G- | — |
 | Google Ads | — | AW- | — |
 | WhatsApp event | — | — | — |
