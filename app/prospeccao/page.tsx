@@ -59,7 +59,7 @@ function saveCampaign(c: Campaign) {
 }
 
 const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL || ''
-const APIFY_KEY = 'AQEDARk9jLsAcbMqAAABnS9StZ4AAAGeT5f7h04ADuhn9FREOIJniSHeyMyDLH0qfjTEu0CDk-RGf9XheQMyTSV6LDO1D5P6WiVDNbDvIEvM7nlX95gTKW1YsYLil2yW2D2eE3Cg21ApZ83FCj1gi7cE'
+const APIFY_KEY_STORAGE = 'cc_apify_key'
 const APIFY_BASE = 'https://api.apify.com/v2'
 
 type Tab = 'queue' | 'add' | 'stats' | 'instagram'
@@ -94,11 +94,14 @@ export default function ProspeccaoPage() {
   const [igStatus, setIgStatus] = useState('')
   const [portfolioUrl, setPortfolioUrl] = useState('')
   const [editingPortfolio, setEditingPortfolio] = useState(false)
+  const [apifyKey, setApifyKey] = useState('')
+  const [editingApify, setEditingApify] = useState(false)
 
   useEffect(() => {
     setProspects(loadProspects())
     setCampaign(loadCampaign())
     setPortfolioUrl(localStorage.getItem(PORTFOLIO_KEY) || 'casacriative.com.br')
+    setApifyKey(localStorage.getItem(APIFY_KEY_STORAGE) || '')
   }, [])
 
   const persist = useCallback((list: Prospect[]) => {
@@ -111,35 +114,38 @@ export default function ProspeccaoPage() {
     saveCampaign(c)
   }, [])
 
-  const HASHTAGS_BY_SECTOR: Record<string, Record<string, string[]>> = {
-    'all':                     { PT: ['restauranteportugal','clinicalisboa','belezaportugal','negociolocal','empresaportugal'], ES: ['restaurantemadrid','clinicamadrid','bellezaespana','negociolocal','pymesespana'] },
-    'Restaurante / Alimentação':{ PT: ['restauranteportugal','restaurantelisboa','restaurantoporto'], ES: ['restaurantemadrid','restaurantebarcelona','hosteleria'] },
-    'Clínica / Saúde':          { PT: ['clinicalisboa','clinicaportugal','saudeportugal'], ES: ['clinicamadrid','saludybienestar','clinicaestetica'] },
-    'Estética / Beleza':        { PT: ['cabelereiroPortugal','belezaportugal','esteticalisboa'], ES: ['peluqueriamadrid','esteticamadrid','bellezaespana'] },
-    'Academia / Fitness':       { PT: ['ginasiolisboa','fitnessportugal'], ES: ['gimnasioespana','fitnessespana'] },
-    'Advocacia / Jurídico':     { PT: ['advocaciaportugal','advogadoportugal'], ES: ['abogadosespana','despachoabogados'] },
+
+  const SECTOR_KEYWORDS: Record<string, Record<string, string>> = {
+    'all':                       { PT: 'dono fundador empresário Portugal', ES: 'dueño fundador empresario España' },
+    'Restaurante / Alimentação': { PT: 'dono restaurante Portugal', ES: 'dueño restaurante España' },
+    'Clínica / Saúde':           { PT: 'diretor clínica Portugal', ES: 'director clínica España' },
+    'Estética / Beleza':         { PT: 'dono salão beleza Portugal', ES: 'dueño salón belleza España' },
+    'Academia / Fitness':        { PT: 'dono ginásio fitness Portugal', ES: 'dueño gimnasio España' },
+    'Advocacia / Jurídico':      { PT: 'sócio advogado Portugal', ES: 'socio abogado España' },
+    'Imobiliária / Construção':  { PT: 'diretor imobiliária Portugal', ES: 'director inmobiliaria España' },
+    'Comércio / Loja':           { PT: 'dono loja comércio Portugal', ES: 'dueño tienda España' },
+    'Turismo / Hotelaria':       { PT: 'diretor hotel Portugal', ES: 'director hotel España' },
   }
 
   async function handleInstagramScrape() {
+    if (!apifyKey) { setIgStatus('Cole a sua chave Apify no campo acima.'); return }
     setIgLoading(true)
-    setIgStatus('Iniciando busca no Instagram...')
+    setIgStatus('Iniciando busca no LinkedIn...')
     try {
-      const hashtags = HASHTAGS_BY_SECTOR[igSector]?.[igCountry] ?? HASHTAGS_BY_SECTOR['all'][igCountry]
-
+      const keyword = SECTOR_KEYWORDS[igSector]?.[igCountry] ?? SECTOR_KEYWORDS['all'][igCountry]
       const runRes = await fetch(
-        `${APIFY_BASE}/acts/apify~instagram-hashtag-scraper/runs?token=${APIFY_KEY}`,
+        `${APIFY_BASE}/acts/harvestapi~linkedin-profile-search/runs?token=${apifyKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ hashtags, resultsLimit: 30, addParentData: true }),
+          body: JSON.stringify({ keyword, count: 25 }),
         }
       )
       const runData = await runRes.json()
       const runId = runData.data?.id
-      if (!runId) throw new Error('Run não iniciou')
-
+      if (!runId) throw new Error(JSON.stringify(runData))
       setIgRunId(runId)
-      setIgStatus('Buscando perfis... pode levar 1-2 minutos.')
+      setIgStatus('Buscando perfis no LinkedIn... aguarda 1-2 minutos.')
       pollApifyResults(runId)
     } catch (e: unknown) {
       setIgStatus('Erro: ' + (e instanceof Error ? e.message : 'falha'))
@@ -152,50 +158,48 @@ export default function ProspeccaoPage() {
     const interval = setInterval(async () => {
       attempts++
       try {
-        const statusRes = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${APIFY_KEY}`)
+        const statusRes = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${apifyKey}`)
         const statusData = await statusRes.json()
         const status = statusData.data?.status
-
-        setIgStatus(`Buscando perfis... ${attempts * 8}s (status: ${status})`)
-
+        setIgStatus(`Buscando no LinkedIn... ${attempts * 8}s`)
         if (status === 'SUCCEEDED') {
           clearInterval(interval)
           const datasetId = statusData.data?.defaultDatasetId
-          const itemsRes = await fetch(`${APIFY_BASE}/datasets/${datasetId}/items?token=${APIFY_KEY}&limit=100`)
+          const itemsRes = await fetch(`${APIFY_BASE}/datasets/${datasetId}/items?token=${apifyKey}&limit=100`)
           const items = await itemsRes.json()
-
           const newProspects = Array.from(
             new Map(
-              items
-                .filter((item: Record<string, unknown>) => item.ownerUsername)
-                .map((item: Record<string, unknown>) => {
+              (items as Record<string, unknown>[])
+                .filter(item => item.fullName || item.name)
+                .map(item => {
+                  const positions = item.currentPositions as Record<string, unknown>[] | undefined
+                  const pos = positions?.[0]
                   const p: Prospect = {
                     id: Math.random().toString(36).slice(2, 10),
-                    name: (item.ownerFullName as string) || (item.ownerUsername as string),
-                    title: 'Dono(a)',
-                    company: item.ownerUsername as string,
+                    name: (item.fullName || item.name || '') as string,
+                    title: (item.headline || (pos?.title) || 'Fundador(a)') as string,
+                    company: ((pos?.companyName) || (item.company) || '') as string,
                     country: igCountry,
                     sector: igSector === 'all' ? 'Outro' : igSector,
                     companySize: '1-10',
-                    linkedinUrl: '',
-                    email: '',
-                    companyWebsite: (item.ownerBiography as string)?.match(/https?:\/\/[^\s]+/)?.[0] || '',
-                    notes: `Instagram: @${item.ownerUsername}. Bio: ${String(item.ownerBiography || '').slice(0, 150)}`,
+                    linkedinUrl: (item.profileUrl || item.linkedInUrl || item.url || '') as string,
+                    email: (item.email || '') as string,
+                    companyWebsite: '',
+                    notes: (item.summary || item.about || '') as string,
                     status: 'pending',
                     createdAt: new Date().toISOString(),
                   }
-                  return [item.ownerUsername, p]
+                  return [item.profileUrl || item.fullName, p]
                 })
             ).values()
           )
-
           persist([...(newProspects as Prospect[]), ...prospects])
-          setIgStatus(`✅ ${newProspects.length} prospects importados!`)
+          setIgStatus(`✅ ${newProspects.length} prospects do LinkedIn importados!`)
           setIgLoading(false)
           setTab('queue')
         } else if (status === 'FAILED' || attempts > 20) {
           clearInterval(interval)
-          setIgStatus(status === 'FAILED' ? 'Falhou no Apify.' : 'Timeout — tente novamente.')
+          setIgStatus(status === 'FAILED' ? 'Falhou — tente novamente.' : 'Timeout — tente novamente.')
           setIgLoading(false)
         }
       } catch {
@@ -203,7 +207,6 @@ export default function ProspeccaoPage() {
       }
     }, 8_000)
   }
-
   function handleExportQueue() {
     const data = JSON.stringify(prospects, null, 2)
     const blob = new Blob([data], { type: 'application/json' })
@@ -434,6 +437,17 @@ export default function ProspeccaoPage() {
                 <p className="text-xs text-zinc-500 mb-5">O Apify busca perfis de PMEs por hashtag e importa automaticamente para a fila.</p>
 
                 <div className="space-y-4">
+                  <label className="block">
+                    <span className="text-xs text-zinc-500 mb-1 block">Chave Apify (cole uma vez, fica salvo)</span>
+                    <input
+                      type="password"
+                      value={apifyKey}
+                      onChange={e => { setApifyKey(e.target.value); localStorage.setItem(APIFY_KEY_STORAGE, e.target.value) }}
+                      placeholder="apify_api_..."
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-amber-600"
+                    />
+                  </label>
+
                   <label className="block">
                     <span className="text-xs text-zinc-500 mb-1 block">País</span>
                     <select value={igCountry} onChange={e => setIgCountry(e.target.value as ProspectCountry)}
