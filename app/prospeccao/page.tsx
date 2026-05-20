@@ -102,6 +102,34 @@ export default function ProspeccaoPage() {
     saveCampaign(c)
   }, [])
 
+  function handleExportQueue() {
+    const data = JSON.stringify(prospects, null, 2)
+    const blob = new Blob([data], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `queue-${todayStr()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleImportResult(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      try {
+        const imported: Prospect[] = JSON.parse(ev.target?.result as string)
+        persist(imported)
+        alert(`${imported.filter(p => p.status === 'sent').length} enviadas importadas com sucesso.`)
+      } catch {
+        alert('Arquivo inválido.')
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
   function handleFormChange(key: string, value: string) {
     setForm(f => ({ ...f, [key]: value }))
   }
@@ -194,6 +222,21 @@ export default function ProspeccaoPage() {
             <h1 className="text-sm font-semibold tracking-tight">Prospecção LinkedIn</h1>
             <p className="text-xs text-zinc-500">Portugal &amp; Espanha · PMEs</p>
           </div>
+        </div>
+
+        {/* Bot actions */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportQueue}
+            className="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition-colors"
+            title="Exporta queue.json para rodar o bot"
+          >
+            Exportar para Bot
+          </button>
+          <label className="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg cursor-pointer transition-colors">
+            Importar Resultado
+            <input type="file" accept=".json" onChange={handleImportResult} className="hidden" />
+          </label>
         </div>
 
         {/* Portfolio URL */}

@@ -1,0 +1,15 @@
+{
+  "name": "linkedin-bot",
+  "version": "1.0.0",
+  "description": "LinkedIn automation bot for PT/ES outreach",
+  "main": "send.js",
+  "type": "module",
+  "scripts": {
+    "install-browser": "npx playwright install chromium",
+    "send": "node send.js",
+    "send-headless": "node send.js --headless"
+  },
+  "dependencies": {
+    "playwright": "^1.44.0"
+  }
+}
