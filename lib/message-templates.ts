@@ -4,211 +4,259 @@ type Templates = Record<string, { PT: string; ES: string }>
 
 const TEMPLATES: Templates = {
   'Restaurante / Alimentação': {
-    PT: `{firstName}, reparei que {company} tem uma presença online que ainda não reflecte bem a qualidade do que fazem.
+    PT: `{firstName}, reparei que {company} ainda não tem uma presença online que reflicta a qualidade do que fazem — e isso custa reservas todos os dias.
 
-Trabalho com restaurantes em Portugal a melhorar a visibilidade no Google Maps e a trazer mais reservas sem depender só do passa-a-palavra.
+Ajudo restaurantes em Portugal com design, redes sociais e visibilidade no Google. Trabalho com uma equipa especializada no Brasil: entregamos qualidade de agência europeia a preços muito mais acessíveis.
 
-Posso mostrar-lhe em 10 minutos o que está a perder em pesquisas locais todos os dias.
+Portfólio: {portfolioUrl}
 
-Tem disponibilidade esta semana para uma chamada rápida?`,
+Tem 10 minutos esta semana para uma chamada rápida?`,
 
-    ES: `{firstName}, he visto que {company} tiene potencial en redes y buscadores que aún no está aprovechando del todo.
+    ES: `{firstName}, he visto que {company} aún no tiene una presencia online que refleje la calidad de lo que hacéis, y eso cuesta reservas cada día.
 
-Trabajo con restaurantes en España para mejorar su visibilidad en Google Maps y conseguir más reservas sin depender solo del boca a boca.
+Ayudo a restaurantes en España con diseño, redes sociales y visibilidad en Google. Trabajo con un equipo especializado en Brasil: calidad de agencia europea a precios muy por debajo del mercado.
 
-Puedo mostrarte en 10 minutos lo que estás dejando de ganar cada día en búsquedas locales.
+Portfolio: {portfolioUrl}
 
-¿Tienes disponibilidad esta semana para una llamada rápida?`,
+¿Tienes 10 minutos esta semana para una llamada rápida?`,
   },
 
   'Clínica / Saúde': {
-    PT: `{firstName}, tenho acompanhado o trabalho de {company} e vi que existe margem para atrair muito mais pacientes através da pesquisa local no Google.
+    PT: `{firstName}, vi o trabalho de {company} e acredito que conseguimos trazer muito mais pacientes novos através da pesquisa local no Google — sem depender de plataformas ou publicidade cara.
 
-Ajudo clínicas em Portugal a aparecer no topo quando alguém procura os vossos serviços na zona — sem pagar publicidade.
+Trabalho com clínicas em Portugal em design, SEO e páginas de conversão. Equipa especializada no Brasil: resultados de agência europeia, preços que fazem sentido para uma PME.
 
-Em média, os meus clientes passam a receber entre 15 a 30 contactos novos por mês só com essa mudança.
+Portfólio: {portfolioUrl}
 
-Faz sentido conversar 15 minutos para perceber se se aplica ao vosso caso?`,
+Faz sentido conversar 15 minutos?`,
 
-    ES: `{firstName}, he visto el trabajo de {company} y creo que hay margen para atraer muchos más pacientes a través de la búsqueda local en Google.
+    ES: `{firstName}, vi el trabajo de {company} y creo que podemos conseguir muchos más pacientes nuevos a través de la búsqueda local en Google, sin depender de plataformas ni publicidad cara.
 
-Ayudo a clínicas en España a aparecer en los primeros resultados cuando alguien busca sus servicios en la zona, sin pagar publicidad.
+Trabajo con clínicas en España en diseño, SEO y páginas de conversión. Equipo especializado en Brasil: resultados de agencia europea, precios que tienen sentido para una pyme.
 
-De media, mis clientes empiezan a recibir entre 15 y 30 contactos nuevos al mes solo con ese cambio.
+Portfolio: {portfolioUrl}
 
-¿Tiene sentido hablar 15 minutos para ver si aplica a vuestro caso?`,
+¿Tiene sentido hablar 15 minutos?`,
   },
 
   'Advocacia / Jurídico': {
-    PT: `{firstName}, vi o perfil de {company} e percebo que têm uma área de actuação muito definida — exactamente o tipo de escritório que beneficia mais de uma estratégia digital bem feita.
+    PT: `{firstName}, para escritórios como {company} a primeira impressão online é quase tão importante quanto a reputação — e acredito que há margem para melhorar isso claramente.
 
-Trabalho com advogados em Portugal a construir autoridade online e a atrair clientes qualificados que já chegam prontos a contratar.
+Trabalho com advogados em Portugal em identidade visual, site e autoridade online. Equipa no Brasil com nível de agência europeia, a uma fracção do preço habitual.
 
-Seria muito breve — tem 10 minutos esta semana para perceber como funciona?`,
+Portfólio: {portfolioUrl}
 
-    ES: `{firstName}, vi el perfil de {company} y entiendo que tienen un área de actuación muy definida — exactamente el tipo de despacho que más se beneficia de una estrategia digital bien hecha.
+Tem 10 minutos esta semana?`,
 
-Trabajo con abogados en España para construir autoridad online y atraer clientes cualificados que ya llegan listos para contratar.
+    ES: `{firstName}, para despachos como {company} la primera impresión online es casi tan importante como la reputación, y creo que hay margen para mejorar eso claramente.
 
-Sería muy breve — ¿tiene 10 minutos esta semana para ver cómo funciona?`,
+Trabajo con abogados en España en identidad visual, web y autoridad online. Equipo en Brasil con nivel de agencia europea, a una fracción del precio habitual.
+
+Portfolio: {portfolioUrl}
+
+¿Tienes 10 minutos esta semana?`,
   },
 
   'Imobiliária / Construção': {
-    PT: `{firstName}, trabalho com agências imobiliárias e empresas de construção em Portugal a gerar contactos qualificados através de páginas de captação e anúncios bem segmentados.
+    PT: `{firstName}, vi o portfólio de {company} e acredito que a presença digital ainda não está a fazer jus à qualidade dos vossos projectos — o que limita os contactos que chegam.
 
-Vi que {company} tem um portfólio interessante mas acredito que podemos trazer mais visibilidade para os vossos imóveis/projectos sem aumentar muito o custo de aquisição.
+Ajudo empresas do sector imobiliário e construção em Portugal com design, site e campanhas de captação. Trabalho com equipa no Brasil: qualidade premium, preços acessíveis para o mercado europeu.
+
+Portfólio: {portfolioUrl}
 
 Tem 15 minutos para uma chamada esta semana?`,
 
-    ES: `{firstName}, trabajo con agencias inmobiliarias y empresas de construcción en España para generar contactos cualificados a través de páginas de captación y anuncios bien segmentados.
+    ES: `{firstName}, vi el portfolio de {company} y creo que la presencia digital todavía no está haciendo justicia a la calidad de vuestros proyectos, lo que limita los contactos que llegan.
 
-Vi que {company} tiene un portfolio interesante y creo que podemos dar mucha más visibilidad a vuestros inmuebles/proyectos sin aumentar demasiado el coste de captación.
+Ayudo a empresas del sector inmobiliario y construcción en España con diseño, web y campañas de captación. Equipo en Brasil: calidad premium, precios accesibles para el mercado europeo.
+
+Portfolio: {portfolioUrl}
 
 ¿Tienes 15 minutos para una llamada esta semana?`,
   },
 
   'Estética / Beleza': {
-    PT: `{firstName}, muitos salões e clínicas de estética com quem trabalho tinham o mesmo problema: clientes fiéis, mas dificuldade em atrair novos de forma consistente.
+    PT: `{firstName}, muitos negócios de estética com quem trabalho tinham o mesmo problema: agenda vazia a meio da semana, dependência total do passa-a-palavra.
 
-Ajudo negócios como {company} a crescer com uma presença no Instagram e Google que traz marcações todos os meses de forma previsível.
+Ajudo salões e clínicas em Portugal com design, Instagram e Google. Equipa especializada no Brasil — entregamos resultados de agência europeia por muito menos do que estão habituados a pagar.
 
-Posso mostrar-lhe exemplos concretos em menos de 10 minutos. Tem disponibilidade?`,
+Portfólio: {portfolioUrl}
 
-    ES: `{firstName}, muchos salones y clínicas de estética con los que trabajo tenían el mismo problema: clientes fieles, pero dificultad para atraer nuevos de forma constante.
+Tem disponibilidade para conversar 10 minutos?`,
 
-Ayudo a negocios como {company} a crecer con una presencia en Instagram y Google que trae reservas todos los meses de forma predecible.
+    ES: `{firstName}, muchos negocios de estética con los que trabajo tenían el mismo problema: agenda vacía a mitad de semana, dependencia total del boca a boca.
 
-Puedo mostrarte ejemplos concretos en menos de 10 minutos. ¿Tienes disponibilidad?`,
+Ayudo a salones y clínicas en España con diseño, Instagram y Google. Equipo especializado en Brasil: resultados de agencia europea por mucho menos de lo que están acostumbrados a pagar.
+
+Portfolio: {portfolioUrl}
+
+¿Tienes disponibilidad para hablar 10 minutos?`,
   },
 
   'Comércio / Loja': {
-    PT: `{firstName}, vi que {company} tem um negócio com potencial de crescimento claro, e acredito que a presença digital ainda não está a trabalhar a favor de vocês tanto quanto podia.
+    PT: `{firstName}, vi que {company} tem um negócio com potencial claro, e acredito que a presença digital ainda não está a trabalhar a favor de vocês tanto quanto podia.
 
-Trabalho com comércio local em Portugal a aumentar o tráfego na loja e as vendas — tanto presencialmente como online — com estratégias simples e mensuráveis.
+Trabalho com comércio local em Portugal em design, redes sociais e campanhas de tráfego. Equipa no Brasil com qualidade de agência europeia — a preços muito mais acessíveis.
 
-Faz sentido conversar 10 minutos para perceber o que se encaixa melhor no vosso caso?`,
-
-    ES: `{firstName}, vi que {company} tiene un negocio con potencial de crecimiento claro, y creo que la presencia digital todavía no está trabajando a vuestro favor tanto como podría.
-
-Trabajo con comercio local en España para aumentar el tráfico en tienda y las ventas, tanto presencialmente como online, con estrategias simples y medibles.
-
-¿Tiene sentido hablar 10 minutos para ver qué encaja mejor en vuestro caso?`,
-  },
-
-  'Academia / Fitness': {
-    PT: `{firstName}, trabalho com ginásios e estúdios de fitness em Portugal a atrair novos sócios de forma consistente — sem depender só de promoções ou do passa-a-palavra.
-
-A maioria dos meus clientes consegue preencher turmas e aumentar a base de sócios em 2 a 3 meses com uma estratégia simples de conteúdo e anúncios locais.
-
-Tem 15 minutos esta semana para uma conversa rápida sobre {company}?`,
-
-    ES: `{firstName}, trabajo con gimnasios y estudios de fitness en España para atraer nuevos socios de forma constante, sin depender solo de promociones o del boca a boca.
-
-La mayoría de mis clientes consigue llenar clases y aumentar la base de socios en 2 o 3 meses con una estrategia sencilla de contenido y anuncios locales.
-
-¿Tienes 15 minutos esta semana para una conversación rápida sobre {company}?`,
-  },
-
-  'Contabilidade / Finanças': {
-    PT: `{firstName}, sei que para contabilistas e consultores financeiros a reputação é tudo — e é exactamente por isso que a presença digital precisa de reflectir a seriedade do vosso trabalho.
-
-Ajudo escritórios como {company} a aparecer no topo do Google quando potenciais clientes procuram os vossos serviços na vossa zona, e a construir credibilidade online que converte.
-
-Tem 10 minutos para perceber como isso funciona na prática?`,
-
-    ES: `{firstName}, sé que para contables y asesores financieros la reputación lo es todo, y es exactamente por eso que la presencia digital necesita reflejar la seriedad de vuestro trabajo.
-
-Ayudo a despachos como {company} a aparecer en los primeros resultados de Google cuando potenciales clientes buscan vuestros servicios en vuestra zona, y a construir credibilidad online que convierte.
-
-¿Tienes 10 minutos para ver cómo funciona en la práctica?`,
-  },
-
-  'Turismo / Hotelaria': {
-    PT: `{firstName}, no sector do turismo a visibilidade online decide quem reserva e quem não reserva — e vi que {company} tem margem para captar muito mais visitantes directamente, sem depender de comissões de plataformas.
-
-Trabalho com alojamentos e operadores turísticos em Portugal a aumentar as reservas directas com estratégia digital focada em resultados.
-
-Tem disponibilidade para uma chamada de 15 minutos esta semana?`,
-
-    ES: `{firstName}, en el sector del turismo la visibilidad online decide quién reserva y quién no, y vi que {company} tiene margen para captar muchos más visitantes directamente, sin depender de comisiones de plataformas.
-
-Trabajo con alojamientos y operadores turísticos en España para aumentar las reservas directas con estrategia digital enfocada en resultados.
-
-¿Tienes disponibilidad para una llamada de 15 minutos esta semana?`,
-  },
-
-  'Educação / Formação': {
-    PT: `{firstName}, trabalho com centros de formação e escolas em Portugal a atrair mais alunos de forma previsível — com páginas de inscrição que convertem e campanhas bem segmentadas.
-
-Vi o trabalho de {company} e acredito que há uma oportunidade clara para crescer a base de alunos sem aumentar muito o investimento em marketing.
+Portfólio: {portfolioUrl}
 
 Faz sentido falarmos 10 minutos?`,
 
-    ES: `{firstName}, trabajo con centros de formación y academias en España para atraer más alumnos de forma predecible, con páginas de inscripción que convierten y campañas bien segmentadas.
+    ES: `{firstName}, vi que {company} tiene un negocio con potencial claro, y creo que la presencia digital todavía no está trabajando a vuestro favor tanto como podría.
 
-Vi el trabajo de {company} y creo que hay una oportunidad clara para hacer crecer la base de alumnos sin aumentar demasiado la inversión en marketing.
+Trabajo con comercio local en España en diseño, redes sociales y campañas de tráfico. Equipo en Brasil con calidad de agencia europea, a precios mucho más accesibles.
+
+Portfolio: {portfolioUrl}
+
+¿Tiene sentido hablar 10 minutos?`,
+  },
+
+  'Academia / Fitness': {
+    PT: `{firstName}, trabalho com ginásios e estúdios em Portugal a atrair sócios novos de forma consistente — com design e campanhas que realmente convertem, não só posts no Instagram.
+
+Equipa especializada no Brasil: entregamos qualidade de agência europeia a preços que fazem sentido para um negócio local.
+
+Portfólio: {portfolioUrl}
+
+Tem 15 minutos esta semana para uma conversa sobre {company}?`,
+
+    ES: `{firstName}, trabajo con gimnasios y estudios en España para atraer socios nuevos de forma constante, con diseño y campañas que realmente convierten, no solo posts en Instagram.
+
+Equipo especializado en Brasil: calidad de agencia europea a precios que tienen sentido para un negocio local.
+
+Portfolio: {portfolioUrl}
+
+¿Tienes 15 minutos esta semana para una conversación sobre {company}?`,
+  },
+
+  'Contabilidade / Finanças': {
+    PT: `{firstName}, para escritórios como {company} a presença online precisa de transmitir rigor e confiança — e acredito que existe margem para melhorar isso claramente.
+
+Trabalho com contabilistas e consultores em Portugal em identidade visual, site e posicionamento no Google. Equipa no Brasil: nível de agência europeia, investimento muito mais acessível.
+
+Portfólio: {portfolioUrl}
+
+Tem 10 minutos para perceber como funciona?`,
+
+    ES: `{firstName}, para despachos como {company} la presencia online necesita transmitir rigor y confianza, y creo que hay margen para mejorar eso claramente.
+
+Trabajo con contables y asesores en España en identidad visual, web y posicionamiento en Google. Equipo en Brasil: nivel de agencia europea, inversión mucho más accesible.
+
+Portfolio: {portfolioUrl}
+
+¿Tienes 10 minutos para ver cómo funciona?`,
+  },
+
+  'Turismo / Hotelaria': {
+    PT: `{firstName}, no turismo a diferença entre uma página bonita e uma que converte pode valer dezenas de reservas por mês — e vi que {company} tem margem para melhorar isso.
+
+Trabalho com alojamentos e operadores em Portugal em design, site e campanhas de reserva directa. Equipa no Brasil: qualidade premium, preços abaixo do mercado europeu.
+
+Portfólio: {portfolioUrl}
+
+Tem 15 minutos esta semana?`,
+
+    ES: `{firstName}, en turismo la diferencia entre una página bonita y una que convierte puede valer decenas de reservas al mes, y vi que {company} tiene margen para mejorar eso.
+
+Trabajo con alojamientos y operadores en España en diseño, web y campañas de reserva directa. Equipo en Brasil: calidad premium, precios por debajo del mercado europeo.
+
+Portfolio: {portfolioUrl}
+
+¿Tienes 15 minutos esta semana?`,
+  },
+
+  'Educação / Formação': {
+    PT: `{firstName}, trabalho com centros de formação em Portugal a atrair mais alunos com páginas de inscrição que convertem e campanhas bem segmentadas.
+
+Vi o trabalho de {company} e acredito que há uma oportunidade clara para crescer. Equipa no Brasil com qualidade de agência europeia — por muito menos do que estão habituados a pagar.
+
+Portfólio: {portfolioUrl}
+
+Faz sentido falarmos 10 minutos?`,
+
+    ES: `{firstName}, trabajo con centros de formación en España para atraer más alumnos con páginas de inscripción que convierten y campañas bien segmentadas.
+
+Vi el trabajo de {company} y creo que hay una oportunidad clara para crecer. Equipo en Brasil con calidad de agencia europea, por mucho menos de lo que están acostumbrados a pagar.
+
+Portfolio: {portfolioUrl}
 
 ¿Tiene sentido hablar 10 minutos?`,
   },
 
   'Tecnologia / Software': {
-    PT: `{firstName}, vi o posicionamento de {company} e acredito que existe espaço para aumentar a geração de leads qualificados de forma mais consistente.
+    PT: `{firstName}, vi o posicionamento de {company} e acredito que existe espaço para um design e uma comunicação digital que transmita melhor o valor do que fazem.
 
-Trabalho com empresas tech em Portugal a optimizar a presença digital e a criar funis de aquisição que trazem decisores certos — não apenas tráfego.
+Trabalho com empresas tech em Portugal em branding, site e geração de leads. Equipa especializada no Brasil: execução de nível europeu, custo muito mais competitivo.
 
-Teria interesse numa conversa rápida de 15 minutos sobre o que está a funcionar no mercado agora?`,
+Portfólio: {portfolioUrl}
 
-    ES: `{firstName}, vi el posicionamiento de {company} y creo que hay espacio para aumentar la generación de leads cualificados de forma más consistente.
+Teria interesse numa conversa rápida de 15 minutos?`,
 
-Trabajo con empresas tech en España para optimizar la presencia digital y crear embudos de adquisición que traen a los decisores correctos, no solo tráfico.
+    ES: `{firstName}, vi el posicionamiento de {company} y creo que hay espacio para un diseño y una comunicación digital que transmita mejor el valor de lo que hacéis.
 
-¿Le interesaría una conversación rápida de 15 minutos sobre lo que está funcionando en el mercado ahora?`,
+Trabajo con empresas tech en España en branding, web y generación de leads. Equipo especializado en Brasil: ejecución de nivel europeo, coste mucho más competitivo.
+
+Portfolio: {portfolioUrl}
+
+¿Le interesaría una conversación rápida de 15 minutos?`,
   },
 
   'Consultoria': {
-    PT: `{firstName}, para consultores o maior desafio costuma ser transformar credibilidade em contactos qualificados de forma consistente.
+    PT: `{firstName}, para consultores como {company} a credibilidade online é o principal activo de aquisição — e acredito que existe margem para a tornar muito mais forte.
 
-Ajudo consultores e empresas como {company} a posicionar-se online de forma a atrair os clientes certos — não qualquer cliente — e a reduzir o tempo gasto em prospeção.
+Trabalho com consultores em Portugal em identidade visual, site e posicionamento digital. Equipa no Brasil: qualidade de agência europeia a preços que fazem sentido para quem está a crescer.
 
-Tem 15 minutos esta semana para uma conversa sem compromisso?`,
+Portfólio: {portfolioUrl}
 
-    ES: `{firstName}, para consultores el mayor reto suele ser convertir credibilidad en contactos cualificados de forma constante.
+Tem 15 minutos esta semana?`,
 
-Ayudo a consultores y empresas como {company} a posicionarse online de forma que atraigan a los clientes correctos, no a cualquier cliente, y a reducir el tiempo dedicado a la prospección.
+    ES: `{firstName}, para consultores como {company} la credibilidad online es el principal activo de adquisición, y creo que hay margen para hacerla mucho más sólida.
 
-¿Tienes 15 minutos esta semana para una conversación sin compromiso?`,
+Trabajo con consultores en España en identidad visual, web y posicionamiento digital. Equipo en Brasil: calidad de agencia europea a precios que tienen sentido para quien está creciendo.
+
+Portfolio: {portfolioUrl}
+
+¿Tienes 15 minutos esta semana?`,
   },
 
   'Arquitectura / Design': {
-    PT: `{firstName}, o trabalho de {company} merece uma presença digital que transmita a mesma qualidade do que fazem — e acredito que há espaço para melhorar isso.
+    PT: `{firstName}, o trabalho de {company} merece uma presença digital à altura — e pela qualidade do que fazem, acredito que ainda está abaixo do potencial.
 
-Trabalho com arquitectos e designers em Portugal a construir portfólios digitais que geram contactos qualificados e diferenciam claramente da concorrência.
+Trabalho com arquitectos e designers em Portugal em portfólios digitais, site e posicionamento online. Equipa no Brasil: execução de nível europeu, por uma fracção do preço habitual.
 
-Tem 10 minutos para perceber como isso se aplicaria ao vosso caso?`,
+Portfólio: {portfolioUrl}
 
-    ES: `{firstName}, el trabajo de {company} merece una presencia digital que transmita la misma calidad de lo que hacéis, y creo que hay margen para mejorar eso.
+Tem 10 minutos para perceber como seria?`,
 
-Trabajo con arquitectos y diseñadores en España para construir portfolios digitales que generan contactos cualificados y diferencian claramente de la competencia.
+    ES: `{firstName}, el trabajo de {company} merece una presencia digital a la altura, y por la calidad de lo que hacéis, creo que todavía está por debajo del potencial.
 
-¿Tienes 10 minutos para ver cómo aplicaría esto a vuestro caso?`,
+Trabajo con arquitectos y diseñadores en España en portfolios digitales, web y posicionamiento online. Equipo en Brasil: ejecución de nivel europeo, a una fracción del precio habitual.
+
+Portfolio: {portfolioUrl}
+
+¿Tienes 10 minutos para ver cómo sería?`,
   },
 
   'Outro': {
-    PT: `{firstName}, vi o trabalho de {company} e acredito que existe uma oportunidade real para aumentar a visibilidade online e atrair mais clientes de forma consistente.
+    PT: `{firstName}, vi o trabalho de {company} e acredito que existe uma oportunidade clara para ter uma presença digital que gere mais clientes de forma consistente.
 
-Trabalho com pequenas e médias empresas em Portugal a criar estratégias digitais simples que geram resultados mensuráveis — sem complexidade desnecessária.
+Trabalho com PMEs em Portugal em design, site e marketing digital. Equipa especializada no Brasil: entregamos qualidade de agência europeia a preços muito mais acessíveis.
 
-Faz sentido falarmos 10 minutos para perceber se consigo acrescentar valor?`,
+Portfólio: {portfolioUrl}
 
-    ES: `{firstName}, vi el trabajo de {company} y creo que existe una oportunidad real para aumentar la visibilidad online y atraer más clientes de forma constante.
+Faz sentido falarmos 10 minutos?`,
 
-Trabajo con pequeñas y medianas empresas en España para crear estrategias digitales sencillas que generan resultados medibles, sin complejidad innecesaria.
+    ES: `{firstName}, vi el trabajo de {company} y creo que existe una oportunidad clara para tener una presencia digital que genere más clientes de forma constante.
 
-¿Tiene sentido hablar 10 minutos para ver si puedo aportar valor?`,
+Trabajo con pymes en España en diseño, web y marketing digital. Equipo especializado en Brasil: calidad de agencia europea a precios mucho más accesibles.
+
+Portfolio: {portfolioUrl}
+
+¿Tiene sentido hablar 10 minutos?`,
   },
 }
 
-export function generateMessage(prospect: Prospect): string {
+export function generateMessage(prospect: Prospect, portfolioUrl: string): string {
   const firstName = prospect.name.split(' ')[0]
   const sectorKey = SECTOR_OPTIONS.includes(prospect.sector) ? prospect.sector : 'Outro'
   const template = TEMPLATES[sectorKey] ?? TEMPLATES['Outro']
@@ -218,4 +266,5 @@ export function generateMessage(prospect: Prospect): string {
     .replace(/\{firstName\}/g, firstName)
     .replace(/\{company\}/g, prospect.company)
     .replace(/\{sector\}/g, prospect.sector)
+    .replace(/\{portfolioUrl\}/g, portfolioUrl || 'casacriative.com.br')
 }

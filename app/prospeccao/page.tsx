@@ -16,6 +16,7 @@ import {
 const DAILY_LIMIT = 20
 const STORAGE_KEY = 'cc_prospects'
 const CAMPAIGN_KEY = 'cc_campaign'
+const PORTFOLIO_KEY = 'cc_portfolio_url'
 
 function generateId() {
   return Math.random().toString(36).slice(2, 10)
@@ -82,10 +83,13 @@ export default function ProspeccaoPage() {
   const [copied, setCopied] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [portfolioUrl, setPortfolioUrl] = useState('')
+  const [editingPortfolio, setEditingPortfolio] = useState(false)
 
   useEffect(() => {
     setProspects(loadProspects())
     setCampaign(loadCampaign())
+    setPortfolioUrl(localStorage.getItem(PORTFOLIO_KEY) || 'casacriative.com.br')
   }, [])
 
   const persist = useCallback((list: Prospect[]) => {
@@ -119,7 +123,7 @@ export default function ProspeccaoPage() {
   }
 
   function handleGenerate(prospect: Prospect) {
-    const message = generateMessage(prospect)
+    const message = generateMessage(prospect, portfolioUrl)
     const next = prospects.map(p =>
       p.id === prospect.id
         ? { ...p, generatedMessage: message, status: 'message_ready' as ProspectStatus }
@@ -190,6 +194,29 @@ export default function ProspeccaoPage() {
             <h1 className="text-sm font-semibold tracking-tight">Prospecção LinkedIn</h1>
             <p className="text-xs text-zinc-500">Portugal &amp; Espanha · PMEs</p>
           </div>
+        </div>
+
+        {/* Portfolio URL */}
+        <div className="flex items-center gap-2">
+          {editingPortfolio ? (
+            <input
+              autoFocus
+              type="text"
+              value={portfolioUrl}
+              onChange={e => setPortfolioUrl(e.target.value)}
+              onBlur={() => { localStorage.setItem(PORTFOLIO_KEY, portfolioUrl); setEditingPortfolio(false) }}
+              onKeyDown={e => { if (e.key === 'Enter') { localStorage.setItem(PORTFOLIO_KEY, portfolioUrl); setEditingPortfolio(false) } }}
+              className="w-56 bg-zinc-900 border border-amber-600 rounded px-2 py-1 text-xs text-zinc-100 focus:outline-none"
+            />
+          ) : (
+            <button
+              onClick={() => setEditingPortfolio(true)}
+              className="text-xs text-zinc-500 hover:text-amber-400 transition-colors border border-zinc-800 rounded px-2 py-1"
+              title="Clique para editar o link do portfólio"
+            >
+              Portfolio: <span className="text-zinc-400">{portfolioUrl}</span>
+            </button>
+          )}
         </div>
 
         {/* Daily quota */}
