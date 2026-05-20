@@ -49,8 +49,8 @@ async function handleContact(request, env) {
 }
 
 async function handleGenerateMessage(request, env) {
-  if (!env.ANTHROPIC_API_KEY) {
-    return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), {
+  if (!env.PERPLEXITY_API_KEY) {
+    return new Response(JSON.stringify({ error: 'PERPLEXITY_API_KEY not configured' }), {
       status: 500,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
@@ -72,7 +72,8 @@ REGRAS OBRIGATÓRIAS:
 - Mencione algo específico do setor/empresa para parecer personalizado
 - Ofereça UM resultado claro e específico (ex: "mais clientes locais via Google", "página que converte visitantes em orçamentos")
 - Termine com uma pergunta direta e fácil de responder
-- Tom: profissional mas próximo, sem firulas corporativas`
+- Tom: profissional mas próximo, sem firulas corporativas
+- Retorne APENAS o texto da mensagem, sem comentários ou explicações`
 
   const userPrompt = `Crie uma mensagem de prospecção no LinkedIn para:
 
@@ -84,31 +85,32 @@ País: ${prospect.country === 'PT' ? 'Portugal' : 'Espanha'}
 Tamanho da empresa: ${prospect.companySize} funcionários
 ${prospect.notes ? `Notas adicionais: ${prospect.notes}` : ''}`
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
+      Authorization: `Bearer ${env.PERPLEXITY_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
+      model: 'sonar',
       max_tokens: 400,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
     }),
   })
 
   if (!res.ok) {
     const err = await res.text()
-    return new Response(JSON.stringify({ error: 'Claude API error', detail: err }), {
+    return new Response(JSON.stringify({ error: 'Perplexity API error', detail: err }), {
       status: 500,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   }
 
   const data = await res.json()
-  const message = data.content?.[0]?.text || ''
+  const message = data.choices?.[0]?.message?.content || ''
 
   return new Response(JSON.stringify({ message }), {
     headers: { ...CORS, 'Content-Type': 'application/json' },
