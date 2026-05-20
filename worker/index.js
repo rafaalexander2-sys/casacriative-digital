@@ -113,12 +113,7 @@ const HASHTAGS = {
 }
 
 async function startApifyScrape(request, env) {
-  if (!env.APIFY_API_KEY) {
-    return new Response(JSON.stringify({ error: 'APIFY_API_KEY not configured' }), {
-      status: 500,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    })
-  }
+  const APIFY_KEY = env.APIFY_API_KEY || 'AQEDARk9jLsAcbMqAAABnS9StZ4AAAGeT5f7h04ADuhn9FREOIJniSHeyMyDLH0qfjTEu0CDk-RGf9XheQMyTSV6LDO1D5P6WiVDNbDvIEvM7nlX95gTKW1YsYLil2yW2D2eE3Cg21ApZ83FCj1gi7cE'
 
   const { country = 'PT', sector = 'all', limit = 30 } = await request.json()
   const countryKey = country === 'ES' ? 'ES' : 'PT'
@@ -148,7 +143,7 @@ async function startApifyScrape(request, env) {
 
   // 1. Roda o hashtag scraper
   const hashtagRun = await fetch(
-    `https://api.apify.com/v2/acts/apify~instagram-hashtag-scraper/runs?token=${env.APIFY_API_KEY}`,
+    `https://api.apify.com/v2/acts/apify~instagram-hashtag-scraper/runs?token=${APIFY_KEY}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -182,12 +177,7 @@ async function startApifyScrape(request, env) {
 }
 
 async function getApifyResults(request, env) {
-  if (!env.APIFY_API_KEY) {
-    return new Response(JSON.stringify({ error: 'APIFY_API_KEY not configured' }), {
-      status: 500,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
-    })
-  }
+  const APIFY_KEY = env.APIFY_API_KEY || 'AQEDARk9jLsAcbMqAAABnS9StZ4AAAGeT5f7h04ADuhn9FREOIJniSHeyMyDLH0qfjTEu0CDk-RGf9XheQMyTSV6LDO1D5P6WiVDNbDvIEvM7nlX95gTKW1YsYLil2yW2D2eE3Cg21ApZ83FCj1gi7cE'
 
   const url = new URL(request.url)
   const runId = url.searchParams.get('runId')
@@ -199,9 +189,8 @@ async function getApifyResults(request, env) {
     })
   }
 
-  // Verifica status do run
   const statusRes = await fetch(
-    `https://api.apify.com/v2/actor-runs/${runId}?token=${env.APIFY_API_KEY}`
+    `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_KEY}`
   )
   const statusData = await statusRes.json()
   const status = statusData.data?.status
@@ -212,10 +201,9 @@ async function getApifyResults(request, env) {
     })
   }
 
-  // Pega os resultados
   const datasetId = statusData.data?.defaultDatasetId
   const itemsRes = await fetch(
-    `https://api.apify.com/v2/datasets/${datasetId}/items?token=${env.APIFY_API_KEY}&limit=100`
+    `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_KEY}&limit=100`
   )
   const items = await itemsRes.json()
 

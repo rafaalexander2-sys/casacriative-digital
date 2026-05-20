@@ -59,6 +59,8 @@ function saveCampaign(c: Campaign) {
 }
 
 const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL || ''
+const APIFY_KEY = 'AQEDARk9jLsAcbMqAAABnS9StZ4AAAGeT5f7h04ADuhn9FREOIJniSHeyMyDLH0qfjTEu0CDk-RGf9XheQMyTSV6LDO1D5P6WiVDNbDvIEvM7nlX95gTKW1YsYLil2yW2D2eE3Cg21ApZ83FCj1gi7cE'
+const APIFY_BASE = 'https://api.apify.com/v2'
 
 type Tab = 'queue' | 'add' | 'stats' | 'instagram'
 
@@ -109,26 +111,38 @@ export default function ProspeccaoPage() {
     saveCampaign(c)
   }, [])
 
+  const HASHTAGS_BY_SECTOR: Record<string, Record<string, string[]>> = {
+    'all':                     { PT: ['restauranteportugal','clinicalisboa','belezaportugal','negociolocal','empresaportugal'], ES: ['restaurantemadrid','clinicamadrid','bellezaespana','negociolocal','pymesespana'] },
+    'Restaurante / Alimentação':{ PT: ['restauranteportugal','restaurantelisboa','restaurantoporto'], ES: ['restaurantemadrid','restaurantebarcelona','hosteleria'] },
+    'Clínica / Saúde':          { PT: ['clinicalisboa','clinicaportugal','saudeportugal'], ES: ['clinicamadrid','saludybienestar','clinicaestetica'] },
+    'Estética / Beleza':        { PT: ['cabelereiroPortugal','belezaportugal','esteticalisboa'], ES: ['peluqueriamadrid','esteticamadrid','bellezaespana'] },
+    'Academia / Fitness':       { PT: ['ginasiolisboa','fitnessportugal'], ES: ['gimnasioespana','fitnessespana'] },
+    'Advocacia / Jurídico':     { PT: ['advocaciaportugal','advogadoportugal'], ES: ['abogadosespana','despachoabogados'] },
+  }
+
   async function handleInstagramScrape() {
     setIgLoading(true)
     setIgStatus('Iniciando busca no Instagram...')
     try {
-      const res = await fetch(`${WORKER_URL}/instagram-scrape`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ country: igCountry, sector: igSector === 'all' ? 'all' : igSector, limit: 30 }),
-      })
-      const data = await res.json()
-      if (data.runId) {
-        setIgRunId(data.runId)
-        setIgStatus(`Scraping iniciado. Aguardando resultados...`)
-        pollApifyResults(data.runId)
-      } else {
-        setIgStatus('Erro: ' + (data.error || 'Falha ao iniciar'))
-        setIgLoading(false)
-      }
-    } catch (e) {
-      setIgStatus('Erro de conexão com o Worker.')
+      const hashtags = HASHTAGS_BY_SECTOR[igSector]?.[igCountry] ?? HASHTAGS_BY_SECTOR['all'][igCountry]
+
+      const runRes = await fetch(
+        `${APIFY_BASE}/acts/apify~instagram-hashtag-scraper/runs?token=${APIFY_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hashtags, resultsLimit: 30, addParentData: true }),
+        }
+      )
+      const runData = await runRes.json()
+      const runId = runData.data?.id
+      if (!runId) throw new Error('Run não iniciou')
+
+      setIgRunId(runId)
+      setIgStatus('Buscando perfis... pode levar 1-2 minutos.')
+      pollApifyResults(runId)
+    } catch (e: unknown) {
+      setIgStatus('Erro: ' + (e instanceof Error ? e.message : 'falha'))
       setIgLoading(false)
     }
   }
@@ -137,26 +151,57 @@ export default function ProspeccaoPage() {
     let attempts = 0
     const interval = setInterval(async () => {
       attempts++
-      setIgStatus(`Aguardando Apify... (${attempts * 10}s)`)
       try {
-        const res = await fetch(`${WORKER_URL}/instagram-results?runId=${runId}`)
-        const data = await res.json()
-        if (data.ok && data.prospects?.length > 0) {
+        const statusRes = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${APIFY_KEY}`)
+        const statusData = await statusRes.json()
+        const status = statusData.data?.status
+
+        setIgStatus(`Buscando perfis... ${attempts * 8}s (status: ${status})`)
+
+        if (status === 'SUCCEEDED') {
           clearInterval(interval)
-          const next = [...data.prospects, ...prospects]
-          persist(next)
-          setIgStatus(`✅ ${data.count} prospects importados do Instagram!`)
+          const datasetId = statusData.data?.defaultDatasetId
+          const itemsRes = await fetch(`${APIFY_BASE}/datasets/${datasetId}/items?token=${APIFY_KEY}&limit=100`)
+          const items = await itemsRes.json()
+
+          const newProspects = Array.from(
+            new Map(
+              items
+                .filter((item: Record<string, unknown>) => item.ownerUsername)
+                .map((item: Record<string, unknown>) => {
+                  const p: Prospect = {
+                    id: Math.random().toString(36).slice(2, 10),
+                    name: (item.ownerFullName as string) || (item.ownerUsername as string),
+                    title: 'Dono(a)',
+                    company: item.ownerUsername as string,
+                    country: igCountry,
+                    sector: igSector === 'all' ? 'Outro' : igSector,
+                    companySize: '1-10',
+                    linkedinUrl: '',
+                    email: '',
+                    companyWebsite: (item.ownerBiography as string)?.match(/https?:\/\/[^\s]+/)?.[0] || '',
+                    notes: `Instagram: @${item.ownerUsername}. Bio: ${String(item.ownerBiography || '').slice(0, 150)}`,
+                    status: 'pending',
+                    createdAt: new Date().toISOString(),
+                  }
+                  return [item.ownerUsername, p]
+                })
+            ).values()
+          )
+
+          persist([...(newProspects as Prospect[]), ...prospects])
+          setIgStatus(`✅ ${newProspects.length} prospects importados!`)
           setIgLoading(false)
           setTab('queue')
-        } else if (attempts > 18) {
+        } else if (status === 'FAILED' || attempts > 20) {
           clearInterval(interval)
-          setIgStatus('Timeout — tente novamente.')
+          setIgStatus(status === 'FAILED' ? 'Falhou no Apify.' : 'Timeout — tente novamente.')
           setIgLoading(false)
         }
       } catch {
         // keep polling
       }
-    }, 10_000)
+    }, 8_000)
   }
 
   function handleExportQueue() {
