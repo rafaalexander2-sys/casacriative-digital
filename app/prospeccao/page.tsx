@@ -1,10 +1,7 @@
 'use client'
 
-// NEXT_PUBLIC_WORKER_URL must be set at build time.
-// Example: https://casacriative-form.YOUR_ACCOUNT.workers.dev
-const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL || ''
-
 import { useState, useEffect, useCallback } from 'react'
+import { generateMessage } from '@/lib/message-templates'
 import {
   Prospect,
   ProspectStatus,
@@ -82,7 +79,6 @@ export default function ProspeccaoPage() {
   const [form, setForm] = useState(emptyForm)
   const [filter, setFilter] = useState<ProspectStatus | 'all'>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [generating, setGenerating] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -122,27 +118,15 @@ export default function ProspeccaoPage() {
     setSaving(false)
   }
 
-  async function handleGenerate(prospect: Prospect) {
-    setGenerating(prospect.id)
-    try {
-      const res = await fetch(`${WORKER_URL}/generate-message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(prospect),
-      })
-      const data = await res.json()
-      if (data.message) {
-        const next = prospects.map(p =>
-          p.id === prospect.id
-            ? { ...p, generatedMessage: data.message, status: 'message_ready' as ProspectStatus }
-            : p
-        )
-        persist(next)
-        setSelectedId(prospect.id)
-      }
-    } finally {
-      setGenerating(null)
-    }
+  function handleGenerate(prospect: Prospect) {
+    const message = generateMessage(prospect)
+    const next = prospects.map(p =>
+      p.id === prospect.id
+        ? { ...p, generatedMessage: message, status: 'message_ready' as ProspectStatus }
+        : p
+    )
+    persist(next)
+    setSelectedId(prospect.id)
   }
 
   function handleCopy(prospect: Prospect) {
@@ -340,10 +324,9 @@ export default function ProspeccaoPage() {
                             {!p.generatedMessage && (
                               <button
                                 onClick={() => handleGenerate(p)}
-                                disabled={generating === p.id}
-                                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-black text-xs font-medium rounded-lg transition-colors"
+                                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-black text-xs font-medium rounded-lg transition-colors"
                               >
-                                {generating === p.id ? 'Gerando...' : 'Gerar Mensagem'}
+                                Gerar Mensagem
                               </button>
                             )}
 
@@ -351,10 +334,9 @@ export default function ProspeccaoPage() {
                               <>
                                 <button
                                   onClick={() => handleGenerate(p)}
-                                  disabled={generating === p.id}
                                   className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition-colors"
                                 >
-                                  {generating === p.id ? 'Gerando...' : 'Regenerar'}
+                                  Regenerar
                                 </button>
                                 <button
                                   onClick={() => handleCopy(p)}
