@@ -2,6 +2,12 @@
 
 # dependencies
 /node_modules
+**/node_modules
+
+# linkedin bot runtime files
+linkedin-bot/session.json
+linkedin-bot/queue.json
+linkedin-bot/queue-result.json
 /.pnp
 .pnp.js
 .yarn/install-state.gz
