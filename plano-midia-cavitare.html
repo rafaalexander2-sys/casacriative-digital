@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plano de Mídia — Cavitare Suplementos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand: #1a1a2e;
+      --accent: #e94560;
+      --accent2: #0f3460;
+      --ok: #16a34a;
+      --warn: #ca8a04;
+      --danger: #dc2626;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+      --white: #ffffff;
+      --text: #1e293b;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── COVER ── */
+    .cover {
+      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 60%, #e94560 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 80px;
+      page-break-after: always;
+    }
+    .cover-badge {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 32px;
+      display: inline-block;
+    }
+    .cover h1 {
+      color: #fff;
+      font-size: 52px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      max-width: 700px;
+    }
+    .cover h1 span { color: #e94560; }
+    .cover p.subtitle {
+      color: rgba(255,255,255,0.75);
+      font-size: 18px;
+      max-width: 500px;
+      margin-bottom: 48px;
+    }
+    .cover-meta {
+      display: flex;
+      gap: 32px;
+    }
+    .cover-meta-item { color: rgba(255,255,255,0.9); }
+    .cover-meta-item strong {
+      display: block;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .cover-meta-item span {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.55);
+    }
+    .cover-footer {
+      position: absolute;
+      bottom: 48px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: rgba(255,255,255,0.4);
+      font-size: 12px;
+    }
+    .cover-logo {
+      font-weight: 800;
+      font-size: 16px;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 1px;
+    }
+
+    /* ── LAYOUT ── */
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 32px;
+    }
+
+    /* ── SECTION HEADER ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--brand);
+      margin-bottom: 6px;
+    }
+    h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--brand);
+      margin-bottom: 12px;
+      margin-top: 28px;
+    }
+    .section-desc {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+      max-width: 640px;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none;
+      border-top: 2px solid var(--border);
+      margin: 48px 0;
+    }
+
+    /* ── STAT CARDS ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .stat-card .label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .stat-card .value {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--brand);
+      line-height: 1;
+    }
+    .stat-card .sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .stat-card.danger .value { color: var(--danger); }
+    .stat-card.warn .value { color: var(--warn); }
+    .stat-card.ok .value { color: var(--ok); }
+    .stat-card.accent .value { color: var(--accent); }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      overflow-x: auto;
+      margin-bottom: 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--white);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead tr {
+      background: var(--brand);
+      color: #fff;
+    }
+    thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f8fafc; }
+    tbody td {
+      padding: 11px 16px;
+      vertical-align: middle;
+    }
+    .td-mono {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+    .total-row td {
+      font-weight: 700;
+      background: #f1f5f9;
+      font-size: 13px;
+    }
+
+    /* ── BADGE ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-danger { background: #fef2f2; color: var(--danger); }
+    .badge-warn   { background: #fefce8; color: var(--warn); }
+    .badge-ok     { background: #f0fdf4; color: var(--ok); }
+    .badge-blue   { background: #eff6ff; color: #2563eb; }
+    .badge-gray   { background: #f1f5f9; color: var(--muted); }
+
+    /* ── ALERT BOXES ── */
+    .alert {
+      display: flex;
+      gap: 14px;
+      padding: 16px 20px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      border-left: 4px solid;
+    }
+    .alert-icon { font-size: 18px; flex-shrink: 0; }
+    .alert-body strong { font-weight: 700; display: block; margin-bottom: 4px; }
+    .alert-body p { font-size: 13px; color: var(--muted); }
+    .alert.danger { background: #fef2f2; border-color: var(--danger); }
+    .alert.warn   { background: #fefce8; border-color: var(--warn); }
+    .alert.ok     { background: #f0fdf4; border-color: var(--ok); }
+    .alert.info   { background: #eff6ff; border-color: #2563eb; }
+
+    /* ── CHANNEL CARDS ── */
+    .channel-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .channel-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .channel-header {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .channel-header h4 {
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .channel-header .budget {
+      font-size: 20px;
+      font-weight: 800;
+    }
+    .channel-meta { font-size: 11px; color: rgba(255,255,255,0.7); }
+    .channel-body { padding: 16px 20px; }
+    .channel-body .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .channel-body .row:last-child { border: none; }
+    .channel-body .row .k { color: var(--muted); }
+    .channel-body .row .v { font-weight: 600; }
+
+    .ch-google .channel-header { background: #4285f4; color: white; }
+    .ch-meta   .channel-header { background: #1877f2; color: white; }
+    .ch-pmax   .channel-header { background: #0f9d58; color: white; }
+    .ch-search .channel-header { background: #f4b400; color: white; }
+    .ch-display .channel-header { background: #db4437; color: white; }
+    .ch-tofu   .channel-header { background: #8b5cf6; color: white; }
+    .ch-mefu   .channel-header { background: #0ea5e9; color: white; }
+    .ch-fufu   .channel-header { background: #e94560; color: white; }
+
+    /* ── FUNNEL DIAGRAM ── */
+    .funnel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin: 32px 0;
+    }
+    .funnel-step {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      width: 100%;
+      max-width: 700px;
+    }
+    .funnel-bar {
+      flex: 1;
+      border-radius: 8px;
+      padding: 18px 24px;
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .funnel-step:nth-child(1) .funnel-bar { background: #8b5cf6; width: 100%; }
+    .funnel-step:nth-child(2) .funnel-bar { background: #0ea5e9; width: 80%; }
+    .funnel-step:nth-child(3) .funnel-bar { background: #e94560; width: 60%; }
+    .funnel-label {
+      width: 120px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* ── TIMELINE ── */
+    .timeline {
+      border-left: 3px solid var(--accent);
+      margin-left: 16px;
+      padding-left: 32px;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 28px;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -40px;
+      top: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid var(--white);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+    .timeline-item h4 {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .timeline-item ul {
+      padding-left: 16px;
+    }
+    .timeline-item ul li {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    /* ── KPI TABLE ── */
+    .kpi-highlight {
+      background: linear-gradient(135deg, var(--brand) 0%, var(--accent2) 100%);
+      border-radius: 16px;
+      padding: 32px;
+      color: white;
+      margin: 32px 0;
+    }
+    .kpi-highlight h3 {
+      color: white;
+      margin-top: 0;
+      font-size: 20px;
+      margin-bottom: 24px;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .kpi-item { text-align: center; }
+    .kpi-item .kv {
+      font-size: 28px;
+      font-weight: 800;
+      color: white;
+    }
+    .kpi-item .kk {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── KEYWORDS ── */
+    .keyword-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 20px;
+    }
+    .keyword-tag {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .keyword-tag.hot { background: #fef2f2; border-color: #fca5a5; color: var(--danger); }
+    .keyword-tag.mid { background: #fefce8; border-color: #fcd34d; color: #92400e; }
+    .keyword-tag.cool { background: #f0fdf4; border-color: #86efac; color: var(--ok); }
+
+    /* ── NEGATIVE KEYWORDS ── */
+    .negatives {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+    .negatives strong { color: var(--danger); font-size: 13px; display: block; margin-bottom: 8px; }
+    .neg-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .neg-tag {
+      background: #fee2e2;
+      color: var(--danger);
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    /* ── PRINT / PAGE BREAKS ── */
+    @media print {
+      .cover { min-height: 100vh; }
+      .no-print { display: none; }
+      .page-break { page-break-before: always; }
+      body { background: white; }
+      .page { padding: 32px; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      .cover { padding: 40px 24px; }
+      .cover h1 { font-size: 32px; }
+      .channel-grid { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2,1fr); }
+    }
+
+    .text-danger { color: var(--danger); font-weight: 700; }
+    .text-ok { color: var(--ok); font-weight: 700; }
+    .text-warn { color: var(--warn); font-weight: 700; }
+    p { margin-bottom: 12px; }
+    ul, ol { padding-left: 20px; margin-bottom: 12px; }
+    li { margin-bottom: 4px; }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .box {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .box h4 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--brand);
+    }
+    .box ul li { font-size: 13px; color: var(--muted); }
+    .box ul li strong { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ CAPA ══════════════ -->
+<div class="cover" style="position:relative;">
+  <span class="cover-badge">Plano de Mídia Paga · 2026</span>
+  <h1>Cavitare<br/><span>Suplementos</span></h1>
+  <p class="subtitle">Análise do histórico de mídia paga + plano estratégico para R$6.000/mês</p>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <strong>R$ 6.000</strong>
+      <span>Orçamento mensal</span>
+    </div>
+    <div class="cover-meta-item">
+      <strong>Meta + Google</strong>
+      <span>Canais</span>
+    </div>
+    <div class="cover-meta-item">
+      <strong>Mai/2026</strong>
+      <span>Data do plano</span>
+    </div>
+    <div class="cover-meta-item">
+      <strong>Casa Criative</strong>
+      <span>Agência</span>
+    </div>
+  </div>
+  <div class="cover-footer">
+    <div class="cover-logo">CASA CRIATIVE</div>
+    <div>Confidencial · uso interno e do cliente</div>
+  </div>
+</div>
+
+<!-- ══════════════ PARTE 1 · DIAGNÓSTICO ══════════════ -->
+<div class="page">
+  <div class="section-label">Parte 1</div>
+  <h2>Análise do Histórico</h2>
+  <p class="section-desc">Leitura dos relatórios fornecidos pela agência anterior cobrindo o período de <strong>dezembro/2025 a maio/2026</strong> — Meta Ads e Google Ads.</p>
+
+  <!-- ── VISÃO GERAL ── -->
+  <h3>Visão geral do período</h3>
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="label">Investimento Total</div>
+      <div class="value">~R$15k</div>
+      <div class="sub">Meta ~R$11.600 + Google ~R$3.780</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Período</div>
+      <div class="value">6 meses</div>
+      <div class="sub">Dez/2025 → Mai/2026</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="label">CPA Médio Real</div>
+      <div class="value">~R$450</div>
+      <div class="sub">Para ticket de R$150–500</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="label">ROAS Real (Meta)</div>
+      <div class="value">~0,55x</div>
+      <div class="sub">Operação no prejuízo</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="label">Compras Meta</div>
+      <div class="value">~27</div>
+      <div class="sub">Em 6 meses via pixel</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="label">Compras Google</div>
+      <div class="value">0</div>
+      <div class="sub">Pixel de compra não configurado</div>
+    </div>
+  </div>
+
+  <!-- ── PRODUTOS ── -->
+  <h3>Portfólio anunciado (identificado nos criativos)</h3>
+  <div class="keyword-tags">
+    <span class="keyword-tag hot">Creatina Gummy ⭐ principal</span>
+    <span class="keyword-tag hot">Colágeno Verisol</span>
+    <span class="keyword-tag mid">Vinagre de Maçã Gummy</span>
+    <span class="keyword-tag mid">Hair (queda de cabelo)</span>
+    <span class="keyword-tag mid">KIDS Gummy</span>
+    <span class="keyword-tag cool">Melatonina</span>
+    <span class="keyword-tag cool">Sleep</span>
+    <span class="keyword-tag cool">Kit Completo</span>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ══ META ADS ══ -->
+  <div class="section-label">Meta Ads · Dez/2025 – Mai/2026</div>
+  <h2>Diagnóstico Meta Ads</h2>
+
+  <h3>Performance das campanhas</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Campanha</th>
+          <th>Objetivo</th>
+          <th>Investido</th>
+          <th>Resultado</th>
+          <th>Custo/resultado</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>[ToFu] Tráfego novos seguidores</td>
+          <td>Visitas ao perfil</td>
+          <td class="td-mono">R$ 489,08</td>
+          <td>2.258 visitas</td>
+          <td class="td-mono">R$ 0,22</td>
+          <td><span class="badge badge-ok">OK</span></td>
+        </tr>
+        <tr>
+          <td>Eng-seguidores novos instagram</td>
+          <td>Seguidores</td>
+          <td class="td-mono">R$ 498,17</td>
+          <td>3.142 seguidores</td>
+          <td class="td-mono">R$ 0,16</td>
+          <td><span class="badge badge-warn">Não converte</span></td>
+        </tr>
+        <tr>
+          <td>Seguidores Novos (ativa)</td>
+          <td>Visitas ao perfil</td>
+          <td class="td-mono">R$ 717,17</td>
+          <td>2.564 visitas</td>
+          <td class="td-mono">R$ 0,28</td>
+          <td><span class="badge badge-warn">Ativa sem conversão</span></td>
+        </tr>
+        <tr>
+          <td>[MeFu] adicionar ao carrinho</td>
+          <td>Add to cart</td>
+          <td class="td-mono">R$ 809,48</td>
+          <td>63 ATCs</td>
+          <td class="td-mono">R$ 12,85</td>
+          <td><span class="badge badge-ok">Viável</span></td>
+        </tr>
+        <tr>
+          <td>[FuFu] Compra</td>
+          <td>Compra</td>
+          <td class="td-mono">R$ 1.515,66</td>
+          <td>1 compra</td>
+          <td class="td-mono text-danger">R$ 1.515</td>
+          <td><span class="badge badge-danger">Crítico</span></td>
+        </tr>
+        <tr>
+          <td>Fundo de funil vendas</td>
+          <td>Compra</td>
+          <td class="td-mono">R$ 1.335,34</td>
+          <td>0 compras</td>
+          <td class="td-mono text-danger">—</td>
+          <td><span class="badge badge-danger">Crítico</span></td>
+        </tr>
+        <tr>
+          <td>Catálogo</td>
+          <td>Compra</td>
+          <td class="td-mono">R$ 691,35</td>
+          <td>0 compras</td>
+          <td class="td-mono text-danger">—</td>
+          <td><span class="badge badge-danger">Crítico</span></td>
+        </tr>
+        <tr>
+          <td>Semana do Consumidor</td>
+          <td>Compra</td>
+          <td class="td-mono">R$ 984,02</td>
+          <td>4 compras</td>
+          <td class="td-mono text-warn">R$ 246</td>
+          <td><span class="badge badge-warn">Melhor FuFu</span></td>
+        </tr>
+        <tr>
+          <td>[WhatsApp] Queda de cabelo</td>
+          <td>Mensagem WPP</td>
+          <td class="td-mono">R$ 216,29</td>
+          <td>33 conversas</td>
+          <td class="td-mono text-ok">R$ 6,55</td>
+          <td><span class="badge badge-ok">Destaque</span></td>
+        </tr>
+        <tr>
+          <td>Colágeno (add-to-cart)</td>
+          <td>Add to cart</td>
+          <td class="td-mono">R$ 154,26</td>
+          <td>17 ATCs</td>
+          <td class="td-mono text-ok">R$ 9,07</td>
+          <td><span class="badge badge-ok">Destaque</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Criativos com melhor desempenho (ToFu)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Criativo</th>
+          <th>Tipo</th>
+          <th>Resultado</th>
+          <th>Custo/resultado</th>
+          <th>Por que funciona</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>🏆 "Não é só suplemento. É..."</td>
+          <td>Post Instagram</td>
+          <td>306 visitas</td>
+          <td class="td-mono text-ok">R$ 0,16</td>
+          <td>Posicionamento emocional — melhor CPV</td>
+        </tr>
+        <tr>
+          <td>"Eu troquei a creatina em pó..."</td>
+          <td>UGC vídeo</td>
+          <td>639 visitas</td>
+          <td class="td-mono text-ok">R$ 0,25</td>
+          <td>Narrativa de substituição — alto CTR</td>
+        </tr>
+        <tr>
+          <td>UGC Gummy vinagre de maçã</td>
+          <td>UGC vídeo</td>
+          <td>2.234 visitas</td>
+          <td class="td-mono text-ok">R$ 0,22</td>
+          <td>Volume alto + CPV baixo — maior alcance</td>
+        </tr>
+        <tr>
+          <td>"Creatina em goma 💥 Sem pó. Sem..."</td>
+          <td>Post Instagram</td>
+          <td>382 visitas</td>
+          <td class="td-mono text-warn">R$ 0,41</td>
+          <td>Diferencial claro do produto</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Problemas críticos identificados — Meta</h3>
+
+  <div class="alert danger">
+    <div class="alert-icon">🚨</div>
+    <div class="alert-body">
+      <strong>CPA inviável — operação no prejuízo</strong>
+      <p>CPA médio de R$430–464 para produtos de R$150–500. ROAS estimado de 0,55x — cada real investido retornou R$0,55. A operação financiou o prejuízo mês a mês.</p>
+    </div>
+  </div>
+
+  <div class="alert danger">
+    <div class="alert-icon">💸</div>
+    <div class="alert-body">
+      <strong>R$1.700+ em seguidores sem funil de conversão conectado</strong>
+      <p>As campanhas de engajamento/seguidores trouxeram alcance, mas não existia um funil estruturado para converter esse público em compradores. Dinheiro jogado em vanity metrics.</p>
+    </div>
+  </div>
+
+  <div class="alert danger">
+    <div class="alert-icon">📊</div>
+    <div class="alert-body">
+      <strong>Orçamento fragmentado em 40+ conjuntos simultâneos</strong>
+      <p>A maioria dos conjuntos rodava com R$10–30/dia, abaixo do mínimo para o algoritmo aprender. Campanhas canibalizavam umas às outras. Estrutura impossível de analisar e otimizar.</p>
+    </div>
+  </div>
+
+  <div class="alert warn">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">
+      <strong>Pixel descalibrado em campanhas de fundo de funil</strong>
+      <p>Campanhas de compra com dezenas de milhares de impressões e zero conversão registrada (ex: Catálogo — R$691 → 0 compras). Indica falha no disparo do evento Purchase em parte das sessões.</p>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ══ GOOGLE ADS ══ -->
+  <div class="section-label">Google Ads · Histórico total da conta</div>
+  <h2>Diagnóstico Google Ads</h2>
+
+  <h3>Performance das campanhas</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Campanha</th>
+          <th>Tipo</th>
+          <th>Gasto</th>
+          <th>Impressões</th>
+          <th>Conversões¹</th>
+          <th>ROAS</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2 CPN GG SHOPPING</td>
+          <td>PMax</td>
+          <td class="td-mono">R$ 922,25</td>
+          <td>217.676</td>
+          <td><span class="text-danger">6.334 (micro-eventos)</span></td>
+          <td><span class="text-danger">17,51x (falso)</span></td>
+          <td><span class="badge badge-danger">Tracking errado</span></td>
+        </tr>
+        <tr>
+          <td>[pesquisa] fev red</td>
+          <td>Search</td>
+          <td class="td-mono">R$ 758,74</td>
+          <td>22.104</td>
+          <td><span class="text-danger">1.620 (micro-eventos)</span></td>
+          <td><span class="text-danger">5,80x (falso)</span></td>
+          <td><span class="badge badge-danger">Tracking errado</span></td>
+        </tr>
+        <tr>
+          <td>Campanha 1</td>
+          <td>PMax</td>
+          <td class="td-mono">R$ 134,82</td>
+          <td>9.017</td>
+          <td><span class="text-danger">216 (micro-eventos)</span></td>
+          <td><span class="text-danger">9,41x (falso)</span></td>
+          <td><span class="badge badge-danger">Tracking errado</span></td>
+        </tr>
+        <tr style="background:#fff5f5">
+          <td><strong>[SHOPPING] Janeiro red</strong></td>
+          <td>Shopping Standard</td>
+          <td class="td-mono"><strong>R$ 1.964,93</strong></td>
+          <td>222.421</td>
+          <td class="text-danger"><strong>0</strong></td>
+          <td class="text-danger"><strong>0%</strong></td>
+          <td><span class="badge badge-danger">Sem pixel</span></td>
+        </tr>
+        <tr class="total-row">
+          <td><strong>TOTAL</strong></td>
+          <td></td>
+          <td class="td-mono"><strong>R$ 3.780,74</strong></td>
+          <td>471.218</td>
+          <td class="text-danger"><strong>0 compras reais</strong></td>
+          <td class="text-danger"><strong>—</strong></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12px;color:var(--muted)">¹ As conversões do PMax e Search rastreavam page views/sessões, não compras. CVR de 92–219% é matematicamente impossível para e-commerce.</p>
+
+  <h3>Problemas críticos identificados — Google</h3>
+
+  <div class="alert danger">
+    <div class="alert-icon">🔥</div>
+    <div class="alert-body">
+      <strong>R$1.964 desperdiçados no Shopping sem conversão configurada</strong>
+      <p>A maior campanha em gasto ("[SHOPPING] Janeiro red") rodou sem pixel de compra. O algoritmo não tinha sinal, serviu impressões para termos completamente irrelevantes: "best otc sleep aid" (inglês), "como mejorar el sueño profundo" (espanhol), "drogasil", "shampoo crescimento de cabelo". Zero retorno.</p>
+    </div>
+  </div>
+
+  <div class="alert danger">
+    <div class="alert-icon">📉</div>
+    <div class="alert-body">
+      <strong>ROAS falso de 17x — algoritmo otimizando para page views, não compras</strong>
+      <p>O PMax e a Search registravam conversões com CVR de 94–219%, o que é impossível para compras reais. O evento configurado era visualização de página ou sessão. Os algoritmos aprenderam a trazer cliques baratos, não compradores.</p>
+    </div>
+  </div>
+
+  <div class="alert warn">
+    <div class="alert-icon">🔑</div>
+    <div class="alert-body">
+      <strong>Search em correspondência ampla sem listas negativas</strong>
+      <p>Palavras como "creatina" em ampla ativaram buscas por "suplemento queratina" (cabelo — produto diferente), termos informativos e marcas sem relação. O produto exato "creatina em goma" apareceu apenas 5 vezes em toda a história da conta.</p>
+    </div>
+  </div>
+
+  <h3>Termos de busca mais relevantes identificados (Search)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Palavra-chave</th>
+          <th>Cliques</th>
+          <th>CPC médio</th>
+          <th>Intenção</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>comprar creatina</td>
+          <td>373</td>
+          <td class="td-mono">R$ 0,96</td>
+          <td><span class="badge badge-danger">Alta — compra</span></td>
+        </tr>
+        <tr>
+          <td>creatina venda</td>
+          <td>69</td>
+          <td class="td-mono">R$ 0,86</td>
+          <td><span class="badge badge-danger">Alta — compra</span></td>
+        </tr>
+        <tr>
+          <td>creatina power</td>
+          <td>56</td>
+          <td class="td-mono">R$ 0,85</td>
+          <td><span class="badge badge-danger">Alta — compra</span></td>
+        </tr>
+        <tr>
+          <td>creatina preço / melhor preço</td>
+          <td>33</td>
+          <td class="td-mono">R$ 0,82</td>
+          <td><span class="badge badge-warn">Média — comparação</span></td>
+        </tr>
+        <tr>
+          <td>creatina comprimidos</td>
+          <td>14</td>
+          <td class="td-mono">R$ 0,82</td>
+          <td><span class="badge badge-warn">Média — formato sólido</span></td>
+        </tr>
+        <tr>
+          <td><strong>creatina em goma</strong></td>
+          <td><strong>5</strong></td>
+          <td class="td-mono"><strong>R$ 0,73</strong></td>
+          <td><span class="badge badge-ok">Altíssima — produto exato</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>O CTR médio da Search de <strong>3,35%</strong> e CPC de <strong>R$1,03</strong> são saudáveis — o canal funciona. O problema era estrutura e tracking, não o canal em si.</p>
+
+</div>
+
+<!-- ══════════════ PARTE 2 · PLANO DE MÍDIA ══════════════ -->
+<div class="page page-break">
+  <div class="section-label">Parte 2</div>
+  <h2>Plano de Mídia</h2>
+  <p class="section-desc">Estratégia completa com funil de 3 etapas para <strong>R$6.000/mês</strong> — Google Ads (Shopping + Search) e Meta Ads (ToFu → MeFu → FuFu).</p>
+
+  <!-- ── DISTRIBUIÇÃO ── -->
+  <h3>Distribuição do orçamento</h3>
+  <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr)">
+    <div class="stat-card">
+      <div class="label">🔵 Google Ads</div>
+      <div class="value">R$ 2.200</div>
+      <div class="sub">37% do orçamento total</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">🟣 Meta Ads</div>
+      <div class="value">R$ 3.500</div>
+      <div class="sub">58% do orçamento total</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">🧪 Testes A/B</div>
+      <div class="value">R$ 300</div>
+      <div class="sub">5% reserva de testes</div>
+    </div>
+  </div>
+
+  <!-- ── FUNIL VISUAL ── -->
+  <h3>Funil de 3 etapas</h3>
+  <div class="funnel">
+    <div class="funnel-step">
+      <div class="funnel-label">ToFu<br/>Conscientização</div>
+      <div class="funnel-bar" style="background:#8b5cf6">
+        <span>🌱 Topo de Funil — Awareness</span>
+        <span>R$ 1.000 / mês</span>
+      </div>
+    </div>
+    <div class="funnel-step">
+      <div class="funnel-label">MeFu<br/>Consideração</div>
+      <div class="funnel-bar" style="background:#0ea5e9; margin-left:auto; width:80%">
+        <span>💡 Meio de Funil — Consideração</span>
+        <span>R$ 1.200 / mês</span>
+      </div>
+    </div>
+    <div class="funnel-step">
+      <div class="funnel-label">FuFu<br/>Conversão</div>
+      <div class="funnel-bar" style="background:#e94560; margin-left:auto; width:60%">
+        <span>🛒 Fundo de Funil — Conversão</span>
+        <span>R$ 1.300 / mês</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ══ GOOGLE ══ -->
+  <div class="section-label">Google Ads · R$ 2.200/mês</div>
+  <h2>Estrutura Google Ads</h2>
+
+  <div class="channel-grid">
+    <div class="channel-card ch-pmax">
+      <div class="channel-header">
+        <div>
+          <h4>Performance Max</h4>
+          <div class="channel-meta">Shopping + Display + YouTube + Search</div>
+        </div>
+        <div class="budget">R$1.500</div>
+      </div>
+      <div class="channel-body">
+        <div class="row"><span class="k">Objetivo</span><span class="v">Compras — ROAS alvo 3x</span></div>
+        <div class="row"><span class="k">Produtos foco</span><span class="v">Creatina Gummy · Colágeno · KIDS</span></div>
+        <div class="row"><span class="k">Público-sinal</span><span class="v">Compradores do site + e-mail list</span></div>
+        <div class="row"><span class="k">Assets criativos</span><span class="v">UGC + imagem produto + headline</span></div>
+        <div class="row"><span class="k">Lance</span><span class="v">Max. valor de conversão c/ ROAS alvo</span></div>
+        <div class="row"><span class="k">Meta compras</span><span class="v text-ok">8–12 / mês</span></div>
+      </div>
+    </div>
+
+    <div class="channel-card ch-search">
+      <div class="channel-header">
+        <div>
+          <h4>Search — Intenção Alta</h4>
+          <div class="channel-meta">Frase e Exata · sem Ampla</div>
+        </div>
+        <div class="budget">R$500</div>
+      </div>
+      <div class="channel-body">
+        <div class="row"><span class="k">Grupo 1</span><span class="v">"creatina em goma" · "creatina gummy"</span></div>
+        <div class="row"><span class="k">Grupo 2</span><span class="v">"comprar creatina" · "creatina venda"</span></div>
+        <div class="row"><span class="k">Grupo 3</span><span class="v">"colágeno verisol comprar"</span></div>
+        <div class="row"><span class="k">Grupo 4</span><span class="v">"vitaree" · "cavitare suplementos" (marca)</span></div>
+        <div class="row"><span class="k">CPC estimado</span><span class="v">R$ 0,80–1,20</span></div>
+        <div class="row"><span class="k">Meta compras</span><span class="v text-ok">4–7 / mês</span></div>
+      </div>
+    </div>
+
+    <div class="channel-card ch-display">
+      <div class="channel-header">
+        <div>
+          <h4>Display Remarketing</h4>
+          <div class="channel-meta">GDN · Carrinho abandonado</div>
+        </div>
+        <div class="budget">R$200</div>
+      </div>
+      <div class="channel-body">
+        <div class="row"><span class="k">Público</span><span class="v">Visitantes site últimos 30 dias</span></div>
+        <div class="row"><span class="k">Exclusão</span><span class="v">Compradores últimos 30 dias</span></div>
+        <div class="row"><span class="k">Cap frequência</span><span class="v">3 impressões / dia</span></div>
+        <div class="row"><span class="k">Creative</span><span class="v">Banner produto + prova social</span></div>
+        <div class="row"><span class="k">Meta compras</span><span class="v text-ok">2–3 / mês</span></div>
+      </div>
+    </div>
+
+    <div class="box" style="background:#fffbeb; border-color:#fcd34d">
+      <h4>⚠️ Pré-requisitos obrigatórios (antes de gastar R$1)</h4>
+      <ul>
+        <li>Configurar evento <strong>Purchase com valor dinâmico</strong> via Google Tag Manager</li>
+        <li>Desativar ações de conversão antigas (micro-eventos falsas)</li>
+        <li>Otimizar feed Merchant Center: título com keyword, GTIN, preço correto</li>
+        <li>Criar lista negativa antes de ligar qualquer campanha</li>
+        <li>Verificar aprovação dos produtos no Merchant Center</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Lista negativa obrigatória (Google Shopping + Search)</h3>
+  <div class="negatives">
+    <strong>🚫 Termos a excluir imediatamente</strong>
+    <div class="neg-tags">
+      <span class="neg-tag">queratina</span>
+      <span class="neg-tag">keratin</span>
+      <span class="neg-tag">drogasil</span>
+      <span class="neg-tag">mercadolivre</span>
+      <span class="neg-tag">farmácia</span>
+      <span class="neg-tag">remédio</span>
+      <span class="neg-tag">medicamento</span>
+      <span class="neg-tag">bula</span>
+      <span class="neg-tag">benefícios do</span>
+      <span class="neg-tag">o que é</span>
+      <span class="neg-tag">para que serve</span>
+      <span class="neg-tag">como tomar</span>
+      <span class="neg-tag">como usar</span>
+      <span class="neg-tag">shampoo</span>
+      <span class="neg-tag">condicionador</span>
+      <span class="neg-tag">best otc</span>
+      <span class="neg-tag">como mejorar</span>
+      <span class="neg-tag">pantogar</span>
+      <span class="neg-tag">lavitan</span>
+      <span class="neg-tag">serebem</span>
+      <span class="neg-tag">monsterone</span>
+      <span class="neg-tag">creatina mhp</span>
+      <span class="neg-tag">growth supplements</span>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ══ META ══ -->
+  <div class="section-label">Meta Ads · R$ 3.500/mês</div>
+  <h2>Estrutura Meta Ads</h2>
+  <p style="margin-bottom:24px">Três campanhas fixas com <strong>orçamento no nível da campanha (CBO)</strong>. Máximo de 3–4 conjuntos por campanha para não fragmentar o aprendizado do algoritmo.</p>
+
+  <div class="channel-grid">
+    <div class="channel-card ch-tofu">
+      <div class="channel-header">
+        <div>
+          <h4>Campanha ToFu — Tráfego</h4>
+          <div class="channel-meta">Awareness · Novos públicos</div>
+        </div>
+        <div class="budget">R$1.000</div>
+      </div>
+      <div class="channel-body">
+        <div class="row"><span class="k">Objetivo</span><span class="v">Tráfego (visualiz. página destino)</span></div>
+        <div class="row"><span class="k">Público A</span><span class="v">Lookalike 1–3% de compradores</span></div>
+        <div class="row"><span class="k">Público B</span><span class="v">Interesses: saúde, academia, beleza</span></div>
+        <div class="row"><span class="k">Segmentação</span><span class="v">Mulheres 25–50 · BR</span></div>
+        <div class="row"><span class="k">Formato</span><span class="v">Reels 9:16 (principal) + Stories</span></div>
+        <div class="row"><span class="k">Exclusão</span><span class="v">Compradores últimos 30 dias</span></div>
+        <div class="row"><span class="k">Meta CPC</span><span class="v text-ok">< R$ 1,50 · CTR > 1,5%</span></div>
+      </div>
+    </div>
+
+    <div class="channel-card ch-mefu">
+      <div class="channel-header">
+        <div>
+          <h4>Campanha MeFu — Consideração</h4>
+          <div class="channel-meta">Add to Cart · Retargeting quente</div>
+        </div>
+        <div class="budget">R$1.200</div>
+      </div>
+      <div class="channel-body">
+        <div class="row"><span class="k">Objetivo</span><span class="v">Add to Cart / Iniciar Checkout</span></div>
+        <div class="row"><span class="k">Público A</span><span class="v">Visitantes site últimos 14 dias</span></div>
+        <div class="row"><span class="k">Público B</span><span class="v">Engajamento IG/FB últimos 30 dias</span></div>
+        <div class="row"><span class="k">Público C</span><span class="v">Vídeo view +50% últimos 30 dias</span></div>
+        <div class="row"><span class="k">Formato</span><span class="v">Carrossel + Catálogo dinâmico</span></div>
+        <div class="row"><span class="k">Meta ATC</span><span class="v text-ok">< R$ 12 · ATC rate > 3%</span></div>
+      </div>
+    </div>
+
+    <div class="channel-card ch-fufu">
+      <div class="channel-header">
+        <div>
+          <h4>Campanha FuFu — Conversão</h4>
+          <div class="channel-meta">Compra · Remarketing quente</div>
+        </div>
+        <div class="budget">R$1.300</div>
+      </div>
+      <div class="channel-body">
+        <div class="row"><span class="k">Objetivo</span><span class="v">Compra (Purchase event)</span></div>
+        <div class="row"><span class="k">Público A</span><span class="v">Adicionou ao carrinho últimos 7 dias</span></div>
+        <div class="row"><span class="k">Público B</span><span class="v">Iniciou checkout últimos 7 dias</span></div>
+        <div class="row"><span class="k">Público C</span><span class="v">Visitou produto 3x+ últimos 14 dias</span></div>
+        <div class="row"><span class="k">Creative</span><span class="v">Prova social + urgência + oferta</span></div>
+        <div class="row"><span class="k">Meta CPA</span><span class="v text-ok">< R$ 120 · ROAS > 2,5x</span></div>
+      </div>
+    </div>
+
+    <div class="channel-card" style="border:1px dashed #cbd5e1">
+      <div class="channel-header" style="background:#f1f5f9">
+        <div>
+          <h4 style="color:var(--brand)">Extra · WhatsApp Hair</h4>
+          <div class="channel-meta" style="color:var(--muted)">Dentro do envelope do MeFu</div>
+        </div>
+        <div class="budget" style="color:var(--brand)">R$200</div>
+      </div>
+      <div class="channel-body">
+        <div class="row"><span class="k">Objetivo</span><span class="v">Mensagem WhatsApp</span></div>
+        <div class="row"><span class="k">Produto</span><span class="v">Hair / Queda de cabelo</span></div>
+        <div class="row"><span class="k">Histórico</span><span class="v text-ok">R$6,55/conversa (melhor resultado)</span></div>
+        <div class="row"><span class="k">Público</span><span class="v">Mulheres 30–55 · interesse cabelo</span></div>
+        <div class="row"><span class="k">Meta</span><span class="v text-ok">20–30 conversas/mês</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Criativos prioritários a produzir</h3>
+  <div class="two-col">
+    <div class="box">
+      <h4>🎬 Vídeos UGC (ToFu)</h4>
+      <ul>
+        <li>Pessoa mostrando textura/gosto da gummy — diferencial vs. pó</li>
+        <li>"Antes: shaker com creatina. Depois: uma gominha antes do treino"</li>
+        <li>Mãe dando KIDS gummy para o filho — naturalidade</li>
+        <li>Formato: Reel 9:16, 15–30 segundos, sem cortes</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4>📸 Estáticos (MeFu + FuFu)</h4>
+      <ul>
+        <li>Carrossel de produtos com benefício por linha</li>
+        <li>Print de avaliação real + foto do produto</li>
+        <li>Oferta: "Leve 3, Pague 2 — por tempo limitado"</li>
+        <li>Antes/depois queda de cabelo (Hair)</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ══ KPIs ══ -->
+  <div class="section-label">Metas e KPIs</div>
+  <h2>Resultados esperados</h2>
+
+  <div class="kpi-highlight">
+    <h3>📊 Meta mensal consolidada (a partir do mês 2)</h3>
+    <div class="kpi-grid">
+      <div class="kpi-item">
+        <div class="kv">27–42</div>
+        <div class="kk">Compras / mês</div>
+      </div>
+      <div class="kpi-item">
+        <div class="kv">R$143–222</div>
+        <div class="kk">CPA médio</div>
+      </div>
+      <div class="kpi-item">
+        <div class="kv">1,8–2,8x</div>
+        <div class="kk">ROAS alvo</div>
+      </div>
+      <div class="kpi-item">
+        <div class="kv">R$5–11k</div>
+        <div class="kk">Receita gerada / mês</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Metas por canal</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Canal</th>
+          <th>Gasto</th>
+          <th>Meta de compras</th>
+          <th>CPA alvo</th>
+          <th>ROAS alvo</th>
+          <th>Obs.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Google PMax</td>
+          <td class="td-mono">R$ 1.500</td>
+          <td>8–12</td>
+          <td class="td-mono">R$ 125–187</td>
+          <td>2,5–3,5x</td>
+          <td>Maior canal de compra</td>
+        </tr>
+        <tr>
+          <td>Google Search</td>
+          <td class="td-mono">R$ 500</td>
+          <td>4–7</td>
+          <td class="td-mono">R$ 71–125</td>
+          <td>2–4x</td>
+          <td>Alta intenção de compra</td>
+        </tr>
+        <tr>
+          <td>Google Display Rmkt</td>
+          <td class="td-mono">R$ 200</td>
+          <td>2–3</td>
+          <td class="td-mono">R$ 67–100</td>
+          <td>3x+</td>
+          <td>Suporte ao funil</td>
+        </tr>
+        <tr>
+          <td>Meta ToFu</td>
+          <td class="td-mono">R$ 1.000</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td>Alimenta o funil</td>
+        </tr>
+        <tr>
+          <td>Meta MeFu</td>
+          <td class="td-mono">R$ 1.200</td>
+          <td>5–8</td>
+          <td class="td-mono">R$ 150–240</td>
+          <td>1,5–2x</td>
+          <td>Retargeting de visitantes</td>
+        </tr>
+        <tr>
+          <td>Meta FuFu</td>
+          <td class="td-mono">R$ 1.300</td>
+          <td>8–12</td>
+          <td class="td-mono">R$ 108–162</td>
+          <td>2–3x</td>
+          <td>Remarketing quente</td>
+        </tr>
+        <tr>
+          <td>Testes A/B</td>
+          <td class="td-mono">R$ 300</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+          <td>Rotativo por mês</td>
+        </tr>
+        <tr class="total-row">
+          <td><strong>TOTAL</strong></td>
+          <td class="td-mono"><strong>R$ 6.000</strong></td>
+          <td><strong>27–42 compras</strong></td>
+          <td class="td-mono"><strong>R$ 143–222</strong></td>
+          <td><strong>~1,8–2,8x</strong></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert info">
+    <div class="alert-icon">ℹ️</div>
+    <div class="alert-body">
+      <strong>Expectativa do mês 1 (aprendizado)</strong>
+      <p>No primeiro mês o algoritmo está aprendendo. Esperar CPAs 30–50% acima da meta. A partir do mês 2, com histórico de compras reais, os CPAs caem e o ROAS sobe. Não interromper campanhas antes de 7–10 dias de dados.</p>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ══ CRONOGRAMA ══ -->
+  <div class="section-label">Execução</div>
+  <h2>Cronograma de implementação</h2>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <h4>⚙️ Semana 1 — Setup técnico (pré-lançamento)</h4>
+      <ul>
+        <li>Configurar evento <strong>Purchase com valor dinâmico</strong> no Google Tag Manager</li>
+        <li>Verificar e corrigir disparo do Pixel Meta (API de Conversões)</li>
+        <li>Cadastrar e aprovar produtos no Google Merchant Center</li>
+        <li>Criar lista de palavras negativas no Google Ads</li>
+        <li>Otimizar feed de produtos (título, descrição, GTIN, imagem)</li>
+        <li>Verificar velocidade do site mobile (PageSpeed &gt; 70)</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <h4>🚀 Semana 2 — Lançamento Google + Meta ToFu</h4>
+      <ul>
+        <li>Subir PMax com feed aprovado e sinais de público</li>
+        <li>Ligar Search com correspondências de Frase/Exata e lista negativa</li>
+        <li>Ativar Meta ToFu com UGCs existentes (Reels)</li>
+        <li>Configurar públicos de remarketing Meta (visitantes, vídeo view)</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <h4>📊 Semana 3 — Lançamento Meta MeFu + FuFu</h4>
+      <ul>
+        <li>Ativar MeFu com catálogo dinâmico + carrossel</li>
+        <li>Ativar FuFu para públicos de ATC e checkout abandonado</li>
+        <li>Ligar Display Remarketing no Google</li>
+        <li>Primeira revisão de dados (verificar se pixel está disparando)</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <h4>🔍 Semana 4 — Primeira otimização</h4>
+      <ul>
+        <li>Pausar anúncios com CPA &gt; 2x a meta por 3 dias consecutivos</li>
+        <li>Escalar 20% de budget nos conjuntos com CPA abaixo da meta</li>
+        <li>Adicionar novas palavras negativas identificadas nos termos de pesquisa</li>
+        <li>Relatório de performance semanal</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <h4>🧪 Mês 2 — Testes e escala</h4>
+      <ul>
+        <li>Teste A/B: UGC vs. depoimento em câmera (ToFu)</li>
+        <li>Teste de oferta: Kit Leve 3 Pague 2 vs. frete grátis</li>
+        <li>Criar Lookalike de compradores do mês 1</li>
+        <li>Avaliar redistribuição de orçamento com base no ROAS por canal</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <h4>📈 Mês 3 — Consolidação</h4>
+      <ul>
+        <li>Avaliar ROAS real consolidado dos 2 primeiros meses</li>
+        <li>Escalar o canal com melhor performance (Google ou Meta)</li>
+        <li>Adicionar campanha de Upsell/Cross-sell para compradores (email + remarketing)</li>
+        <li>Revisão estratégica e recomendação de orçamento para o trimestre seguinte</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ══ REGRAS DE AUTOMAÇÃO ══ -->
+  <h3>Regras de automação (Meta Ads)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Condição</th><th>Ação</th><th>Janela</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CPA &gt; R$200 por 3 dias consecutivos</td>
+          <td>Pausar conjunto de anúncios</td>
+          <td>Verificação diária</td>
+        </tr>
+        <tr>
+          <td>CPA &lt; R$90 por 2 dias consecutivos</td>
+          <td>Aumentar budget em 20%</td>
+          <td>Verificação diária</td>
+        </tr>
+        <tr>
+          <td>Frequência &gt; 3,5 (públicos pequenos)</td>
+          <td>Expandir público ou pausar</td>
+          <td>Semanal</td>
+        </tr>
+        <tr>
+          <td>CTR &lt; 0,8% por 5 dias (Feed)</td>
+          <td>Trocar criativo</td>
+          <td>Semanal</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ══ RESUMO EXECUTIVO ══ -->
+  <div class="section-label">Resumo Executivo</div>
+  <h2>Conclusões e próximos passos</h2>
+
+  <div class="two-col" style="margin-bottom:24px">
+    <div class="box" style="border-color:#fca5a5;background:#fef2f2">
+      <h4 style="color:var(--danger)">❌ O que não pode se repetir</h4>
+      <ul>
+        <li>Shopping rodando sem pixel de compra</li>
+        <li>40+ conjuntos simultâneos com R$10/dia cada</li>
+        <li>Tracking de page view como conversão no Google</li>
+        <li>Orçamento em seguidores sem funil de conversão</li>
+        <li>Correspondência ampla sem listas negativas</li>
+      </ul>
+    </div>
+    <div class="box" style="border-color:#86efac;background:#f0fdf4">
+      <h4 style="color:var(--ok)">✅ O que manter e escalar</h4>
+      <ul>
+        <li>UGC com narrativa "Eu troquei a creatina em pó..."</li>
+        <li>Campanha WhatsApp para Hair (R$6,55/conversa)</li>
+        <li>Colágeno MeFu (R$9,07/ATC)</li>
+        <li>Promoções com oferta clara (Leve 3 Pague 2)</li>
+        <li>Semana do consumidor como mecânica recorrente</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="alert ok">
+    <div class="alert-icon">🎯</div>
+    <div class="alert-body">
+      <strong>Prioridade #1: corrigir o tracking antes de tudo</strong>
+      <p>Todo o resto do plano depende de ter o evento Purchase disparando corretamente com valor dinâmico — no Meta (via API de Conversões) e no Google (via GTM). Sem isso, os algoritmos voltam a otimizar para o alvo errado.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:48px; padding:24px; background:var(--brand); border-radius:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div style="color:rgba(255,255,255,0.6);font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Elaborado por</div>
+      <div style="color:white;font-size:20px;font-weight:800">Casa Criative</div>
+      <div style="color:rgba(255,255,255,0.5);font-size:12px">casacriative.com.br · contato@casacriative.com.br</div>
+    </div>
+    <div style="text-align:right">
+      <div style="color:rgba(255,255,255,0.6);font-size:11px;margin-bottom:4px">Cliente</div>
+      <div style="color:white;font-size:18px;font-weight:700">Cavitare Suplementos</div>
+      <div style="color:rgba(255,255,255,0.5);font-size:12px">vitaree.com.br · Maio 2026</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
