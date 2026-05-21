@@ -301,7 +301,7 @@ export default function ProspeccaoPage() {
     setAiGenerating(prospect.id)
     setAiError(null)
     try {
-      const message = await generateAIMessage(prospect, portfolioUrl, perplexityKey)
+      const message = await generateAIMessage(prospect, perplexityKey)
       const next = prospects.map(p =>
         p.id === prospect.id
           ? { ...p, generatedMessage: message, status: 'message_ready' as ProspectStatus }
