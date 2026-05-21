@@ -365,13 +365,51 @@ export default function ProspeccaoPage() {
     if (selectedId === id) setSelectedId(null)
   }
 
-  const filtered = prospects
-    .filter(p => filter === 'all' || p.status === filter)
-    .filter(p =>
-      searchQuery === '' ||
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.company.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  function sortByPriority(list: Prospect[]): Prospect[] {
+    const now = Date.now()
+    const DAY = 86_400_000
+
+    function priority(p: Prospect): number {
+      // engaging = pronto para enviar DM agora → topo absoluto
+      if (p.status === 'engaging') return 0
+      // following há 2+ dias = pronto para interagir → urgente
+      if (p.status === 'following') {
+        const age = p.followedAt ? now - new Date(p.followedAt).getTime() : 0
+        return age >= 2 * DAY ? 1 : 3
+      }
+      if (p.status === 'message_ready') return 2
+      if (p.status === 'pending') return 4
+      if (p.status === 'sent') return 5
+      if (p.status === 'replied') return 6
+      return 7 // no_reply, not_interested
+    }
+
+    function tiebreak(p: Prospect): number {
+      // dentro do mesmo grupo: mais antigo/atrasado primeiro
+      const ref =
+        p.status === 'engaging' ? p.engagedAt :
+        p.status === 'following' ? p.followedAt :
+        p.status === 'sent' ? p.sentAt :
+        p.createdAt
+      return ref ? new Date(ref).getTime() : 0
+    }
+
+    return [...list].sort((a, b) => {
+      const diff = priority(a) - priority(b)
+      if (diff !== 0) return diff
+      return tiebreak(a) - tiebreak(b)
+    })
+  }
+
+  const filtered = sortByPriority(
+    prospects
+      .filter(p => filter === 'all' || p.status === filter)
+      .filter(p =>
+        searchQuery === '' ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.company.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+  )
 
   const selected = selectedId ? prospects.find(p => p.id === selectedId) : null
 
