@@ -390,7 +390,7 @@ export default function ProspeccaoPage() {
       <div className="flex" style={{ height: 'calc(100vh - 65px)' }}>
         {/* Sidebar */}
         <nav className="w-48 border-r border-zinc-800 p-4 flex flex-col gap-1 flex-shrink-0">
-          {([['instagram', '🔍 Buscar Instagram'], ['queue', 'Fila'], ['add', '+ Adicionar'], ['stats', 'Estatísticas']] as [Tab, string][]).map(([t, label]) => (
+          {([['instagram', '🔍 Buscar Leads'], ['queue', 'Fila'], ['add', '+ Adicionar'], ['stats', 'Estatísticas']] as [Tab, string][]).map(([t, label]) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -433,8 +433,8 @@ export default function ProspeccaoPage() {
           <div className="flex-1 overflow-y-auto">
             {tab === 'instagram' && (
               <div className="p-6 max-w-md">
-                <h2 className="text-base font-semibold mb-1">Buscar prospects no Instagram</h2>
-                <p className="text-xs text-zinc-500 mb-5">O Apify busca perfis de PMEs por hashtag e importa automaticamente para a fila.</p>
+                <h2 className="text-base font-semibold mb-1">Buscar prospects no LinkedIn</h2>
+                <p className="text-xs text-zinc-500 mb-5">O Apify busca donos de PMEs em Portugal e Espanha e importa direto para a fila.</p>
 
                 <div className="space-y-4">
                   <label className="block">
@@ -484,7 +484,7 @@ export default function ProspeccaoPage() {
                   <p className="text-xs text-amber-500 font-medium mb-2">Como funciona</p>
                   <ol className="text-xs text-zinc-400 space-y-1.5 list-decimal list-inside">
                     <li>Seleciona país e setor</li>
-                    <li>Clica em Buscar — o Apify varre hashtags do Instagram</li>
+                    <li>Clica em Buscar — o Apify pesquisa donos de PME no LinkedIn</li>
                     <li>Perfis são importados automaticamente para a Fila</li>
                     <li>Gera mensagem e envia pelo bot</li>
                   </ol>
