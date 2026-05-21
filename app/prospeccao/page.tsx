@@ -64,7 +64,7 @@ const APIFY_KEY_STORAGE = 'cc_apify_key'
 const PERPLEXITY_KEY_STORAGE = 'cc_perplexity_key'
 const APIFY_BASE = 'https://api.apify.com/v2'
 
-type Tab = 'queue' | 'add' | 'stats' | 'instagram'
+type Tab = 'queue' | 'kanban' | 'add' | 'stats' | 'instagram'
 
 const emptyForm = {
   name: '',
@@ -104,6 +104,8 @@ export default function ProspeccaoPage() {
   const [editingPerplexity, setEditingPerplexity] = useState(false)
   const [aiGenerating, setAiGenerating] = useState<string | null>(null)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState<ProspectStatus | null>(null)
 
   useEffect(() => {
     setProspects(loadProspects())
@@ -526,7 +528,7 @@ export default function ProspeccaoPage() {
       <div className="flex" style={{ height: 'calc(100vh - 65px)' }}>
         {/* Sidebar */}
         <nav className="w-48 border-r border-zinc-800 p-4 flex flex-col gap-1 flex-shrink-0">
-          {([['instagram', '🔍 Buscar Leads'], ['queue', 'Fila'], ['add', '+ Adicionar'], ['stats', 'Estatísticas']] as [Tab, string][]).map(([t, label]) => (
+          {([['instagram', '🔍 Buscar Leads'], ['queue', 'Fila'], ['kanban', '📋 Kanban'], ['add', '+ Adicionar'], ['stats', 'Estatísticas']] as [Tab, string][]).map(([t, label]) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -664,6 +666,106 @@ export default function ProspeccaoPage() {
                 </div>
               </div>
             )}
+
+            {tab === 'kanban' && (() => {
+              const COLUMNS: { status: ProspectStatus; label: string; color: string; dot: string }[] = [
+                { status: 'pending',       label: 'Pendente',     color: 'border-zinc-700',     dot: 'bg-zinc-500' },
+                { status: 'following',     label: 'A Seguir',     color: 'border-blue-700/60',  dot: 'bg-blue-500' },
+                { status: 'engaging',      label: 'A Interagir',  color: 'border-violet-700/60',dot: 'bg-violet-500' },
+                { status: 'sent',          label: 'DM Enviada',   color: 'border-teal-700/60',  dot: 'bg-teal-500' },
+                { status: 'replied',       label: 'Respondeu',    color: 'border-green-700/60', dot: 'bg-green-500' },
+                { status: 'no_reply',      label: 'Sem Resposta', color: 'border-zinc-700',     dot: 'bg-zinc-600' },
+              ]
+              const FLAG: Record<ProspectCountry, string> = { PT: '🇵🇹', ES: '🇪🇸' }
+              const NOW = Date.now()
+              const DAY = 86_400_000
+
+              return (
+                <div className="flex gap-3 p-4 overflow-x-auto h-full" style={{ minWidth: 'max-content' }}>
+                  {COLUMNS.map(col => {
+                    const cards = sortByPriority(prospects.filter(p => p.status === col.status))
+                    const isOver = dragOver === col.status
+                    return (
+                      <div
+                        key={col.status}
+                        className={`flex flex-col rounded-xl border ${col.color} ${isOver ? 'ring-2 ring-amber-500/40' : ''} bg-zinc-900/60 w-52 flex-shrink-0 transition-all`}
+                        onDragOver={e => { e.preventDefault(); setDragOver(col.status) }}
+                        onDragLeave={() => setDragOver(null)}
+                        onDrop={() => {
+                          if (dragId) {
+                            const p = prospects.find(x => x.id === dragId)
+                            if (p) {
+                              const extra: Partial<Prospect> =
+                                col.status === 'following' ? { followedAt: p.followedAt || new Date().toISOString() } :
+                                col.status === 'engaging'  ? { engagedAt: p.engagedAt || new Date().toISOString() } :
+                                col.status === 'sent'      ? { sentAt: p.sentAt || new Date().toISOString() } : {}
+                              const next = prospects.map(x => x.id === dragId ? { ...x, ...extra, status: col.status } : x)
+                              persist(next)
+                              if (col.status === 'sent' && p.status !== 'sent') {
+                                const c = { ...campaign, sentToday: campaign.sentToday + 1 }
+                                persistCampaign(c)
+                              }
+                            }
+                          }
+                          setDragId(null)
+                          setDragOver(null)
+                        }}
+                      >
+                        {/* Column header */}
+                        <div className="px-3 py-2.5 flex items-center gap-2 border-b border-zinc-800">
+                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${col.dot}`} />
+                          <span className="text-xs font-semibold text-zinc-300">{col.label}</span>
+                          <span className="ml-auto text-xs text-zinc-600 font-mono">{cards.length}</span>
+                        </div>
+
+                        {/* Cards */}
+                        <div className="flex-1 overflow-y-auto p-2 space-y-2" style={{ maxHeight: 'calc(100vh - 160px)' }}>
+                          {cards.length === 0 && (
+                            <div className={`h-16 rounded-lg border-2 border-dashed flex items-center justify-center text-xs ${isOver ? 'border-amber-500/50 text-amber-500/50' : 'border-zinc-800 text-zinc-700'}`}>
+                              {isOver ? 'Soltar aqui' : 'Vazio'}
+                            </div>
+                          )}
+                          {cards.map(p => {
+                            const isFollowingReady = p.status === 'following' && p.followedAt && (NOW - new Date(p.followedAt).getTime()) >= 2 * DAY
+                            return (
+                              <div
+                                key={p.id}
+                                draggable
+                                onDragStart={() => setDragId(p.id)}
+                                onDragEnd={() => { setDragId(null); setDragOver(null) }}
+                                onClick={() => { setSelectedId(p.id); setTab('queue') }}
+                                className={`bg-zinc-950 border rounded-lg p-2.5 cursor-grab active:cursor-grabbing transition-all hover:border-zinc-600 select-none ${dragId === p.id ? 'opacity-40' : ''} ${isFollowingReady ? 'border-amber-700/50' : 'border-zinc-800'}`}
+                                title="Clica para abrir · Arrasta para mover"
+                              >
+                                <div className="flex items-start justify-between gap-1 mb-1.5">
+                                  <span className="text-xs font-medium text-zinc-100 leading-tight truncate">{p.name.split(' ')[0]} {p.name.split(' ').slice(-1)[0]}</span>
+                                  <span className="text-base flex-shrink-0 leading-none">{FLAG[p.country]}</span>
+                                </div>
+                                <p className="text-xs text-zinc-500 truncate mb-1.5">{p.company}</p>
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  <span className="text-xs px-1.5 py-0.5 bg-zinc-800 text-zinc-500 rounded truncate max-w-full">{p.sector.split(' /')[0]}</span>
+                                  {isFollowingReady && (
+                                    <span className="text-xs px-1.5 py-0.5 bg-amber-900/50 text-amber-400 rounded">pronto</span>
+                                  )}
+                                  {p.generatedMessage && (
+                                    <span className="text-xs px-1.5 py-0.5 bg-violet-900/50 text-violet-400 rounded">msg ✓</span>
+                                  )}
+                                </div>
+                                {p.status === 'following' && p.followedAt && (
+                                  <p className="text-xs text-zinc-600 mt-1.5">
+                                    {Math.floor((NOW - new Date(p.followedAt).getTime()) / DAY)}d a seguir
+                                  </p>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
 
             {tab === 'queue' && (
               <div className="p-6">
