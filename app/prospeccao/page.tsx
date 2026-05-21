@@ -133,12 +133,16 @@ export default function ProspeccaoPage() {
     setIgStatus('Iniciando busca no LinkedIn...')
     try {
       const keyword = SECTOR_KEYWORDS[igSector]?.[igCountry] ?? SECTOR_KEYWORDS['all'][igCountry]
+      // Build LinkedIn people search URL
+      const q = encodeURIComponent(keyword)
+      const searchUrl = `https://www.linkedin.com/search/results/people/?keywords=${q}&origin=GLOBAL_SEARCH_HEADER`
+
       const runRes = await fetch(
         `${APIFY_BASE}/acts/harvestapi~linkedin-profile-search/runs?token=${apifyKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ keyword, count: 25 }),
+          body: JSON.stringify({ searchUrl, maxResults: 25 }),
         }
       )
       const runData = await runRes.json()
