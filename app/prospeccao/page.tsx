@@ -577,31 +577,42 @@ export default function ProspeccaoPage() {
                         <div className="mt-4 pt-4 border-t border-zinc-800" onClick={e => e.stopPropagation()}>
                           {p.generatedMessage ? (
                             <div className="mb-3 space-y-3">
-                              {/* Step 1: Connect */}
+                              {/* Direct message option */}
                               <div className="bg-blue-950/30 border border-blue-800/40 rounded-lg p-3">
-                                <p className="text-xs font-semibold text-blue-300 mb-1">① Pedir conexão (grátis, &lt;300 chars)</p>
-                                <p className="text-xs text-zinc-300 leading-relaxed italic mb-2">{generateConnectionNote(p)}</p>
+                                <p className="text-xs font-semibold text-blue-300 mb-0.5">Enviar mensagem direta</p>
+                                <p className="text-xs text-zinc-500 mb-2">Clica o botão → LinkedIn abre + mensagem copiada → cola no campo de texto → clica o botão azul ✈️</p>
                                 <a
                                   href={p.linkedinUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  onClick={() => navigator.clipboard.writeText(generateConnectionNote(p))}
+                                  onClick={() => { if (p.generatedMessage) navigator.clipboard.writeText(p.generatedMessage) }}
                                   className="inline-block px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors"
                                 >
-                                  Abrir LinkedIn + Copiar nota
+                                  Abrir LinkedIn + Copiar mensagem
                                 </a>
-                                <p className="text-xs text-zinc-600 mt-1.5">No LinkedIn: clica "Mais" → "Conectar" → "Adicionar nota" → Ctrl+V → Enviar</p>
+                                <p className="text-xs text-zinc-600 mt-1.5">💡 Se pedir assunto: deixa em branco, clica no campo da mensagem, Ctrl+V, envia</p>
                               </div>
-                              {/* Step 2: Full message after connecting */}
-                              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
-                                <p className="text-xs font-semibold text-zinc-400 mb-1">② Após aceitar — enviar mensagem completa</p>
-                                <div className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap mb-2">{p.generatedMessage}</div>
-                                <button
-                                  onClick={() => handleCopy(p)}
-                                  className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs rounded-lg transition-colors"
-                                >
-                                  {copied === p.id ? '✓ Copiado!' : 'Copiar mensagem completa'}
-                                </button>
+                              {/* Connection note if blocked */}
+                              <details className="group">
+                                <summary className="text-xs text-zinc-500 cursor-pointer hover:text-zinc-300 list-none flex items-center gap-1">
+                                  <span className="group-open:rotate-90 transition-transform inline-block">▶</span>
+                                  Se bloqueado por ser 3° grau — pedir conexão primeiro
+                                </summary>
+                                <div className="mt-2 bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+                                  <p className="text-xs text-zinc-400 italic mb-2">{generateConnectionNote(p)}</p>
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(generateConnectionNote(p))}
+                                    className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs rounded-lg transition-colors"
+                                  >
+                                    Copiar nota curta (&lt;300 chars)
+                                  </button>
+                                  <p className="text-xs text-zinc-600 mt-1.5">No LinkedIn: "Mais" → "Conectar" → "Adicionar nota" → Ctrl+V → Enviar</p>
+                                </div>
+                              </details>
+                              {/* Full message text */}
+                              <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3">
+                                <p className="text-xs text-zinc-500 mb-1.5">Mensagem completa:</p>
+                                <div className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap">{p.generatedMessage}</div>
                               </div>
                             </div>
                           ) : null}
