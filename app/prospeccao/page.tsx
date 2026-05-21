@@ -612,9 +612,12 @@ export default function ProspeccaoPage() {
                                   href={p.linkedinUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="px-3 py-1.5 bg-blue-900/40 hover:bg-blue-900/60 text-blue-300 text-xs rounded-lg transition-colors"
+                                  onClick={() => {
+                                    if (p.generatedMessage) navigator.clipboard.writeText(p.generatedMessage)
+                                  }}
+                                  className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors"
                                 >
-                                  Abrir LinkedIn
+                                  Abrir LinkedIn + Copiar msg
                                 </a>
                                 {p.status !== 'sent' && canSendMore && (
                                   <button
