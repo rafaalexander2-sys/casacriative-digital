@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { generateMessage } from '@/lib/message-templates'
+import { generateMessage, generateConnectionNote } from '@/lib/message-templates'
 import {
   Prospect,
   ProspectStatus,
