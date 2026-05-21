@@ -14,6 +14,7 @@ export interface Prospect {
   email?: string
   companyWebsite?: string
   notes?: string
+  instagramUrl?: string
   status: ProspectStatus
   generatedMessage?: string
   sentAt?: string
