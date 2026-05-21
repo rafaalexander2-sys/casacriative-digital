@@ -4,253 +4,183 @@ type Templates = Record<string, { PT: string; ES: string }>
 
 const TEMPLATES: Templates = {
   'Restaurante / Alimentação': {
-    PT: `{firstName}, reparei que {company} ainda não tem uma presença online que reflicta a qualidade do que fazem — e isso custa reservas todos os dias.
+    PT: `{firstName}, mesa vazia a meio da semana é dinheiro perdido todo o dia.
 
-Ajudo restaurantes em Portugal com design, redes sociais e visibilidade no Google. Trabalho com uma equipa especializada no Brasil: entregamos qualidade de agência europeia a preços muito mais acessíveis.
+Feed bonito que atrai + tráfego pago que converte — é isso que fazemos para restaurantes em Portugal. Equipa brasileira: metade do preço das agências locais, mesmo resultado.
 
-Portfólio: {portfolioUrl}
+Tens 10 minutos esta semana?`,
 
-Tem 10 minutos esta semana para uma chamada rápida?`,
+    ES: `{firstName}, mesa vacía a mitad de semana es dinero perdido cada día.
 
-    ES: `{firstName}, he visto que {company} aún no tiene una presencia online que refleje la calidad de lo que hacéis, y eso cuesta reservas cada día.
+Feed bonito que atrae + tráfico pagado que convierte — eso es lo que hacemos para restaurantes en España. Equipo brasileño: la mitad del precio de las agencias locales, mismo resultado.
 
-Ayudo a restaurantes en España con diseño, redes sociales y visibilidad en Google. Trabajo con un equipo especializado en Brasil: calidad de agencia europea a precios muy por debajo del mercado.
-
-Portfolio: {portfolioUrl}
-
-¿Tienes 10 minutos esta semana para una llamada rápida?`,
+¿Tienes 10 minutos esta semana?`,
   },
 
   'Clínica / Saúde': {
-    PT: `{firstName}, vi o trabalho de {company} e acredito que conseguimos trazer muito mais pacientes novos através da pesquisa local no Google — sem depender de plataformas ou publicidade cara.
+    PT: `{firstName}, clínica sem tráfego pago hoje depende só da sorte do passa-a-palavra.
 
-Trabalho com clínicas em Portugal em design, SEO e páginas de conversão. Equipa especializada no Brasil: resultados de agência europeia, preços que fazem sentido para uma PME.
-
-Portfólio: {portfolioUrl}
+Fazemos design e campanhas que trazem pacientes novos todos os meses — sem depender de plataformas caras. Equipa brasileira: preços que fazem sentido para uma PME, resultado de agência europeia.
 
 Faz sentido conversar 15 minutos?`,
 
-    ES: `{firstName}, vi el trabajo de {company} y creo que podemos conseguir muchos más pacientes nuevos a través de la búsqueda local en Google, sin depender de plataformas ni publicidad cara.
+    ES: `{firstName}, una clínica sin tráfico pagado hoy depende solo del boca a boca.
 
-Trabajo con clínicas en España en diseño, SEO y páginas de conversión. Equipo especializado en Brasil: resultados de agencia europea, precios que tienen sentido para una pyme.
-
-Portfolio: {portfolioUrl}
+Hacemos diseño y campañas que traen pacientes nuevos cada mes, sin depender de plataformas caras. Equipo brasileño: precios que tienen sentido para una pyme, resultado de agencia europea.
 
 ¿Tiene sentido hablar 15 minutos?`,
   },
 
+  'Estética / Beleza': {
+    PT: `{firstName}, agenda vazia a meio da semana é o sinal mais claro de que o digital ainda não está a trabalhar por ti.
+
+Feed que vende + tráfego pago que enche a agenda — fazemos isso para salões em Portugal. Equipa no Brasil: metade do preço, mesmo nível das melhores agências europeias.
+
+Tens 10 minutos?`,
+
+    ES: `{firstName}, agenda vacía a mitad de semana es la señal más clara de que el digital todavía no está trabajando por ti.
+
+Feed que vende + tráfico pagado que llena la agenda — hacemos eso para salones en España. Equipo en Brasil: la mitad del precio, mismo nivel que las mejores agencias europeas.
+
+¿Tienes 10 minutos?`,
+  },
+
+  'Academia / Fitness': {
+    PT: `{firstName}, ginásio que não aparece no Instagram e no Google hoje perde sócios para quem aparece — todos os dias.
+
+Fazemos design, feed e tráfego pago para estúdios em Portugal. Equipa brasileira: preço de PME, resultado de agência de topo.
+
+Tens 10 minutos esta semana?`,
+
+    ES: `{firstName}, un gimnasio que no aparece en Instagram y en Google hoy pierde socios ante quien sí aparece — cada día.
+
+Hacemos diseño, feed y tráfico pagado para estudios en España. Equipo brasileño: precio de pyme, resultado de agencia de primer nivel.
+
+¿Tienes 10 minutos esta semana?`,
+  },
+
+  'Turismo / Hotelaria': {
+    PT: `{firstName}, reserva directa perdida para o Booking é margem que vai embora todo o mês.
+
+Feed que converte + tráfego pago que traz reservas directas — é o que fazemos para alojamentos em Portugal. Equipa no Brasil: qualidade europeia a preços muito abaixo do mercado local.
+
+Tens 15 minutos esta semana?`,
+
+    ES: `{firstName}, reserva directa perdida al Booking es margen que se va cada mes.
+
+Feed que convierte + tráfico pagado que trae reservas directas — eso hacemos para alojamientos en España. Equipo en Brasil: calidad europea a precios muy por debajo del mercado local.
+
+¿Tienes 15 minutos esta semana?`,
+  },
+
+  'Comércio / Loja': {
+    PT: `{firstName}, loja sem tráfego pago hoje vende só para quem já a conhece.
+
+Design de feed que para o scroll + campanhas que trazem clientes novos — fazemos isso para comércio local em Portugal. Equipa brasileira: metade do custo das agências locais, mesmo resultado.
+
+Faz sentido falarmos 10 minutos?`,
+
+    ES: `{firstName}, una tienda sin tráfico pagado hoy vende solo a quien ya la conoce.
+
+Diseño de feed que para el scroll + campañas que traen clientes nuevos — hacemos eso para comercio local en España. Equipo brasileño: la mitad del coste de las agencias locales, mismo resultado.
+
+¿Tiene sentido hablar 10 minutos?`,
+  },
+
   'Advocacia / Jurídico': {
-    PT: `{firstName}, para escritórios como {company} a primeira impressão online é quase tão importante quanto a reputação — e acredito que há margem para melhorar isso claramente.
+    PT: `{firstName}, escritório sem presença digital consistente perde mandatos para quem aparece primeiro no Google.
 
-Trabalho com advogados em Portugal em identidade visual, site e autoridade online. Equipa no Brasil com nível de agência europeia, a uma fracção do preço habitual.
+Design de autoridade + tráfego pago segmentado — fazemos isso para advogados em Portugal. Equipa no Brasil com nível de agência europeia, a uma fracção do preço habitual.
 
-Portfólio: {portfolioUrl}
+Tens 10 minutos esta semana?`,
 
-Tem 10 minutos esta semana?`,
+    ES: `{firstName}, un despacho sin presencia digital consistente pierde clientes ante quien aparece primero en Google.
 
-    ES: `{firstName}, para despachos como {company} la primera impresión online es casi tan importante como la reputación, y creo que hay margen para mejorar eso claramente.
-
-Trabajo con abogados en España en identidad visual, web y autoridad online. Equipo en Brasil con nivel de agencia europea, a una fracción del precio habitual.
-
-Portfolio: {portfolioUrl}
+Diseño de autoridad + tráfico pagado segmentado — hacemos eso para abogados en España. Equipo en Brasil con nivel de agencia europea, a una fracción del precio habitual.
 
 ¿Tienes 10 minutos esta semana?`,
   },
 
   'Imobiliária / Construção': {
-    PT: `{firstName}, vi o portfólio de {company} e acredito que a presença digital ainda não está a fazer jus à qualidade dos vossos projectos — o que limita os contactos que chegam.
+    PT: `{firstName}, imóvel sem feed profissional e sem tráfego pago demora o dobro a vender.
 
-Ajudo empresas do sector imobiliário e construção em Portugal com design, site e campanhas de captação. Trabalho com equipa no Brasil: qualidade premium, preços acessíveis para o mercado europeu.
+Design visual que valoriza + campanhas que chegam ao comprador certo — é o que fazemos para o sector imobiliário em Portugal. Equipa brasileira: preços europeus acessíveis, resultado premium.
 
-Portfólio: {portfolioUrl}
+Tens 15 minutos esta semana?`,
 
-Tem 15 minutos para uma chamada esta semana?`,
+    ES: `{firstName}, un inmueble sin feed profesional y sin tráfico pagado tarda el doble en venderse.
 
-    ES: `{firstName}, vi el portfolio de {company} y creo que la presencia digital todavía no está haciendo justicia a la calidad de vuestros proyectos, lo que limita los contactos que llegan.
-
-Ayudo a empresas del sector inmobiliario y construcción en España con diseño, web y campañas de captación. Equipo en Brasil: calidad premium, precios accesibles para el mercado europeo.
-
-Portfolio: {portfolioUrl}
-
-¿Tienes 15 minutos para una llamada esta semana?`,
-  },
-
-  'Estética / Beleza': {
-    PT: `{firstName}, muitos negócios de estética com quem trabalho tinham o mesmo problema: agenda vazia a meio da semana, dependência total do passa-a-palavra.
-
-Ajudo salões e clínicas em Portugal com design, Instagram e Google. Equipa especializada no Brasil — entregamos resultados de agência europeia por muito menos do que estão habituados a pagar.
-
-Portfólio: {portfolioUrl}
-
-Tem disponibilidade para conversar 10 minutos?`,
-
-    ES: `{firstName}, muchos negocios de estética con los que trabajo tenían el mismo problema: agenda vacía a mitad de semana, dependencia total del boca a boca.
-
-Ayudo a salones y clínicas en España con diseño, Instagram y Google. Equipo especializado en Brasil: resultados de agencia europea por mucho menos de lo que están acostumbrados a pagar.
-
-Portfolio: {portfolioUrl}
-
-¿Tienes disponibilidad para hablar 10 minutos?`,
-  },
-
-  'Comércio / Loja': {
-    PT: `{firstName}, vi que {company} tem um negócio com potencial claro, e acredito que a presença digital ainda não está a trabalhar a favor de vocês tanto quanto podia.
-
-Trabalho com comércio local em Portugal em design, redes sociais e campanhas de tráfego. Equipa no Brasil com qualidade de agência europeia — a preços muito mais acessíveis.
-
-Portfólio: {portfolioUrl}
-
-Faz sentido falarmos 10 minutos?`,
-
-    ES: `{firstName}, vi que {company} tiene un negocio con potencial claro, y creo que la presencia digital todavía no está trabajando a vuestro favor tanto como podría.
-
-Trabajo con comercio local en España en diseño, redes sociales y campañas de tráfico. Equipo en Brasil con calidad de agencia europea, a precios mucho más accesibles.
-
-Portfolio: {portfolioUrl}
-
-¿Tiene sentido hablar 10 minutos?`,
-  },
-
-  'Academia / Fitness': {
-    PT: `{firstName}, trabalho com ginásios e estúdios em Portugal a atrair sócios novos de forma consistente — com design e campanhas que realmente convertem, não só posts no Instagram.
-
-Equipa especializada no Brasil: entregamos qualidade de agência europeia a preços que fazem sentido para um negócio local.
-
-Portfólio: {portfolioUrl}
-
-Tem 15 minutos esta semana para uma conversa sobre {company}?`,
-
-    ES: `{firstName}, trabajo con gimnasios y estudios en España para atraer socios nuevos de forma constante, con diseño y campañas que realmente convierten, no solo posts en Instagram.
-
-Equipo especializado en Brasil: calidad de agencia europea a precios que tienen sentido para un negocio local.
-
-Portfolio: {portfolioUrl}
-
-¿Tienes 15 minutos esta semana para una conversación sobre {company}?`,
-  },
-
-  'Contabilidade / Finanças': {
-    PT: `{firstName}, para escritórios como {company} a presença online precisa de transmitir rigor e confiança — e acredito que existe margem para melhorar isso claramente.
-
-Trabalho com contabilistas e consultores em Portugal em identidade visual, site e posicionamento no Google. Equipa no Brasil: nível de agência europeia, investimento muito mais acessível.
-
-Portfólio: {portfolioUrl}
-
-Tem 10 minutos para perceber como funciona?`,
-
-    ES: `{firstName}, para despachos como {company} la presencia online necesita transmitir rigor y confianza, y creo que hay margen para mejorar eso claramente.
-
-Trabajo con contables y asesores en España en identidad visual, web y posicionamiento en Google. Equipo en Brasil: nivel de agencia europea, inversión mucho más accesible.
-
-Portfolio: {portfolioUrl}
-
-¿Tienes 10 minutos para ver cómo funciona?`,
-  },
-
-  'Turismo / Hotelaria': {
-    PT: `{firstName}, no turismo a diferença entre uma página bonita e uma que converte pode valer dezenas de reservas por mês — e vi que {company} tem margem para melhorar isso.
-
-Trabalho com alojamentos e operadores em Portugal em design, site e campanhas de reserva directa. Equipa no Brasil: qualidade premium, preços abaixo do mercado europeu.
-
-Portfólio: {portfolioUrl}
-
-Tem 15 minutos esta semana?`,
-
-    ES: `{firstName}, en turismo la diferencia entre una página bonita y una que convierte puede valer decenas de reservas al mes, y vi que {company} tiene margen para mejorar eso.
-
-Trabajo con alojamientos y operadores en España en diseño, web y campañas de reserva directa. Equipo en Brasil: calidad premium, precios por debajo del mercado europeo.
-
-Portfolio: {portfolioUrl}
+Diseño visual que valoriza + campañas que llegan al comprador adecuado — eso hacemos para el sector inmobiliario en España. Equipo brasileño: precios europeos accesibles, resultado premium.
 
 ¿Tienes 15 minutos esta semana?`,
   },
 
   'Educação / Formação': {
-    PT: `{firstName}, trabalho com centros de formação em Portugal a atrair mais alunos com páginas de inscrição que convertem e campanhas bem segmentadas.
+    PT: `{firstName}, curso sem tráfego pago hoje enche só com sorte.
 
-Vi o trabalho de {company} e acredito que há uma oportunidade clara para crescer. Equipa no Brasil com qualidade de agência europeia — por muito menos do que estão habituados a pagar.
-
-Portfólio: {portfolioUrl}
+Design que posiciona + campanhas que trazem inscrições — fazemos isso para centros de formação em Portugal. Equipa no Brasil: qualidade de agência europeia por muito menos.
 
 Faz sentido falarmos 10 minutos?`,
 
-    ES: `{firstName}, trabajo con centros de formación en España para atraer más alumnos con páginas de inscripción que convierten y campañas bien segmentadas.
+    ES: `{firstName}, un curso sin tráfico pagado hoy se llena solo con suerte.
 
-Vi el trabajo de {company} y creo que hay una oportunidad clara para crecer. Equipo en Brasil con calidad de agencia europea, por mucho menos de lo que están acostumbrados a pagar.
-
-Portfolio: {portfolioUrl}
+Diseño que posiciona + campañas que traen inscripciones — hacemos eso para centros de formación en España. Equipo en Brasil: calidad de agencia europea por mucho menos.
 
 ¿Tiene sentido hablar 10 minutos?`,
   },
 
   'Tecnologia / Software': {
-    PT: `{firstName}, vi o posicionamento de {company} e acredito que existe espaço para um design e uma comunicação digital que transmita melhor o valor do que fazem.
+    PT: `{firstName}, produto de software sem posicionamento visual e sem tráfego pago perde leads para quem investe nisso.
 
-Trabalho com empresas tech em Portugal em branding, site e geração de leads. Equipa especializada no Brasil: execução de nível europeu, custo muito mais competitivo.
+Branding que convence + campanhas que geram demos — fazemos isso para empresas tech em Portugal. Equipa brasileira: execução de nível europeu, custo muito mais competitivo.
 
-Portfólio: {portfolioUrl}
+Tens 15 minutos?`,
 
-Teria interesse numa conversa rápida de 15 minutos?`,
+    ES: `{firstName}, un producto de software sin posicionamiento visual y sin tráfico pagado pierde leads ante quien sí invierte en eso.
 
-    ES: `{firstName}, vi el posicionamiento de {company} y creo que hay espacio para un diseño y una comunicación digital que transmita mejor el valor de lo que hacéis.
+Branding que convence + campañas que generan demos — hacemos eso para empresas tech en España. Equipo brasileño: ejecución de nivel europeo, coste mucho más competitivo.
 
-Trabajo con empresas tech en España en branding, web y generación de leads. Equipo especializado en Brasil: ejecución de nivel europeo, coste mucho más competitivo.
-
-Portfolio: {portfolioUrl}
-
-¿Le interesaría una conversación rápida de 15 minutos?`,
+¿Tienes 15 minutos?`,
   },
 
   'Consultoria': {
-    PT: `{firstName}, para consultores como {company} a credibilidade online é o principal activo de aquisição — e acredito que existe margem para a tornar muito mais forte.
+    PT: `{firstName}, consultor sem presença digital forte perde autoridade para quem tem — mesmo sendo melhor.
 
-Trabalho com consultores em Portugal em identidade visual, site e posicionamento digital. Equipa no Brasil: qualidade de agência europeia a preços que fazem sentido para quem está a crescer.
+Design que transmite credibilidade + tráfego que traz os clientes certos — é o que fazemos em Portugal. Equipa no Brasil: qualidade europeia a preços que fazem sentido para quem está a crescer.
 
-Portfólio: {portfolioUrl}
+Tens 15 minutos esta semana?`,
 
-Tem 15 minutos esta semana?`,
+    ES: `{firstName}, un consultor sin presencia digital fuerte pierde autoridad ante quien la tiene — aunque sea mejor.
 
-    ES: `{firstName}, para consultores como {company} la credibilidad online es el principal activo de adquisición, y creo que hay margen para hacerla mucho más sólida.
-
-Trabajo con consultores en España en identidad visual, web y posicionamiento digital. Equipo en Brasil: calidad de agencia europea a precios que tienen sentido para quien está creciendo.
-
-Portfolio: {portfolioUrl}
+Diseño que transmite credibilidad + tráfico que trae a los clientes correctos — eso hacemos en España. Equipo en Brasil: calidad europea a precios que tienen sentido para quien está creciendo.
 
 ¿Tienes 15 minutos esta semana?`,
   },
 
   'Arquitectura / Design': {
-    PT: `{firstName}, o trabalho de {company} merece uma presença digital à altura — e pela qualidade do que fazem, acredito que ainda está abaixo do potencial.
+    PT: `{firstName}, projecto bom que não aparece online não existe para o cliente que está agora a pesquisar.
 
-Trabalho com arquitectos e designers em Portugal em portfólios digitais, site e posicionamento online. Equipa no Brasil: execução de nível europeu, por uma fracção do preço habitual.
+Feed que mostra o trabalho a valer + tráfego pago que traz contactos — fazemos isso para arquitectos em Portugal. Equipa brasileira: execução premium, metade do preço local.
 
-Portfólio: {portfolioUrl}
+Tens 10 minutos?`,
 
-Tem 10 minutos para perceber como seria?`,
+    ES: `{firstName}, un proyecto bueno que no aparece online no existe para el cliente que está buscando ahora.
 
-    ES: `{firstName}, el trabajo de {company} merece una presencia digital a la altura, y por la calidad de lo que hacéis, creo que todavía está por debajo del potencial.
+Feed que muestra el trabajo como merece + tráfico pagado que trae contactos — hacemos eso para arquitectos en España. Equipo brasileño: ejecución premium, la mitad del precio local.
 
-Trabajo con arquitectos y diseñadores en España en portfolios digitales, web y posicionamiento online. Equipo en Brasil: ejecución de nivel europeo, a una fracción del precio habitual.
-
-Portfolio: {portfolioUrl}
-
-¿Tienes 10 minutos para ver cómo sería?`,
+¿Tienes 10 minutos?`,
   },
 
   'Outro': {
-    PT: `{firstName}, vi o trabalho de {company} e acredito que existe uma oportunidade clara para ter uma presença digital que gere mais clientes de forma consistente.
+    PT: `{firstName}, negócio sem feed profissional e sem tráfego pago hoje perde clientes todos os dias para quem investe nisso.
 
-Trabalho com PMEs em Portugal em design, site e marketing digital. Equipa especializada no Brasil: entregamos qualidade de agência europeia a preços muito mais acessíveis.
-
-Portfólio: {portfolioUrl}
+Design que para o scroll + campanhas que convertem — fazemos isso para PMEs em Portugal. Equipa no Brasil: qualidade de agência europeia a preços muito mais acessíveis.
 
 Faz sentido falarmos 10 minutos?`,
 
-    ES: `{firstName}, vi el trabajo de {company} y creo que existe una oportunidad clara para tener una presencia digital que genere más clientes de forma constante.
+    ES: `{firstName}, un negocio sin feed profesional y sin tráfico pagado hoy pierde clientes cada día ante quien sí invierte en eso.
 
-Trabajo con pymes en España en diseño, web y marketing digital. Equipo especializado en Brasil: calidad de agencia europea a precios mucho más accesibles.
-
-Portfolio: {portfolioUrl}
+Diseño que para el scroll + campañas que convierten — hacemos eso para pymes en España. Equipo en Brasil: calidad de agencia europea a precios mucho más accesibles.
 
 ¿Tiene sentido hablar 10 minutos?`,
   },
@@ -259,9 +189,9 @@ Portfolio: {portfolioUrl}
 export function generateConnectionNote(prospect: Prospect): string {
   const firstName = prospect.name.split(' ')[0]
   if (prospect.country === 'ES') {
-    return `Hola ${firstName}, vi el trabajo de ${prospect.company} y me gustaría conectar. Ayudo pymes en España con marketing digital — calidad europea, precios de Brasil. ¿Te parece bien conectar?`
+    return `Hola ${firstName}, vi el trabajo de ${prospect.company} y me gustaría conectar. Ayudo pymes en España con diseño y tráfico pagado — equipo brasileño, precios accesibles. ¿Conectamos?`
   }
-  return `Olá ${firstName}, vi o trabalho de ${prospect.company} e gostaria de conectar. Ajudo PMEs em Portugal com marketing digital — qualidade europeia, preços do Brasil. Podemos conectar?`
+  return `Olá ${firstName}, vi o trabalho de ${prospect.company} e gostaria de conectar. Ajudo PMEs em Portugal com design e tráfego pago — equipa brasileira, preços acessíveis. Podemos conectar?`
 }
 
 export function generateMessage(prospect: Prospect, portfolioUrl: string): string {
