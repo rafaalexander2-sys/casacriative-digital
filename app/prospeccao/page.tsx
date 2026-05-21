@@ -509,68 +509,100 @@ export default function ProspeccaoPage() {
           {/* List panel */}
           <div className="flex-1 overflow-y-auto">
             {tab === 'instagram' && (
-              <div className="p-6 max-w-md">
-                <h2 className="text-base font-semibold mb-1">Buscar Leads</h2>
-                <p className="text-xs text-zinc-500 mb-5">Busca perfis no Instagram por hashtag e importa direto para a fila.</p>
+              <div className="p-6 max-w-lg">
+                <h2 className="text-base font-semibold mb-4">Como usar o CC Prospecter</h2>
 
-                {/* Quick seed loader */}
-                <div className="mb-6 p-4 bg-amber-950/30 border border-amber-800/40 rounded-xl">
-                  <p className="text-xs font-semibold text-amber-400 mb-1">🚀 Leads prontos — carrega agora</p>
-                  <p className="text-xs text-zinc-400 mb-3">18 donos de PME reais (Portugal + Espanha): restaurantes, spas, clínicas, lojas. Pronto a usar.</p>
-                  <button onClick={handleLoadSeeds} disabled={igLoading}
-                    className="w-full py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-black text-sm font-semibold rounded-lg transition-colors">
-                    {igLoading ? 'Carregando...' : '⚡ Carregar 18 leads PT + ES'}
-                  </button>
+                {/* Step 1 */}
+                <div className={`mb-3 rounded-xl border p-4 ${perplexityKey ? 'border-green-800/40 bg-green-950/20' : 'border-amber-700/60 bg-amber-950/30'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${perplexityKey ? 'bg-green-700 text-white' : 'bg-amber-600 text-black'}`}>1</span>
+                    <p className="text-sm font-semibold text-zinc-100">Configura a IA</p>
+                    {perplexityKey && <span className="text-xs text-green-400 ml-auto">✓ pronto</span>}
+                  </div>
+                  {!perplexityKey ? (
+                    <div>
+                      <p className="text-xs text-zinc-400 mb-2">Cola a tua chave Perplexity para gerar mensagens personalizadas com IA.</p>
+                      <input
+                        type="password"
+                        value={perplexityKey}
+                        onChange={e => { setPerplexityKey(e.target.value); localStorage.setItem(PERPLEXITY_KEY_STORAGE, e.target.value) }}
+                        placeholder="pplx-..."
+                        className="w-full bg-zinc-900 border border-amber-600 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-700 focus:outline-none"
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-xs text-zinc-500">IA pronta para escrever mensagens personalizadas com base no bio do Instagram.</p>
+                  )}
                 </div>
 
-                <div className="relative flex items-center mb-5">
-                  <div className="flex-1 border-t border-zinc-800" />
-                  <span className="mx-3 text-xs text-zinc-600">ou busca mais com Apify</span>
-                  <div className="flex-1 border-t border-zinc-800" />
-                </div>
+                {/* Step 2 */}
+                <div className="mb-3 rounded-xl border border-zinc-700 bg-zinc-900/50 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-bold w-5 h-5 rounded-full bg-zinc-600 text-white flex items-center justify-center flex-shrink-0">2</span>
+                    <p className="text-sm font-semibold text-zinc-100">Busca leads no Instagram</p>
+                  </div>
+                  <p className="text-xs text-zinc-500 mb-3">Escolhe país + setor e clica buscar. O Apify vai procurar perfis por hashtag (#restaurantelisboa, #belezaportugal, etc.)</p>
 
-                <div className="space-y-4">
-                  <label className="block">
-                    <span className="text-xs text-zinc-500 mb-1 block">Chave Apify (cole uma vez, fica salvo)</span>
-                    <input
-                      type="password"
-                      value={apifyKey}
-                      onChange={e => { setApifyKey(e.target.value); localStorage.setItem(APIFY_KEY_STORAGE, e.target.value) }}
-                      placeholder="apify_api_..."
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-amber-600"
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="text-xs text-zinc-500 mb-1 block">País</span>
+                  <div className="grid grid-cols-2 gap-2 mb-3">
                     <select value={igCountry} onChange={e => setIgCountry(e.target.value as ProspectCountry)}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-600">
-                      <option value="PT">Portugal</option>
-                      <option value="ES">Espanha</option>
+                      className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-600">
+                      <option value="PT">🇵🇹 Portugal</option>
+                      <option value="ES">🇪🇸 Espanha</option>
                     </select>
-                  </label>
-
-                  <label className="block">
-                    <span className="text-xs text-zinc-500 mb-1 block">Setor</span>
                     <select value={igSector} onChange={e => setIgSector(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-600">
+                      className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-600">
                       <option value="all">Todos os setores</option>
-                      {['Restaurante / Alimentação','Clínica / Saúde','Estética / Beleza','Academia / Fitness','Advocacia / Jurídico'].map(s => (
+                      {['Restaurante / Alimentação','Clínica / Saúde','Estética / Beleza','Academia / Fitness','Turismo / Hotelaria','Comércio / Loja'].map(s => (
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
-                  </label>
+                  </div>
 
-                  <button onClick={handleInstagramScrape} disabled={igLoading}
-                    className="w-full py-2.5 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-zinc-100 text-sm font-semibold rounded-lg transition-colors">
-                    {igLoading ? 'Buscando...' : 'Buscar via Apify'}
-                  </button>
+                  {apifyKey ? (
+                    <button onClick={handleInstagramScrape} disabled={igLoading}
+                      className="w-full py-2 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-zinc-100 text-sm font-semibold rounded-lg transition-colors">
+                      {igLoading ? `Buscando... ${igStatus}` : '📸 Buscar no Instagram via Apify'}
+                    </button>
+                  ) : (
+                    <div>
+                      <input
+                        type="password"
+                        value={apifyKey}
+                        onChange={e => { setApifyKey(e.target.value); localStorage.setItem(APIFY_KEY_STORAGE, e.target.value) }}
+                        placeholder="Cola a chave Apify para buscar..."
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-600 mb-2"
+                      />
+                      <p className="text-xs text-zinc-600">Ou usa os leads prontos abaixo ↓</p>
+                    </div>
+                  )}
 
-                  {igStatus && (
-                    <div className={`text-xs px-3 py-2 rounded-lg ${igStatus.startsWith('✅') ? 'bg-green-900/30 text-green-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                  {igStatus && !igLoading && (
+                    <div className={`mt-2 text-xs px-3 py-2 rounded-lg ${igStatus.startsWith('✅') ? 'bg-green-900/30 text-green-400' : 'bg-zinc-800 text-zinc-400'}`}>
                       {igStatus}
                     </div>
                   )}
+
+                  <div className="mt-3 pt-3 border-t border-zinc-800">
+                    <p className="text-xs text-zinc-600 mb-2">Sem Apify? Usa 18 leads reais já prontos:</p>
+                    <button onClick={handleLoadSeeds} disabled={igLoading}
+                      className="w-full py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-black text-sm font-semibold rounded-lg transition-colors">
+                      {igLoading ? 'Carregando...' : '⚡ Carregar 18 leads PT + ES grátis'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-bold w-5 h-5 rounded-full bg-zinc-600 text-white flex items-center justify-center flex-shrink-0">3</span>
+                    <p className="text-sm font-semibold text-zinc-100">Envia pelo Instagram ou WhatsApp</p>
+                  </div>
+                  <ol className="text-xs text-zinc-400 space-y-1.5 list-none">
+                    <li>→ Vai em <button onClick={() => setTab('queue')} className="text-amber-400 underline">Fila</button></li>
+                    <li>→ Clica num lead → <span className="text-amber-400">"Gerar com IA ✦"</span></li>
+                    <li>→ Clica <span className="text-pink-400">"Abrir Instagram"</span> ou <span className="text-green-400">"Abrir WhatsApp"</span></li>
+                    <li>→ Cola a mensagem e envia — é isso!</li>
+                  </ol>
                 </div>
               </div>
             )}
