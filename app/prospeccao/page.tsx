@@ -568,7 +568,7 @@ export default function ProspeccaoPage() {
         {/* Main content */}
         <main className="flex-1 overflow-hidden flex">
           {/* List panel */}
-          <div className="flex-1 overflow-y-auto">
+          <div className={`flex-1 ${tab === 'kanban' ? 'overflow-auto' : 'overflow-y-auto'}`}>
             {tab === 'instagram' && (
               <div className="p-6 max-w-lg">
                 <h2 className="text-base font-semibold mb-4">Como usar o CC Prospecter</h2>
@@ -681,7 +681,7 @@ export default function ProspeccaoPage() {
               const DAY = 86_400_000
 
               return (
-                <div className="flex gap-3 p-4 overflow-x-auto h-full" style={{ minWidth: 'max-content' }}>
+                <div className="flex gap-3 p-4 h-full">
                   {COLUMNS.map(col => {
                     const cards = sortByPriority(prospects.filter(p => p.status === col.status))
                     const isOver = dragOver === col.status
