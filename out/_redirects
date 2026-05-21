@@ -1,0 +1,46 @@
+# WordPress taxonomy / archive pages
+/category/*     /blog   301
+/tag/*          /blog   301
+/author/*       /       301
+/page/*         /blog   301
+/archives/*     /blog   301
+/date/*         /blog   301
+
+# WordPress feeds
+/feed           /       301
+/feed/          /       301
+/comments/feed  /       301
+/rss            /       301
+/rss/           /       301
+
+# WordPress system pages (should not be public)
+/wp-login.php   /       301
+/wp-admin       /       301
+/wp-admin/*     /       301
+/xmlrpc.php     /       301
+
+# Old common WP page slugs → new pages
+/sobre          /quem-somos     301
+/sobre/         /quem-somos     301
+/servicos       /               301
+/servicos/      /               301
+/portfolio      /               301
+/portfolio/     /               301
+/contatos       /contato        301
+/contatos/      /contato        301
+/home           /               301
+/home/          /               301
+
+# Old service slugs (possible variations)
+/trafego-pago           /gestao-de-anuncios-pagos   301
+/trafego-pago/          /gestao-de-anuncios-pagos   301
+/anuncios               /gestao-de-anuncios-pagos   301
+/sites                  /sites-e-landing-pages      301
+/sites/                 /sites-e-landing-pages      301
+/landing-page           /sites-e-landing-pages      301
+/seo                    /seo-e-otimizacao-local     301
+/seo/                   /seo-e-otimizacao-local     301
+/social-media           /gestao-de-midias-e-conteudo 301
+/social-media/          /gestao-de-midias-e-conteudo 301
+/design                 /design-grafico             301
+/design/                /design-grafico             301

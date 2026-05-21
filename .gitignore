@@ -17,7 +17,7 @@ linkedin-bot/queue-result.json
 
 # next.js
 /.next/
-/out/
+# /out/ committed for Hostinger static deploy
 
 # production
 /build
