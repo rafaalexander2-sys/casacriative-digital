@@ -123,16 +123,14 @@ export default function ProspeccaoPage() {
   }, [])
 
 
-  const SECTOR_KEYWORDS: Record<string, Record<string, string>> = {
-    'all':                       { PT: 'dono fundador empresário Portugal', ES: 'dueño fundador empresario España' },
-    'Restaurante / Alimentação': { PT: 'dono restaurante Portugal', ES: 'dueño restaurante España' },
-    'Clínica / Saúde':           { PT: 'diretor clínica Portugal', ES: 'director clínica España' },
-    'Estética / Beleza':         { PT: 'dono salão beleza Portugal', ES: 'dueño salón belleza España' },
-    'Academia / Fitness':        { PT: 'dono ginásio fitness Portugal', ES: 'dueño gimnasio España' },
-    'Advocacia / Jurídico':      { PT: 'sócio advogado Portugal', ES: 'socio abogado España' },
-    'Imobiliária / Construção':  { PT: 'diretor imobiliária Portugal', ES: 'director inmobiliaria España' },
-    'Comércio / Loja':           { PT: 'dono loja comércio Portugal', ES: 'dueño tienda España' },
-    'Turismo / Hotelaria':       { PT: 'diretor hotel Portugal', ES: 'director hotel España' },
+  const SECTOR_HASHTAGS: Record<string, Record<string, string[]>> = {
+    'all':                       { PT: ['negociolocal','empresaportugal','empreendedorismoportugal','pmeportugal'], ES: ['negociolocal','pymesespana','emprendedoresespana','empresaespana'] },
+    'Restaurante / Alimentação': { PT: ['restauranteportugal','restaurantelisboa','restaurantoporto','cafélisboa'], ES: ['restaurantemadrid','restaurantebarcelona','hosteleria','restauranteespana'] },
+    'Clínica / Saúde':           { PT: ['clinicalisboa','clinicaportugal','saudeportugal','medicinaestetica'], ES: ['clinicamadrid','saludybienestar','clinicaestetica','clinicabarcelona'] },
+    'Estética / Beleza':         { PT: ['cabelereiroPortugal','belezaportugal','esteticalisboa','salaobelezaportugal'], ES: ['peluqueriamadrid','esteticamadrid','bellezaespana','salondebelleza'] },
+    'Academia / Fitness':        { PT: ['ginasiolisboa','fitnessportugal','personaltrainerportugal'], ES: ['gimnasioespana','fitnessespana','personaltrainerespana'] },
+    'Turismo / Hotelaria':       { PT: ['hoteislisboa','alojamentoportugal','turismoportugal'], ES: ['hotelmadrid','turismoespana','alojamientoespana'] },
+    'Comércio / Loja':           { PT: ['lojalisboa','comercioportugal','boutiquelisboa'], ES: ['tiendamadrid','comercioespana','boutiquesespana'] },
   }
 
   async function handleLoadSeeds() {
@@ -156,26 +154,23 @@ export default function ProspeccaoPage() {
   async function handleInstagramScrape() {
     if (!apifyKey) { setIgStatus('Cole a sua chave Apify no campo acima.'); return }
     setIgLoading(true)
-    setIgStatus('Iniciando busca no LinkedIn...')
+    setIgStatus('Iniciando busca no Instagram...')
     try {
-      const keyword = SECTOR_KEYWORDS[igSector]?.[igCountry] ?? SECTOR_KEYWORDS['all'][igCountry]
-      // Build LinkedIn people search URL
-      const q = encodeURIComponent(keyword)
-      const searchUrl = `https://www.linkedin.com/search/results/people/?keywords=${q}&origin=GLOBAL_SEARCH_HEADER`
+      const hashtags = SECTOR_HASHTAGS[igSector]?.[igCountry] ?? SECTOR_HASHTAGS['all'][igCountry]
 
       const runRes = await fetch(
-        `${APIFY_BASE}/acts/harvestapi~linkedin-profile-search/runs?token=${apifyKey}`,
+        `${APIFY_BASE}/acts/apify~instagram-hashtag-scraper/runs?token=${apifyKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ searchUrl, maxResults: 25 }),
+          body: JSON.stringify({ hashtags, resultsLimit: 30, addParentData: true }),
         }
       )
       const runData = await runRes.json()
       const runId = runData.data?.id
       if (!runId) throw new Error(JSON.stringify(runData))
       setIgRunId(runId)
-      setIgStatus('Buscando perfis no LinkedIn... aguarda 1-2 minutos.')
+      setIgStatus(`Buscando no Instagram (${hashtags.slice(0,2).map(h=>'#'+h).join(', ')}...)`)
       pollApifyResults(runId)
     } catch (e: unknown) {
       setIgStatus('Erro: ' + (e instanceof Error ? e.message : 'falha'))
@@ -191,7 +186,7 @@ export default function ProspeccaoPage() {
         const statusRes = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${apifyKey}`)
         const statusData = await statusRes.json()
         const status = statusData.data?.status
-        setIgStatus(`Buscando no LinkedIn... ${attempts * 8}s`)
+        setIgStatus(`Buscando no Instagram... ${attempts * 8}s`)
         if (status === 'SUCCEEDED') {
           clearInterval(interval)
           const datasetId = statusData.data?.defaultDatasetId
@@ -200,31 +195,31 @@ export default function ProspeccaoPage() {
           const newProspects = Array.from(
             new Map(
               (items as Record<string, unknown>[])
-                .filter(item => item.fullName || item.name)
+                .filter(item => item.ownerUsername && item.ownerFullName)
                 .map(item => {
-                  const positions = item.currentPositions as Record<string, unknown>[] | undefined
-                  const pos = positions?.[0]
+                  const username = item.ownerUsername as string
                   const p: Prospect = {
                     id: Math.random().toString(36).slice(2, 10),
-                    name: (item.fullName || item.name || '') as string,
-                    title: (item.headline || (pos?.title) || 'Fundador(a)') as string,
-                    company: ((pos?.companyName) || (item.company) || '') as string,
+                    name: (item.ownerFullName || username) as string,
+                    title: 'Dono(a)',
+                    company: username,
                     country: igCountry,
                     sector: igSector === 'all' ? 'Outro' : igSector,
                     companySize: '1-10',
-                    linkedinUrl: (item.profileUrl || item.linkedInUrl || item.url || '') as string,
-                    email: (item.email || '') as string,
-                    companyWebsite: '',
-                    notes: (item.summary || item.about || '') as string,
+                    linkedinUrl: '',
+                    instagramUrl: `https://instagram.com/${username}`,
+                    email: '',
+                    companyWebsite: (item.ownerBiography as string)?.match(/https?:\/\/[^\s]+/)?.[0] || '',
+                    notes: (item.ownerBiography as string)?.slice(0, 300) || '',
                     status: 'pending',
                     createdAt: new Date().toISOString(),
                   }
-                  return [item.profileUrl || item.fullName, p]
+                  return [username, p]
                 })
             ).values()
           )
           persist([...(newProspects as Prospect[]), ...prospects])
-          setIgStatus(`✅ ${newProspects.length} prospects do LinkedIn importados!`)
+          setIgStatus(`✅ ${newProspects.length} perfis do Instagram importados!`)
           setIgLoading(false)
           setTab('queue')
         } else if (status === 'FAILED' || attempts > 20) {
