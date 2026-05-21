@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { generateMessage, generateConnectionNote } from '@/lib/message-templates'
+import { generateMessage } from '@/lib/message-templates'
 import { generateAIMessage } from '@/lib/ai-messages'
 import {
   Prospect,
@@ -75,6 +75,7 @@ const emptyForm = {
   companySize: SIZE_OPTIONS[0],
   linkedinUrl: '',
   instagramUrl: '',
+  whatsapp: '',
   email: '',
   companyWebsite: '',
   notes: '',
@@ -265,7 +266,7 @@ export default function ProspeccaoPage() {
   }
 
   function handleAddProspect() {
-    if (!form.name || !form.company || !form.linkedinUrl) return
+    if (!form.name || !form.company) return
     setSaving(true)
     const p: Prospect = {
       id: generateId(),
@@ -374,8 +375,8 @@ export default function ProspeccaoPage() {
             CC
           </div>
           <div>
-            <h1 className="text-sm font-semibold tracking-tight">Prospecção LinkedIn</h1>
-            <p className="text-xs text-zinc-500">Portugal &amp; Espanha · PMEs</p>
+            <h1 className="text-sm font-semibold tracking-tight">CC Prospecter</h1>
+            <p className="text-xs text-zinc-500">Instagram · WhatsApp · PT &amp; ES</p>
           </div>
         </div>
 
@@ -509,8 +510,8 @@ export default function ProspeccaoPage() {
           <div className="flex-1 overflow-y-auto">
             {tab === 'instagram' && (
               <div className="p-6 max-w-md">
-                <h2 className="text-base font-semibold mb-1">Buscar prospects no LinkedIn</h2>
-                <p className="text-xs text-zinc-500 mb-5">Importa leads reais de donos de PMEs em Portugal e Espanha direto para a fila.</p>
+                <h2 className="text-base font-semibold mb-1">Buscar Leads</h2>
+                <p className="text-xs text-zinc-500 mb-5">Busca perfis no Instagram por hashtag e importa direto para a fila.</p>
 
                 {/* Quick seed loader */}
                 <div className="mb-6 p-4 bg-amber-950/30 border border-amber-800/40 rounded-xl">
@@ -683,17 +684,36 @@ export default function ProspeccaoPage() {
                                 >
                                   {copied === p.id ? 'Copiado!' : 'Copiar'}
                                 </button>
-                                <a
-                                  href={p.linkedinUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={() => {
-                                    if (p.generatedMessage) navigator.clipboard.writeText(p.generatedMessage)
-                                  }}
-                                  className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors"
-                                >
-                                  Abrir LinkedIn + Copiar msg
-                                </a>
+                                {p.instagramUrl ? (
+                                  <button
+                                    onClick={() => {
+                                      if (p.generatedMessage) navigator.clipboard.writeText(p.generatedMessage)
+                                      window.open(p.instagramUrl, '_blank', 'noopener,noreferrer')
+                                    }}
+                                    className="px-3 py-1.5 bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                  >
+                                    Abrir Instagram + Copiar msg
+                                  </button>
+                                ) : null}
+                                {p.whatsapp ? (
+                                  <button
+                                    onClick={() => {
+                                      window.open(
+                                        `https://wa.me/${p.whatsapp!.replace(/\D/g, '')}?text=${encodeURIComponent(p.generatedMessage || '')}`,
+                                        '_blank',
+                                        'noopener,noreferrer'
+                                      )
+                                    }}
+                                    className="px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                  >
+                                    Abrir WhatsApp
+                                  </button>
+                                ) : null}
+                                {!p.instagramUrl && !p.whatsapp && (
+                                  <span className="px-3 py-1.5 text-zinc-600 text-xs italic">
+                                    Adiciona o Instagram ou WhatsApp no perfil
+                                  </span>
+                                )}
                                 {p.status !== 'sent' && canSendMore && (
                                   <button
                                     onClick={() => handleMarkSent(p)}
@@ -778,8 +798,9 @@ export default function ProspeccaoPage() {
                     { key: 'name', label: 'Nome completo *', placeholder: 'João Silva' },
                     { key: 'title', label: 'Cargo *', placeholder: 'Sócio-Gerente' },
                     { key: 'company', label: 'Empresa *', placeholder: 'Clínica Exemplo Lda' },
-                    { key: 'linkedinUrl', label: 'URL LinkedIn *', placeholder: 'https://linkedin.com/in/...' },
+                    { key: 'linkedinUrl', label: 'URL LinkedIn (opcional)', placeholder: 'https://linkedin.com/in/...' },
                     { key: 'instagramUrl', label: 'URL Instagram (opcional)', placeholder: 'https://instagram.com/empresa' },
+                    { key: 'whatsapp', label: 'WhatsApp', placeholder: '+351 912 345 678' },
                     { key: 'email', label: 'Email (opcional)', placeholder: 'joao@empresa.pt' },
                     { key: 'companyWebsite', label: 'Site da empresa (opcional)', placeholder: 'empresa.pt' },
                   ].map(({ key, label, placeholder }) => (
@@ -821,7 +842,7 @@ export default function ProspeccaoPage() {
 
                   <button
                     onClick={handleAddProspect}
-                    disabled={!form.name || !form.company || !form.linkedinUrl || saving}
+                    disabled={!form.name || !form.company || saving}
                     className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed text-black text-sm font-semibold rounded-lg transition-colors"
                   >
                     Adicionar à Fila

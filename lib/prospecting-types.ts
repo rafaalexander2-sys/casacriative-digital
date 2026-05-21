@@ -15,6 +15,7 @@ export interface Prospect {
   companyWebsite?: string
   notes?: string
   instagramUrl?: string
+  whatsapp?: string
   status: ProspectStatus
   generatedMessage?: string
   sentAt?: string
