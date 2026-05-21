@@ -268,3 +268,13 @@ export function generateMessage(prospect: Prospect, portfolioUrl: string): strin
     .replace(/\{sector\}/g, prospect.sector)
     .replace(/\{portfolioUrl\}/g, portfolioUrl || 'casacriative.com.br')
 }
+
+export function generateConnectionNote(prospect: Prospect): string {
+  const firstName = prospect.name.split(' ')[0]
+  const isES = prospect.country === 'ES'
+
+  if (isES) {
+    return `Hola ${firstName}, vi el trabajo de ${prospect.company} y me gustaría conectar. Ayudo pymes en España con marketing digital — calidad europea, precios de Brasil. ¿Te parece bien conectar?`
+  }
+  return `Olá ${firstName}, vi o trabalho de ${prospect.company} e gostaria de conectar. Ajudo PMEs em Portugal com marketing digital — qualidade europeia, preços do Brasil. Podemos conectar?`
+}

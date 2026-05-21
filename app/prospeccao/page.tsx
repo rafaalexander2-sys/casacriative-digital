@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { generateMessage } from '@/lib/message-templates'
+import { generateMessage, generateConnectionNote } from '@/lib/message-templates'
 import {
   Prospect,
   ProspectStatus,
@@ -576,10 +576,32 @@ export default function ProspeccaoPage() {
                       {selectedId === p.id && (
                         <div className="mt-4 pt-4 border-t border-zinc-800" onClick={e => e.stopPropagation()}>
                           {p.generatedMessage ? (
-                            <div className="mb-3">
-                              <p className="text-xs text-zinc-500 mb-2">Mensagem gerada:</p>
-                              <div className="bg-zinc-950 rounded-lg p-3 text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap border border-zinc-800">
-                                {p.generatedMessage}
+                            <div className="mb-3 space-y-3">
+                              {/* Step 1: Connect */}
+                              <div className="bg-blue-950/30 border border-blue-800/40 rounded-lg p-3">
+                                <p className="text-xs font-semibold text-blue-300 mb-1">① Pedir conexão (grátis, &lt;300 chars)</p>
+                                <p className="text-xs text-zinc-300 leading-relaxed italic mb-2">{generateConnectionNote(p)}</p>
+                                <a
+                                  href={p.linkedinUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={() => navigator.clipboard.writeText(generateConnectionNote(p))}
+                                  className="inline-block px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                >
+                                  Abrir LinkedIn + Copiar nota
+                                </a>
+                                <p className="text-xs text-zinc-600 mt-1.5">No LinkedIn: clica "Mais" → "Conectar" → "Adicionar nota" → Ctrl+V → Enviar</p>
+                              </div>
+                              {/* Step 2: Full message after connecting */}
+                              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+                                <p className="text-xs font-semibold text-zinc-400 mb-1">② Após aceitar — enviar mensagem completa</p>
+                                <div className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap mb-2">{p.generatedMessage}</div>
+                                <button
+                                  onClick={() => handleCopy(p)}
+                                  className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs rounded-lg transition-colors"
+                                >
+                                  {copied === p.id ? '✓ Copiado!' : 'Copiar mensagem completa'}
+                                </button>
                               </div>
                             </div>
                           ) : null}
@@ -602,23 +624,6 @@ export default function ProspeccaoPage() {
                                 >
                                   Regenerar
                                 </button>
-                                <button
-                                  onClick={() => handleCopy(p)}
-                                  className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition-colors"
-                                >
-                                  {copied === p.id ? 'Copiado!' : 'Copiar'}
-                                </button>
-                                <a
-                                  href={p.linkedinUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={() => {
-                                    if (p.generatedMessage) navigator.clipboard.writeText(p.generatedMessage)
-                                  }}
-                                  className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors"
-                                >
-                                  Abrir LinkedIn + Copiar msg
-                                </a>
                                 {p.status !== 'sent' && canSendMore && (
                                   <button
                                     onClick={() => handleMarkSent(p)}
