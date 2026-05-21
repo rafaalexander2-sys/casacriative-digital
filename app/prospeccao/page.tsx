@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { generateMessage, generateConnectionNote } from '@/lib/message-templates'
+import { generateAIMessage } from '@/lib/ai-messages'
 import {
   Prospect,
   ProspectStatus,
@@ -60,6 +61,7 @@ function saveCampaign(c: Campaign) {
 
 const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL || ''
 const APIFY_KEY_STORAGE = 'cc_apify_key'
+const PERPLEXITY_KEY_STORAGE = 'cc_perplexity_key'
 const APIFY_BASE = 'https://api.apify.com/v2'
 
 type Tab = 'queue' | 'add' | 'stats' | 'instagram'
@@ -72,6 +74,7 @@ const emptyForm = {
   sector: SECTOR_OPTIONS[0],
   companySize: SIZE_OPTIONS[0],
   linkedinUrl: '',
+  instagramUrl: '',
   email: '',
   companyWebsite: '',
   notes: '',
@@ -96,12 +99,17 @@ export default function ProspeccaoPage() {
   const [editingPortfolio, setEditingPortfolio] = useState(false)
   const [apifyKey, setApifyKey] = useState('')
   const [editingApify, setEditingApify] = useState(false)
+  const [perplexityKey, setPerplexityKey] = useState('')
+  const [editingPerplexity, setEditingPerplexity] = useState(false)
+  const [aiGenerating, setAiGenerating] = useState<string | null>(null)
+  const [aiError, setAiError] = useState<string | null>(null)
 
   useEffect(() => {
     setProspects(loadProspects())
     setCampaign(loadCampaign())
     setPortfolioUrl(localStorage.getItem(PORTFOLIO_KEY) || 'casacriative.com.br')
     setApifyKey(localStorage.getItem(APIFY_KEY_STORAGE) || '')
+    setPerplexityKey(localStorage.getItem(PERPLEXITY_KEY_STORAGE) || '')
   }, [])
 
   const persist = useCallback((list: Prospect[]) => {
@@ -288,6 +296,31 @@ export default function ProspeccaoPage() {
     setSelectedId(prospect.id)
   }
 
+  async function handleGenerateAI(prospect: Prospect) {
+    if (!perplexityKey) {
+      setAiError('Configure a Chave Perplexity no cabeçalho.')
+      setTimeout(() => setAiError(null), 4000)
+      return
+    }
+    setAiGenerating(prospect.id)
+    setAiError(null)
+    try {
+      const message = await generateAIMessage(prospect, portfolioUrl, perplexityKey)
+      const next = prospects.map(p =>
+        p.id === prospect.id
+          ? { ...p, generatedMessage: message, status: 'message_ready' as ProspectStatus }
+          : p
+      )
+      persist(next)
+      setSelectedId(prospect.id)
+    } catch (e: unknown) {
+      setAiError(e instanceof Error ? e.message : 'Erro ao gerar com IA.')
+      setTimeout(() => setAiError(null), 6000)
+    } finally {
+      setAiGenerating(null)
+    }
+  }
+
   function handleCopy(prospect: Prospect) {
     if (!prospect.generatedMessage) return
     navigator.clipboard.writeText(prospect.generatedMessage)
@@ -385,6 +418,32 @@ export default function ProspeccaoPage() {
               title="Clique para editar o link do portfólio"
             >
               Portfolio: <span className="text-zinc-400">{portfolioUrl}</span>
+            </button>
+          )}
+        </div>
+
+        {/* Perplexity Key */}
+        <div className="flex items-center gap-2">
+          {editingPerplexity ? (
+            <input
+              autoFocus
+              type="password"
+              value={perplexityKey}
+              onChange={e => setPerplexityKey(e.target.value)}
+              onBlur={() => { localStorage.setItem(PERPLEXITY_KEY_STORAGE, perplexityKey); setEditingPerplexity(false) }}
+              onKeyDown={e => { if (e.key === 'Enter') { localStorage.setItem(PERPLEXITY_KEY_STORAGE, perplexityKey); setEditingPerplexity(false) } }}
+              placeholder="pplx-..."
+              className="w-48 bg-zinc-900 border border-amber-600 rounded px-2 py-1 text-xs text-zinc-100 focus:outline-none placeholder-zinc-600"
+            />
+          ) : (
+            <button
+              onClick={() => setEditingPerplexity(true)}
+              className={`text-xs transition-colors border rounded px-2 py-1 ${perplexityKey ? 'text-amber-400 border-amber-800/50 hover:border-amber-600' : 'text-zinc-600 border-zinc-800 hover:text-zinc-400'}`}
+              title="Clique para configurar a chave Perplexity"
+            >
+              Chave Perplexity: <span className={perplexityKey ? 'text-green-400' : 'text-zinc-600'}>
+                {perplexityKey ? '●●●●●●' : 'não configurada'}
+              </span>
             </button>
           )}
         </div>
@@ -522,6 +581,11 @@ export default function ProspeccaoPage() {
 
             {tab === 'queue' && (
               <div className="p-6">
+                {aiError && (
+                  <div className="mb-4 px-4 py-2.5 bg-red-900/40 border border-red-800/50 rounded-lg text-xs text-red-300">
+                    {aiError}
+                  </div>
+                )}
                 <div className="mb-4 flex gap-3 items-center">
                   <input
                     type="text"
@@ -586,12 +650,21 @@ export default function ProspeccaoPage() {
 
                           <div className="flex flex-wrap gap-2 mt-3">
                             {!p.generatedMessage && (
-                              <button
-                                onClick={() => handleGenerate(p)}
-                                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-black text-xs font-medium rounded-lg transition-colors"
-                              >
-                                Gerar Mensagem
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => handleGenerate(p)}
+                                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-black text-xs font-medium rounded-lg transition-colors"
+                                >
+                                  Gerar Mensagem
+                                </button>
+                                <button
+                                  onClick={() => handleGenerateAI(p)}
+                                  disabled={aiGenerating === p.id}
+                                  className="px-3 py-1.5 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
+                                >
+                                  {aiGenerating === p.id ? 'Gerando...' : 'Gerar com IA ✦'}
+                                </button>
+                              </>
                             )}
 
                             {p.generatedMessage && (
@@ -601,6 +674,13 @@ export default function ProspeccaoPage() {
                                   className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition-colors"
                                 >
                                   Regenerar
+                                </button>
+                                <button
+                                  onClick={() => handleGenerateAI(p)}
+                                  disabled={aiGenerating === p.id}
+                                  className="px-3 py-1.5 bg-violet-900/60 hover:bg-violet-800/60 disabled:opacity-50 text-violet-300 text-xs rounded-lg transition-colors"
+                                >
+                                  {aiGenerating === p.id ? 'Gerando...' : 'Gerar com IA ✦'}
                                 </button>
                                 <button
                                   onClick={() => handleCopy(p)}
@@ -704,6 +784,7 @@ export default function ProspeccaoPage() {
                     { key: 'title', label: 'Cargo *', placeholder: 'Sócio-Gerente' },
                     { key: 'company', label: 'Empresa *', placeholder: 'Clínica Exemplo Lda' },
                     { key: 'linkedinUrl', label: 'URL LinkedIn *', placeholder: 'https://linkedin.com/in/...' },
+                    { key: 'instagramUrl', label: 'URL Instagram (opcional)', placeholder: 'https://instagram.com/empresa' },
                     { key: 'email', label: 'Email (opcional)', placeholder: 'joao@empresa.pt' },
                     { key: 'companyWebsite', label: 'Site da empresa (opcional)', placeholder: 'empresa.pt' },
                   ].map(({ key, label, placeholder }) => (
