@@ -127,6 +127,24 @@ export default function ProspeccaoPage() {
     'Turismo / Hotelaria':       { PT: 'diretor hotel Portugal', ES: 'director hotel España' },
   }
 
+  async function handleLoadSeeds() {
+    setIgLoading(true)
+    setIgStatus('Carregando leads reais de Portugal e Espanha...')
+    try {
+      const res = await fetch('/seeds-prospects.json')
+      const seeds: Prospect[] = await res.json()
+      const existing = new Set(prospects.map(p => p.linkedinUrl).filter(Boolean))
+      const fresh = seeds.filter(s => !existing.has(s.linkedinUrl))
+      persist([...fresh, ...prospects])
+      setIgStatus(`✅ ${fresh.length} leads importados (PT + ES)!`)
+      setTimeout(() => setTab('queue'), 800)
+    } catch {
+      setIgStatus('Erro ao carregar seeds.')
+    } finally {
+      setIgLoading(false)
+    }
+  }
+
   async function handleInstagramScrape() {
     if (!apifyKey) { setIgStatus('Cole a sua chave Apify no campo acima.'); return }
     setIgLoading(true)
@@ -438,7 +456,23 @@ export default function ProspeccaoPage() {
             {tab === 'instagram' && (
               <div className="p-6 max-w-md">
                 <h2 className="text-base font-semibold mb-1">Buscar prospects no LinkedIn</h2>
-                <p className="text-xs text-zinc-500 mb-5">O Apify busca donos de PMEs em Portugal e Espanha e importa direto para a fila.</p>
+                <p className="text-xs text-zinc-500 mb-5">Importa leads reais de donos de PMEs em Portugal e Espanha direto para a fila.</p>
+
+                {/* Quick seed loader */}
+                <div className="mb-6 p-4 bg-amber-950/30 border border-amber-800/40 rounded-xl">
+                  <p className="text-xs font-semibold text-amber-400 mb-1">🚀 Leads prontos — carrega agora</p>
+                  <p className="text-xs text-zinc-400 mb-3">18 donos de PME reais (Portugal + Espanha): restaurantes, spas, clínicas, lojas. Pronto a usar.</p>
+                  <button onClick={handleLoadSeeds} disabled={igLoading}
+                    className="w-full py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-black text-sm font-semibold rounded-lg transition-colors">
+                    {igLoading ? 'Carregando...' : '⚡ Carregar 18 leads PT + ES'}
+                  </button>
+                </div>
+
+                <div className="relative flex items-center mb-5">
+                  <div className="flex-1 border-t border-zinc-800" />
+                  <span className="mx-3 text-xs text-zinc-600">ou busca mais com Apify</span>
+                  <div className="flex-1 border-t border-zinc-800" />
+                </div>
 
                 <div className="space-y-4">
                   <label className="block">
@@ -473,8 +507,8 @@ export default function ProspeccaoPage() {
                   </label>
 
                   <button onClick={handleInstagramScrape} disabled={igLoading}
-                    className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-black text-sm font-semibold rounded-lg transition-colors">
-                    {igLoading ? 'Buscando...' : 'Buscar agora'}
+                    className="w-full py-2.5 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-zinc-100 text-sm font-semibold rounded-lg transition-colors">
+                    {igLoading ? 'Buscando...' : 'Buscar via Apify'}
                   </button>
 
                   {igStatus && (
@@ -482,16 +516,6 @@ export default function ProspeccaoPage() {
                       {igStatus}
                     </div>
                   )}
-                </div>
-
-                <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                  <p className="text-xs text-amber-500 font-medium mb-2">Como funciona</p>
-                  <ol className="text-xs text-zinc-400 space-y-1.5 list-decimal list-inside">
-                    <li>Seleciona país e setor</li>
-                    <li>Clica em Buscar — o Apify pesquisa donos de PME no LinkedIn</li>
-                    <li>Perfis são importados automaticamente para a Fila</li>
-                    <li>Gera mensagem e envia pelo bot</li>
-                  </ol>
                 </div>
               </div>
             )}
