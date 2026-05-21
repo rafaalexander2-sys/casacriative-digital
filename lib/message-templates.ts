@@ -199,10 +199,13 @@ export function generateMessage(prospect: Prospect, portfolioUrl: string): strin
   const sectorKey = SECTOR_OPTIONS.includes(prospect.sector) ? prospect.sector : 'Outro'
   const template = TEMPLATES[sectorKey] ?? TEMPLATES['Outro']
   const text = template[prospect.country] ?? template['PT']
+  const closing = prospect.country === 'ES'
+    ? '\n\nOu si prefieres, hablamos por aquí.'
+    : '\n\nOu se preferires, falamos aqui mesmo.'
 
-  return text
+  return (text
     .replace(/\{firstName\}/g, firstName)
     .replace(/\{company\}/g, prospect.company)
     .replace(/\{sector\}/g, prospect.sector)
-    .replace(/\{portfolioUrl\}/g, portfolioUrl || 'casacriative.com.br')
+    .replace(/\{portfolioUrl\}/g, portfolioUrl || 'casacriative.com.br')) + closing
 }

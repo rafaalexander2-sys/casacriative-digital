@@ -28,6 +28,7 @@ Instruções obrigatórias:
 - Linha 2: o que fazemos = design de feed que vende + tráfego pago que converte, para o setor deles em ${prospect.country === 'ES' ? 'Espanha' : 'Portugal'}
 - Linha 3: equipa brasileira = metade do preço das agências locais, mesmo resultado
 - Pergunta final: convite para 10-15 minutos de conversa
+- Última linha (depois da pergunta): "${prospect.country === 'ES' ? 'Ou si prefieres, hablamos por aquí.' : 'Ou se preferires, falamos aqui mesmo.'}"
 - Se tiver bio/contexto: usa UM detalhe específico na linha 1 para personalizar
 - PROIBIDO: mencionar portfólio, links, URLs, saudações genéricas
 
