@@ -324,6 +324,25 @@ export default function ProspeccaoPage() {
     setTimeout(() => setCopied(null), 2000)
   }
 
+  function handleMarkFollowing(prospect: Prospect) {
+    const next = prospects.map(p =>
+      p.id === prospect.id
+        ? { ...p, status: 'following' as ProspectStatus, followedAt: new Date().toISOString() }
+        : p
+    )
+    persist(next)
+    if (prospect.instagramUrl) window.open(prospect.instagramUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  function handleMarkEngaging(prospect: Prospect) {
+    const next = prospects.map(p =>
+      p.id === prospect.id
+        ? { ...p, status: 'engaging' as ProspectStatus, engagedAt: new Date().toISOString() }
+        : p
+    )
+    persist(next)
+  }
+
   function handleMarkSent(prospect: Prospect) {
     if (campaign.sentToday >= campaign.dailyLimit) return
     const next = prospects.map(p =>
@@ -359,6 +378,8 @@ export default function ProspeccaoPage() {
   const stats = {
     total: prospects.length,
     pending: prospects.filter(p => p.status === 'pending').length,
+    following: prospects.filter(p => p.status === 'following').length,
+    engaging: prospects.filter(p => p.status === 'engaging').length,
     ready: prospects.filter(p => p.status === 'message_ready').length,
     sent: prospects.filter(p => p.status === 'sent').length,
     replied: prospects.filter(p => p.status === 'replied').length,
@@ -483,7 +504,7 @@ export default function ProspeccaoPage() {
 
           <div className="mt-4 border-t border-zinc-800 pt-4">
             <p className="text-xs text-zinc-600 mb-2 px-1">Filtrar por status</p>
-            {(['all', 'pending', 'message_ready', 'sent', 'replied', 'no_reply'] as const).map(s => (
+            {(['all', 'pending', 'following', 'engaging', 'message_ready', 'sent', 'replied', 'no_reply'] as const).map(s => (
               <button
                 key={s}
                 onClick={() => { setFilter(s); setTab('queue') }}
@@ -597,11 +618,10 @@ export default function ProspeccaoPage() {
                     <span className="text-xs font-bold w-5 h-5 rounded-full bg-zinc-600 text-white flex items-center justify-center flex-shrink-0">3</span>
                     <p className="text-sm font-semibold text-zinc-100">Envia pelo Instagram ou WhatsApp</p>
                   </div>
-                  <ol className="text-xs text-zinc-400 space-y-1.5 list-none">
-                    <li>→ Vai em <button onClick={() => setTab('queue')} className="text-amber-400 underline">Fila</button></li>
-                    <li>→ Clica num lead → <span className="text-amber-400">"Gerar com IA ✦"</span></li>
-                    <li>→ Clica <span className="text-pink-400">"Abrir Instagram"</span> ou <span className="text-green-400">"Abrir WhatsApp"</span></li>
-                    <li>→ Cola a mensagem e envia — é isso!</li>
+                  <ol className="text-xs text-zinc-400 space-y-2 list-none">
+                    <li className="flex gap-2"><span className="text-blue-400 font-bold flex-shrink-0">Dia 1</span> Clica <span className="text-blue-400 font-medium mx-1">"Seguir no Instagram"</span> — abre o perfil e marca como "a seguir"</li>
+                    <li className="flex gap-2"><span className="text-violet-400 font-bold flex-shrink-0">Dia 2-3</span> Curte 1-2 posts, deixa um comentário genuíno no perfil deles</li>
+                    <li className="flex gap-2"><span className="text-amber-400 font-bold flex-shrink-0">Dia 4</span> Clica <span className="text-violet-400 font-medium mx-1">"Já curti e comentei"</span> → gera mensagem com IA → clica <span className="text-rose-400 font-medium mx-1">"Enviar DM"</span></li>
                   </ol>
                 </div>
               </div>
@@ -676,105 +696,148 @@ export default function ProspeccaoPage() {
                             </div>
                           ) : null}
 
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {!p.generatedMessage && (
+                          {/* Step indicators */}
+                          {p.instagramUrl && (
+                            <div className="flex items-center gap-1 mt-3 mb-2">
+                              {(['following','engaging','sent'] as const).map((step, i) => {
+                                const stepOrder = ['following','engaging','sent']
+                                const currentIdx = stepOrder.indexOf(p.status)
+                                const isDone = currentIdx > i
+                                const isActive = currentIdx === i
+                                return (
+                                  <div key={step} className="flex items-center gap-1">
+                                    <div className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDone ? 'bg-green-900/60 text-green-300' : isActive ? 'bg-amber-900/60 text-amber-300' : 'bg-zinc-800 text-zinc-600'}`}>
+                                      {i+1}. {step === 'following' ? 'Seguir' : step === 'engaging' ? 'Interagir' : 'Enviar DM'}
+                                    </div>
+                                    {i < 2 && <span className="text-zinc-700 text-xs">→</span>}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap gap-2 mt-2">
+
+                            {/* STEP 1 — PENDING: follow first */}
+                            {p.status === 'pending' && p.instagramUrl && (
+                              <button
+                                onClick={() => handleMarkFollowing(p)}
+                                className="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                              >
+                                1. Seguir no Instagram →
+                              </button>
+                            )}
+
+                            {/* STEP 1 — PENDING, no Instagram: generate directly */}
+                            {p.status === 'pending' && !p.instagramUrl && (
                               <>
-                                <button
-                                  onClick={() => handleGenerate(p)}
-                                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-black text-xs font-medium rounded-lg transition-colors"
-                                >
+                                <button onClick={() => handleGenerate(p)}
+                                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-black text-xs font-medium rounded-lg transition-colors">
                                   Gerar Mensagem
                                 </button>
-                                <button
-                                  onClick={() => handleGenerateAI(p)}
-                                  disabled={aiGenerating === p.id}
-                                  className="px-3 py-1.5 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
-                                >
+                                <button onClick={() => handleGenerateAI(p)} disabled={aiGenerating === p.id}
+                                  className="px-3 py-1.5 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors">
                                   {aiGenerating === p.id ? 'Gerando...' : 'Gerar com IA ✦'}
                                 </button>
                               </>
                             )}
 
-                            {p.generatedMessage && (
+                            {/* STEP 2 — FOLLOWING: wait + engage */}
+                            {p.status === 'following' && (
+                              <div className="w-full">
+                                <div className="mb-2 px-3 py-2 bg-blue-950/40 border border-blue-800/30 rounded-lg text-xs text-blue-300">
+                                  📌 A seguir desde {p.followedAt ? new Date(p.followedAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }) : '—'} — curte 1-2 posts e deixa um comentário genuíno antes de enviar a DM.
+                                </div>
+                                <button
+                                  onClick={() => handleMarkEngaging(p)}
+                                  className="px-3 py-1.5 bg-violet-700 hover:bg-violet-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                >
+                                  ✓ Já curti e comentei → Preparar DM
+                                </button>
+                                {p.instagramUrl && (
+                                  <button
+                                    onClick={() => window.open(p.instagramUrl, '_blank', 'noopener,noreferrer')}
+                                    className="ml-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition-colors"
+                                  >
+                                    Abrir Instagram
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
+                            {/* STEP 3 — ENGAGING: generate + send DM */}
+                            {(p.status === 'engaging' || p.status === 'message_ready') && (
                               <>
-                                <button
-                                  onClick={() => handleGenerate(p)}
-                                  className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition-colors"
-                                >
-                                  Regenerar
-                                </button>
-                                <button
-                                  onClick={() => handleGenerateAI(p)}
-                                  disabled={aiGenerating === p.id}
-                                  className="px-3 py-1.5 bg-violet-900/60 hover:bg-violet-800/60 disabled:opacity-50 text-violet-300 text-xs rounded-lg transition-colors"
-                                >
-                                  {aiGenerating === p.id ? 'Gerando...' : 'Gerar com IA ✦'}
-                                </button>
-                                <button
-                                  onClick={() => handleCopy(p)}
-                                  className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition-colors"
-                                >
-                                  {copied === p.id ? 'Copiado!' : 'Copiar'}
-                                </button>
-                                {p.instagramUrl ? (
-                                  <button
-                                    onClick={() => {
-                                      if (p.generatedMessage) navigator.clipboard.writeText(p.generatedMessage)
-                                      window.open(p.instagramUrl, '_blank', 'noopener,noreferrer')
-                                    }}
-                                    className="px-3 py-1.5 bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold rounded-lg transition-colors"
-                                  >
-                                    Abrir Instagram + Copiar msg
-                                  </button>
-                                ) : null}
-                                {p.whatsapp ? (
-                                  <button
-                                    onClick={() => {
-                                      window.open(
-                                        `https://wa.me/${p.whatsapp!.replace(/\D/g, '')}?text=${encodeURIComponent(p.generatedMessage || '')}`,
-                                        '_blank',
-                                        'noopener,noreferrer'
-                                      )
-                                    }}
-                                    className="px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors"
-                                  >
-                                    Abrir WhatsApp
-                                  </button>
-                                ) : null}
-                                {!p.instagramUrl && !p.whatsapp && (
-                                  <span className="px-3 py-1.5 text-zinc-600 text-xs italic">
-                                    Adiciona o Instagram ou WhatsApp no perfil
-                                  </span>
-                                )}
-                                {p.status !== 'sent' && canSendMore && (
-                                  <button
-                                    onClick={() => handleMarkSent(p)}
-                                    className="px-3 py-1.5 bg-green-900/40 hover:bg-green-900/60 text-green-300 text-xs rounded-lg transition-colors"
-                                  >
-                                    Marcar como Enviada
-                                  </button>
+                                {!p.generatedMessage ? (
+                                  <>
+                                    <button onClick={() => handleGenerate(p)}
+                                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-black text-xs font-medium rounded-lg transition-colors">
+                                      Gerar Mensagem
+                                    </button>
+                                    <button onClick={() => handleGenerateAI(p)} disabled={aiGenerating === p.id}
+                                      className="px-3 py-1.5 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors">
+                                      {aiGenerating === p.id ? 'Gerando...' : 'Gerar com IA ✦'}
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button onClick={() => handleGenerate(p)}
+                                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition-colors">
+                                      Regenerar
+                                    </button>
+                                    <button onClick={() => handleGenerateAI(p)} disabled={aiGenerating === p.id}
+                                      className="px-3 py-1.5 bg-violet-900/60 hover:bg-violet-800/60 disabled:opacity-50 text-violet-300 text-xs rounded-lg transition-colors">
+                                      {aiGenerating === p.id ? 'Gerando...' : 'IA ✦'}
+                                    </button>
+                                    <button onClick={() => handleCopy(p)}
+                                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-lg transition-colors">
+                                      {copied === p.id ? 'Copiado!' : 'Copiar'}
+                                    </button>
+                                    {p.instagramUrl && (
+                                      <button
+                                        onClick={() => {
+                                          if (p.generatedMessage) navigator.clipboard.writeText(p.generatedMessage)
+                                          window.open(p.instagramUrl, '_blank', 'noopener,noreferrer')
+                                          handleMarkSent(p)
+                                        }}
+                                        className="px-3 py-1.5 bg-rose-700 hover:bg-rose-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                      >
+                                        3. Enviar DM no Instagram →
+                                      </button>
+                                    )}
+                                    {p.whatsapp && (
+                                      <button
+                                        onClick={() => {
+                                          window.open(
+                                            `https://wa.me/${p.whatsapp!.replace(/\D/g, '')}?text=${encodeURIComponent(p.generatedMessage || '')}`,
+                                            '_blank', 'noopener,noreferrer'
+                                          )
+                                          handleMarkSent(p)
+                                        }}
+                                        className="px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                                      >
+                                        Enviar WhatsApp →
+                                      </button>
+                                    )}
+                                  </>
                                 )}
                               </>
                             )}
 
+                            {/* POST-SEND actions */}
                             {p.status === 'sent' && (
                               <>
-                                <button
-                                  onClick={() => handleStatusChange(p, 'replied')}
-                                  className="px-3 py-1.5 bg-green-900/40 hover:bg-green-900/60 text-green-300 text-xs rounded-lg"
-                                >
-                                  Respondeu
+                                <p className="w-full text-xs text-zinc-500 mb-1">DM enviada — como correu?</p>
+                                <button onClick={() => handleStatusChange(p, 'replied')}
+                                  className="px-3 py-1.5 bg-green-900/40 hover:bg-green-900/60 text-green-300 text-xs rounded-lg">
+                                  Respondeu ✓
                                 </button>
-                                <button
-                                  onClick={() => handleStatusChange(p, 'no_reply')}
-                                  className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-xs rounded-lg"
-                                >
+                                <button onClick={() => handleStatusChange(p, 'no_reply')}
+                                  className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-xs rounded-lg">
                                   Sem Resposta
                                 </button>
-                                <button
-                                  onClick={() => handleStatusChange(p, 'not_interested')}
-                                  className="px-3 py-1.5 bg-red-900/30 hover:bg-red-900/50 text-red-400 text-xs rounded-lg"
-                                >
+                                <button onClick={() => handleStatusChange(p, 'not_interested')}
+                                  className="px-3 py-1.5 bg-red-900/30 hover:bg-red-900/50 text-red-400 text-xs rounded-lg">
                                   Não Interessado
                                 </button>
                               </>
@@ -887,10 +950,12 @@ export default function ProspeccaoPage() {
               <div className="p-6">
                 <h2 className="text-base font-semibold mb-5">Estatísticas da Campanha</h2>
 
-                <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="grid grid-cols-3 gap-3 mb-6">
                   {[
-                    { label: 'Total na fila', value: stats.total, color: 'text-zinc-100' },
-                    { label: 'Mensagens enviadas', value: stats.sent, color: 'text-blue-400' },
+                    { label: 'Total', value: stats.total, color: 'text-zinc-100' },
+                    { label: 'A Seguir', value: stats.following, color: 'text-blue-400' },
+                    { label: 'A Interagir', value: stats.engaging, color: 'text-violet-400' },
+                    { label: 'DMs Enviadas', value: stats.sent, color: 'text-teal-400' },
                     { label: 'Responderam', value: stats.replied, color: 'text-green-400' },
                     {
                       label: 'Taxa de resposta',
@@ -929,19 +994,18 @@ export default function ProspeccaoPage() {
                 <div className="bg-zinc-900 border border-amber-900/30 rounded-xl p-4">
                   <p className="text-xs text-amber-500 font-medium mb-2">Fluxo recomendado</p>
                   <ol className="text-xs text-zinc-400 space-y-1.5 list-decimal list-inside">
-                    <li>Adicionar prospectos com dados detalhados</li>
-                    <li>Gerar mensagem personalizada com IA</li>
-                    <li>Revisar e copiar a mensagem</li>
-                    <li>Abrir o LinkedIn e enviar manualmente</li>
-                    <li>Marcar como &ldquo;Enviada&rdquo; no sistema</li>
-                    <li>Acompanhar respostas e atualizar status</li>
+                    <li><span className="text-blue-400">Dia 1:</span> Seguir no Instagram — abre o perfil e segues</li>
+                    <li><span className="text-violet-400">Dia 2-3:</span> Curtir 1-2 posts, comentar genuinamente</li>
+                    <li><span className="text-amber-400">Dia 4:</span> Gerar mensagem com IA personalizada</li>
+                    <li><span className="text-rose-400">Dia 4:</span> Enviar DM pelo direct do Instagram</li>
+                    <li>Registar se respondeu ou não</li>
                   </ol>
                 </div>
 
                 {stats.sent > 0 && (
                   <div className="mt-4 bg-zinc-900 border border-zinc-800 rounded-xl p-4">
                     <p className="text-xs text-zinc-500 mb-3">Status detalhado</p>
-                    {(['pending', 'message_ready', 'sent', 'replied', 'no_reply', 'not_interested'] as ProspectStatus[]).map(s => {
+                    {(['pending', 'following', 'engaging', 'message_ready', 'sent', 'replied', 'no_reply', 'not_interested'] as ProspectStatus[]).map(s => {
                       const count = prospects.filter(p => p.status === s).length
                       if (count === 0) return null
                       return (
