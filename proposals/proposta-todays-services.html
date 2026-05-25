@@ -2,457 +2,453 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Proposta — Today's Services LLC | Casa Criative</title>
   <style>
     @page { size: A4 portrait; margin: 0; }
-
     @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bronze-light: #e8c49a;
+      --bronze:       #c47a4a;
+      --bronze-dark:  #8b4513;
+      --gradient:     linear-gradient(135deg, #e8c49a 0%, #c47a4a 50%, #8b4513 100%);
+      --text-1: #f5f5f7;
+      --text-2: #86868b;
+      --text-3: #555;
+      --border: rgba(255,210,160,0.12);
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-      background: #fff;
-      color: #1d1d1f;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+      background: #000;
+      color: var(--text-1);
       width: 210mm;
       margin: 0 auto;
       -webkit-font-smoothing: antialiased;
     }
 
+    /* Grain */
+    .grain { position: relative; }
+    .grain::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 256px 256px;
+      opacity: 0.04;
+      mix-blend-mode: overlay;
+      z-index: 2;
+      border-radius: inherit;
+    }
+
+    /* Text gradient */
+    .text-bronze {
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    /* Uppercase label */
+    .label {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .label.accent { color: var(--bronze); }
+
     /* ── HEADER ── */
     .header {
-      background: linear-gradient(135deg, #1c1c1e 0%, #0d0d0d 100%);
-      padding: 22px 36px;
+      padding: 18px 36px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid rgba(196,122,74,0.3);
+      border-bottom: 0.5px solid var(--border);
+      background: rgba(0,0,0,0.97);
     }
-
-    .logo-area { display: flex; align-items: center; gap: 12px; }
-
-    .logo-icon { width: 42px; height: 42px; flex-shrink: 0; }
-
-    .brand-name {
-      color: #fff;
-      font-size: 17px;
-      font-weight: 300;
-      letter-spacing: 0.3px;
-    }
-    .brand-name strong { color: #c47a4a; font-weight: 600; }
-    .brand-sub {
-      color: #666;
-      font-size: 10px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-
+    .logo-img { height: 26px; width: auto; }
     .header-right { text-align: right; }
-    .proposal-tag {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 2px;
+    .header-tag {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: #c47a4a;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
       margin-bottom: 4px;
     }
-    .client-title {
-      color: #fff;
+    .header-client {
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
+      color: var(--text-1);
+      letter-spacing: -0.3px;
     }
-    .proposal-meta {
-      color: #555;
-      font-size: 10.5px;
-      margin-top: 3px;
-    }
+    .header-meta { font-size: 10px; color: var(--text-3); margin-top: 2px; }
 
-    /* ── HERO STRIP ── */
-    .hero-strip {
-      background: linear-gradient(135deg, #c47a4a 0%, #8b4e22 100%);
-      padding: 14px 36px;
+    /* ── HERO ── */
+    .hero {
+      padding: 26px 36px 22px;
+      background: linear-gradient(180deg, rgba(196,122,74,0.09) 0%, transparent 100%);
+      border-bottom: 0.5px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
+    .hero-left { max-width: 480px; }
     .hero-title {
-      color: #fff;
-      font-size: 20px;
+      font-size: 26px;
       font-weight: 700;
-      letter-spacing: -0.4px;
+      letter-spacing: -0.8px;
+      line-height: 1.15;
+      color: var(--text-1);
+      margin: 8px 0 10px;
     }
     .hero-sub {
-      color: rgba(255,255,255,0.75);
-      font-size: 11.5px;
-      margin-top: 3px;
+      font-size: 12.5px;
+      font-weight: 300;
+      color: var(--text-2);
+      line-height: 1.65;
     }
     .hero-badge {
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 20px;
-      padding: 5px 13px;
-      color: #fff;
-      font-size: 11px;
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      text-align: center;
+      background: rgba(196,122,74,0.04);
+      flex-shrink: 0;
+    }
+    .hero-badge-val {
+      font-size: 12px;
       font-weight: 500;
-      white-space: nowrap;
+      color: var(--text-2);
+      line-height: 1.5;
     }
 
     /* ── BODY ── */
     .body {
-      padding: 20px 36px;
+      padding: 18px 36px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
     /* ── DIAGNOSIS ── */
-    .diagnosis {
-      background: #faf8f5;
-      border-left: 3px solid #c47a4a;
-      padding: 12px 16px;
+    .diag {
+      border-left: 2px solid var(--bronze);
+      padding: 10px 15px;
+      background: rgba(196,122,74,0.06);
       border-radius: 0 8px 8px 0;
     }
-    .section-label {
-      font-size: 9.5px;
-      font-weight: 700;
-      letter-spacing: 1.8px;
-      text-transform: uppercase;
-      color: #c47a4a;
-      margin-bottom: 5px;
+    .diag p {
+      font-size: 11.5px;
+      color: var(--text-2);
+      line-height: 1.7;
+      margin-top: 5px;
     }
-    .diagnosis p {
-      font-size: 12px;
-      color: #444;
-      line-height: 1.65;
-    }
-    .diagnosis p strong { color: #1d1d1f; }
+    .diag p strong { color: var(--text-1); font-weight: 500; }
 
-    /* ── SERVICES GRID ── */
-    .services-grid {
+    /* ── CARDS ── */
+    .cards {
       display: grid;
-      grid-template-columns: 1.65fr 1fr 1fr;
+      grid-template-columns: 1.55fr 1fr 1fr;
       gap: 10px;
     }
 
     .card {
-      border: 1px solid #e5ddd4;
-      border-radius: 12px;
+      border-radius: 20px;
       padding: 16px;
+      border: 0.5px solid var(--border);
+      background: linear-gradient(160deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
       position: relative;
       overflow: hidden;
     }
+    /* Bronze shimmer top-left */
     .card::after {
       content: "";
       position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #c47a4a, #e8a060);
-      border-radius: 2px 2px 0 0;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      background:
+        radial-gradient(70% 50% at 15% 0%, rgba(232,196,154,0.13), transparent 60%),
+        radial-gradient(50% 40% at 100% 100%, rgba(196,122,74,0.07), transparent 70%);
+      z-index: 1;
     }
+    .card-inner { position: relative; z-index: 2; }
 
-    .card.dark {
-      background: linear-gradient(160deg, #1c1c1e 0%, #2a1508 100%);
-      border-color: rgba(196,122,74,0.35);
-    }
-
-    .card-icon { font-size: 18px; margin-bottom: 8px; }
-
-    .card-title {
-      font-size: 12.5px;
-      font-weight: 700;
-      letter-spacing: -0.2px;
-      margin-bottom: 2px;
-    }
-    .card.dark .card-title { color: #fff; }
-
-    .card-price {
-      font-size: 22px;
-      font-weight: 700;
-      color: #c47a4a;
-      letter-spacing: -0.6px;
-      line-height: 1;
-      margin-top: 6px;
-    }
-    .card-price sup {
-      font-size: 13px;
+    .card-tag {
+      font-size: 9px;
       font-weight: 600;
-      vertical-align: super;
-      margin-right: 1px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--bronze-light);
+      margin-bottom: 5px;
     }
-    .card-price-period {
-      font-size: 10px;
-      color: #888;
-      margin-bottom: 10px;
-      margin-top: 2px;
+    .card-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text-1);
+      line-height: 1.2;
+      margin-bottom: 8px;
     }
-    .card.dark .card-price-period { color: #777; }
-
-    .card-items {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
+    .card-price {
+      font-size: 23px;
+      font-weight: 700;
+      letter-spacing: -0.6px;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      line-height: 1;
     }
+    .card-price sup { font-size: 12px; font-weight: 600; }
+    .card-period {
+      font-size: 9.5px;
+      color: var(--text-3);
+      margin-top: 3px;
+      margin-bottom: 11px;
+    }
+    .card-sep {
+      height: 0.5px;
+      background: linear-gradient(90deg, rgba(255,210,160,0.22), transparent);
+      margin-bottom: 11px;
+    }
+    .card-items { list-style: none; display: flex; flex-direction: column; gap: 5px; }
     .card-items li {
       font-size: 11px;
-      color: #555;
+      color: var(--text-2);
       display: flex;
       align-items: flex-start;
       gap: 6px;
       line-height: 1.45;
     }
-    .card.dark .card-items li { color: #bbb; }
     .card-items li::before {
       content: "✓";
-      color: #c47a4a;
+      font-size: 9.5px;
       font-weight: 800;
-      font-size: 10px;
+      color: var(--bronze);
       flex-shrink: 0;
       margin-top: 1px;
     }
 
-    /* ── INVESTMENT + NOTES ── */
-    .bottom-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      align-items: start;
-    }
+    /* ── BOTTOM: TABLE + NOTES ── */
+    .bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    .invest-table {
-      width: 100%;
-      border-collapse: collapse;
-      border-radius: 10px;
-      overflow: hidden;
-      font-size: 11.5px;
-    }
-    .invest-table thead tr {
-      background: #1c1c1e;
-    }
+    .invest-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .invest-table thead tr { border-bottom: 0.5px solid rgba(255,210,160,0.14); }
     .invest-table thead th {
-      padding: 9px 12px;
+      padding: 7px 0;
       text-align: left;
-      font-size: 9.5px;
-      font-weight: 700;
-      letter-spacing: 1.2px;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: #c47a4a;
+      color: var(--text-3);
     }
     .invest-table thead th:last-child { text-align: right; }
-    .invest-table tbody tr { border-bottom: 1px solid #f0ebe4; }
-    .invest-table tbody tr:last-child { border-bottom: none; }
-    .invest-table tbody td {
-      padding: 9px 12px;
-      color: #333;
-    }
-    .invest-table tbody td:nth-child(2) { color: #999; font-size: 10.5px; }
+    .invest-table tbody tr { border-bottom: 0.5px solid rgba(255,255,255,0.04); }
+    .invest-table tbody td { padding: 8px 0; color: var(--text-2); }
+    .invest-table tbody td:nth-child(2) { font-size: 10px; color: var(--text-3); }
     .invest-table tbody td:last-child {
       text-align: right;
-      font-weight: 600;
-      color: #1d1d1f;
+      font-weight: 500;
+      color: var(--text-1);
     }
-    .invest-table tfoot tr { background: #faf8f5; }
     .invest-table tfoot td {
-      padding: 10px 12px;
-      font-weight: 700;
-      font-size: 12px;
-      color: #1d1d1f;
+      padding: 11px 0 0;
+      font-size: 10px;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
     .invest-table tfoot td:last-child {
       text-align: right;
-      color: #c47a4a;
-      font-size: 15px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
 
-    .notes-box {
-      background: #fff8f1;
-      border: 1px solid #e5c9a8;
-      border-radius: 10px;
+    .notes {
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
       padding: 14px 15px;
+      background: rgba(196,122,74,0.04);
     }
-    .notes-box ul {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      margin-top: 8px;
-    }
-    .notes-box ul li {
-      font-size: 11px;
-      color: #555;
+    .notes ul { list-style: none; margin-top: 8px; display: flex; flex-direction: column; gap: 7px; }
+    .notes ul li {
+      font-size: 10.5px;
+      color: var(--text-2);
       display: flex;
       align-items: flex-start;
       gap: 7px;
-      line-height: 1.5;
+      line-height: 1.55;
     }
-    .notes-box ul li::before {
+    .notes ul li::before {
       content: "→";
-      color: #c47a4a;
+      color: var(--bronze);
       font-size: 10px;
       flex-shrink: 0;
       margin-top: 1px;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 0.5px;
+      background: linear-gradient(90deg, transparent, #c47a4a, #f0d5b0, #c47a4a, transparent);
+      margin: 2px 36px;
     }
 
     /* ── FOOTER ── */
     .footer {
-      background: linear-gradient(135deg, #1c1c1e 0%, #0d0d0d 100%);
-      padding: 15px 36px;
+      padding: 14px 36px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-top: 1px solid rgba(196,122,74,0.2);
-      margin-top: 4px;
+      border-top: 0.5px solid #1a1a1a;
     }
-    .footer-cta {
-      color: #aaa;
-      font-size: 12px;
+    .footer-cta { font-size: 11.5px; color: var(--text-3); line-height: 1.5; }
+    .footer-cta strong {
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
-    .footer-cta strong { color: #c47a4a; }
-
-    .footer-contacts {
-      display: flex;
-      gap: 20px;
-      align-items: flex-end;
-    }
-    .contact-col {
-      text-align: right;
-    }
-    .contact-col .label {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 1.2px;
+    .footer-contacts { display: flex; gap: 22px; }
+    .fc { text-align: right; }
+    .fc-label {
+      font-size: 8.5px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: #555;
+      color: var(--text-3);
     }
-    .contact-col .value {
-      font-size: 11.5px;
-      color: #c47a4a;
-      margin-top: 1px;
-    }
+    .fc-value { font-size: 11px; color: var(--bronze); margin-top: 2px; }
   </style>
 </head>
 <body>
 
   <!-- HEADER -->
-  <div class="header">
-    <div class="logo-area">
-      <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-        <defs>
-          <radialGradient id="bg" cx="40%" cy="35%" r="65%">
-            <stop offset="0%" stop-color="#1a1a1a"/>
-            <stop offset="100%" stop-color="#000"/>
-          </radialGradient>
-          <filter id="sh">
-            <feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="#c47a4a" flood-opacity="0.45"/>
-          </filter>
-        </defs>
-        <circle cx="50" cy="50" r="49" fill="none" stroke="#c47a4a" stroke-width="0.8" opacity="0.5"/>
-        <circle cx="50" cy="50" r="47" fill="url(#bg)"/>
-        <text x="53" y="68"
-          font-family="'Helvetica Neue',Helvetica,Arial,sans-serif"
-          font-size="56" font-weight="300"
-          fill="#fff" text-anchor="middle"
-          filter="url(#sh)">C</text>
-      </svg>
-      <div>
-        <div class="brand-name">Casa <strong>Criative</strong></div>
-        <div class="brand-sub">Agência Digital</div>
-      </div>
-    </div>
+  <div class="header grain">
+    <img src="../public/logo.webp" alt="Casa Criative" class="logo-img" />
     <div class="header-right">
-      <div class="proposal-tag">Proposta Comercial</div>
-      <div class="client-title">Today's Services LLC</div>
-      <div class="proposal-meta">Bothell, Washington &nbsp;·&nbsp; Maio de 2026</div>
+      <div class="header-tag">Proposta Comercial</div>
+      <div class="header-client">Today's Services LLC</div>
+      <div class="header-meta">Bothell, Washington &nbsp;·&nbsp; Maio de 2026</div>
     </div>
   </div>
 
-  <!-- HERO STRIP -->
-  <div class="hero-strip">
-    <div>
-      <div class="hero-title">Presença Digital que Gera Clientes</div>
-      <div class="hero-sub">Tráfego pago + site profissional para o mercado de limpeza nos EUA</div>
+  <!-- HERO -->
+  <div class="hero grain">
+    <div class="hero-left">
+      <div class="label">Diagnóstico &amp; Solução</div>
+      <h1 class="hero-title">
+        Presença Digital que<br/>
+        <span class="text-bronze">Gera Clientes Reais.</span>
+      </h1>
+      <p class="hero-sub">
+        Tráfego pago estratégico + site profissional para dominar<br/>o mercado de limpeza em Bothell, WA.
+      </p>
     </div>
-    <div class="hero-badge">Limpeza Residencial · Bothell, WA</div>
+    <div class="hero-badge">
+      <div class="label" style="margin-bottom:6px">Setor</div>
+      <div class="hero-badge-val">Limpeza Residencial<br/>Bothell · WA · EUA</div>
+    </div>
   </div>
 
   <!-- BODY -->
   <div class="body">
 
     <!-- DIAGNOSIS -->
-    <div class="diagnosis">
-      <div class="section-label">Diagnóstico</div>
+    <div class="diag">
+      <div class="label accent">Oportunidade identificada</div>
       <p>
-        O mercado de limpeza residencial em Bothell/WA é altamente competitivo. Empresas que combinam
-        <strong>Google Local Services + Meta Ads</strong> com um site otimizado captam entre <strong>3× a 5× mais leads</strong>
-        do que aquelas que dependem apenas de indicações. A Today's Services tem potencial real de escala —
-        falta visibilidade digital estratégica para chegar nos clientes certos, na hora certa.
+        O mercado de limpeza em Bothell/WA é competitivo mas com <strong>enorme potencial não explorado digitalmente</strong>.
+        Empresas que combinam <strong>Google Local Services + Meta Ads</strong> com um site otimizado captam entre
+        <strong>3× a 5× mais leads</strong> do que as que dependem apenas de indicações.
+        A Today's Services tem tudo para escalar — falta visibilidade digital estratégica.
       </p>
     </div>
 
     <!-- SERVICE CARDS -->
-    <div class="services-grid">
+    <div class="cards">
 
-      <!-- Tráfego Pago -->
-      <div class="card dark">
-        <div class="card-icon">📣</div>
-        <div class="card-title">Gestão de Tráfego Pago</div>
-        <div class="card-price"><sup>R$</sup>2.000<span style="font-size:13px;font-weight:400;color:#c47a4a">/mês</span></div>
-        <div class="card-price-period">Verba gerenciada: até $2.000 USD/mês</div>
-        <ul class="card-items">
-          <li>Google Ads (busca + display)</li>
-          <li>Google Local Services Ads</li>
-          <li>Meta Ads — Instagram &amp; Facebook</li>
-          <li>Criativos estáticos de alta qualidade</li>
-          <li>3 vídeos editados ou criados / mês</li>
-          <li>Relatórios semanais de performance</li>
-        </ul>
+      <div class="card grain">
+        <div class="card-inner">
+          <div class="card-tag">⭐ Mais Procurado</div>
+          <div class="card-title">Gestão de Tráfego Pago</div>
+          <div class="card-price"><sup>R$</sup> 2.000<span style="font-size:13px;font-weight:300;background:none;-webkit-text-fill-color:var(--text-3)">/mês</span></div>
+          <div class="card-period">Verba gerenciada: até $2.000 USD / mês</div>
+          <div class="card-sep"></div>
+          <ul class="card-items">
+            <li>Google Ads — busca + display</li>
+            <li>Google Local Services Ads</li>
+            <li>Meta Ads — Instagram &amp; Facebook</li>
+            <li>Criativos estáticos de alta qualidade</li>
+            <li>3 vídeos editados ou criados / mês</li>
+            <li>Relatórios semanais de performance</li>
+          </ul>
+        </div>
       </div>
 
-      <!-- Site -->
-      <div class="card">
-        <div class="card-icon">🌐</div>
-        <div class="card-title">Site Institucional Completo</div>
-        <div class="card-price"><sup>R$</sup>1.300</div>
-        <div class="card-price-period">Pagamento único</div>
-        <ul class="card-items">
-          <li>Design moderno e profissional</li>
-          <li>Todas as páginas da empresa</li>
-          <li>Responsivo (mobile + desktop)</li>
-          <li>Otimizado para conversão e SEO</li>
-          <li>Entrega em até 10 dias úteis</li>
-        </ul>
+      <div class="card grain">
+        <div class="card-inner">
+          <div class="card-tag">Site</div>
+          <div class="card-title">Site Institucional Completo</div>
+          <div class="card-price"><sup>R$</sup> 1.300</div>
+          <div class="card-period">Pagamento único</div>
+          <div class="card-sep"></div>
+          <ul class="card-items">
+            <li>Design moderno e profissional</li>
+            <li>Todas as páginas da empresa</li>
+            <li>Responsivo — mobile + desktop</li>
+            <li>SEO técnico incluído</li>
+            <li>Entrega em até 10 dias úteis</li>
+          </ul>
+        </div>
       </div>
 
-      <!-- Landing Page -->
-      <div class="card">
-        <div class="card-icon">🎯</div>
-        <div class="card-title">Landing Page de Captação</div>
-        <div class="card-price"><sup>R$</sup>600</div>
-        <div class="card-price-period">Pagamento único</div>
-        <ul class="card-items">
-          <li>Página focada em conversão</li>
-          <li>Promoções e serviços específicos</li>
-          <li>Formulário de captação de leads</li>
-          <li>Integração direta com anúncios</li>
-          <li>Entrega em até 5 dias úteis</li>
-        </ul>
+      <div class="card grain">
+        <div class="card-inner">
+          <div class="card-tag">Landing Page</div>
+          <div class="card-title">LP de Captação</div>
+          <div class="card-price"><sup>R$</sup> 600</div>
+          <div class="card-period">Pagamento único</div>
+          <div class="card-sep"></div>
+          <ul class="card-items">
+            <li>Página focada em conversão</li>
+            <li>Promoções e serviços específicos</li>
+            <li>Formulário de captação de leads</li>
+            <li>Integração com anúncios</li>
+            <li>Entrega em até 5 dias úteis</li>
+          </ul>
+        </div>
       </div>
 
     </div>
 
-    <!-- INVESTMENT TABLE + NOTES -->
-    <div class="bottom-grid">
+    <!-- INVESTMENT + NOTES -->
+    <div class="bottom">
 
       <table class="invest-table">
         <thead>
           <tr>
             <th>Serviço</th>
             <th>Tipo</th>
-            <th>Investimento</th>
+            <th>Valor</th>
           </tr>
         </thead>
         <tbody>
@@ -462,30 +458,31 @@
             <td>R$ 2.000 / mês</td>
           </tr>
           <tr>
-            <td>Site Institucional Completo</td>
+            <td>Site Institucional</td>
             <td>Único</td>
             <td>R$ 1.300</td>
           </tr>
           <tr>
-            <td>Landing Page de Captação</td>
+            <td>Landing Page</td>
             <td>Único</td>
             <td>R$ 600</td>
           </tr>
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="2">Investimento inicial (site + LP)</td>
+            <td>Investimento inicial (site + LP)</td>
+            <td></td>
             <td>R$ 1.900</td>
           </tr>
         </tfoot>
       </table>
 
-      <div class="notes-box">
-        <div class="section-label">Observações importantes</div>
+      <div class="notes">
+        <div class="label accent">Importante</div>
         <ul>
-          <li>A verba de anúncios (até $2k USD/mês) é paga diretamente às plataformas — não inclusa na taxa de gestão.</li>
+          <li>Verba de anúncios (até $2k USD/mês) é paga diretamente nas plataformas — não inclusa na taxa de gestão.</li>
           <li>Para verbas acima de $2.000 USD/mês, a taxa de gestão é variável — solicite proposta personalizada.</li>
-          <li>Contratos mensais sem fidelidade mínima. Transparência total nos relatórios.</li>
+          <li>Contratos mensais sem fidelidade obrigatória. Relatórios completos toda semana.</li>
         </ul>
       </div>
 
@@ -493,23 +490,27 @@
 
   </div>
 
+  <!-- DIVIDER LINE -->
+  <div class="divider"></div>
+
   <!-- FOOTER -->
   <div class="footer">
     <div class="footer-cta">
-      Pronto para começar? <strong>Entre em contato agora</strong> — damos o primeiro passo juntos.
+      Pronto para começar?<br/>
+      <strong>Entre em contato — damos o primeiro passo juntos.</strong>
     </div>
     <div class="footer-contacts">
-      <div class="contact-col">
-        <div class="label">WhatsApp</div>
-        <div class="value">+55 (41) 99817-0428</div>
+      <div class="fc">
+        <div class="fc-label">WhatsApp</div>
+        <div class="fc-value">+55 (41) 99817-0428</div>
       </div>
-      <div class="contact-col">
-        <div class="label">Instagram</div>
-        <div class="value">@casacriativedigital</div>
+      <div class="fc">
+        <div class="fc-label">Instagram</div>
+        <div class="fc-value">@casacriativedigital</div>
       </div>
-      <div class="contact-col">
-        <div class="label">Website</div>
-        <div class="value">casacriative.com.br</div>
+      <div class="fc">
+        <div class="fc-label">Website</div>
+        <div class="fc-value">casacriative.com.br</div>
       </div>
     </div>
   </div>
