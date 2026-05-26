@@ -69,10 +69,12 @@ Fundo (Tráfego)  → manda o quente pra LP converter
 
 > **Migração do topo atual:** o topo que já roda está em *Alcance* — o Meta não permite trocar objetivo de campanha existente. Cria este topo novo em ThruPlay, **roda os dois em paralelo por 3 dias**, depois **pausa o topo de Alcance**. Motivo: ThruPlay constrói o pool de retargeting 3-5x mais rápido, que é o gargalo do funil. Alcance entregava reach alto mas pool raso.
 
+> **Targeting — Advantage+ Audience ativado em todos os ad sets do topo.** As audiências abaixo entram como *sugestões* — o Meta usa como ponto de partida e expande para perfis com maior probabilidade de performance. Com toggle Advantage+ ON, é o comportamento correto para topo: mais alcance qualificado sem microgerenciamento.
+
 ### Ad Set A
 **Nome:** `[NOWA] IDV | Topo | LAL 1% — Clientes`
 **Budget:** R$22/dia
-**Público:** Lookalike 1% da lista de clientes
+**Público (sugestão Advantage+):** Lookalike 1% da lista de clientes
 **Exclusão:** Custom Audience lista de clientes (não mostrar pra quem já é cliente)
 **Placement:** Reels + Feed
 **Otimização:** ThruPlay
@@ -81,7 +83,7 @@ Fundo (Tráfego)  → manda o quente pra LP converter
 ### Ad Set B
 **Nome:** `[NOWA] IDV | Topo | LAL 2-3% — Clientes`
 **Budget:** R$17/dia
-**Público:** Lookalike 2–3% da lista de clientes
+**Público (sugestão Advantage+):** Lookalike 2–3% da lista de clientes
 **Exclusão:** Custom Audience lista de clientes + Lookalike 1%
 **Placement:** Reels + Feed
 **Otimização:** ThruPlay
@@ -90,7 +92,7 @@ Fundo (Tráfego)  → manda o quente pra LP converter
 ### Ad Set C
 **Nome:** `[NOWA] IDV | Topo | Engajamento Instagram 60d`
 **Budget:** R$16/dia
-**Público:** Pessoas que engajaram com o perfil Instagram nos últimos 60 dias
+**Público (sugestão Advantage+):** Pessoas que engajaram com o perfil Instagram nos últimos 60 dias
 **Exclusão:** Custom Audience lista de clientes
 **Placement:** Reels + Feed
 **Otimização:** ThruPlay
