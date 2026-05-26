@@ -35,26 +35,39 @@
 
 ---
 
+## Princípio estratégico — gargalo do funil
+
+Este funil se sustenta no **tamanho dos públicos de retargeting por % de vídeo assistido** (50%, 75%). Esse é o gargalo. Por isso topo e meio otimizam para **Reproduções de vídeo (ThruPlay)**, não para Alcance nem Engajamento genérico. Só o fundo é que pede ação (tráfego → LP).
+
+```
+Topo (ThruPlay)  → constrói pool de 50%+
+Meio (ThruPlay)  → empurra 50% → 75% (fundo-ready) + aprofunda confiança
+Fundo (Tráfego)  → manda o quente pra LP converter
+```
+
+---
+
 ## Pré-launch — Checklist
 
-- [ ] Corrigir números zerados na LP (`+0 marcas`, `R$0k`, `0%`)
-- [ ] Substituir `"Cliente NOWA"` por nomes reais no carrossel de logos
+- [x] LP corrigida (números preenchidos, logos com nomes reais)
 - [ ] Meta Pixel instalado na LP + evento de conversão configurado (form submit)
 - [ ] Upload da lista de clientes (email + telefone + nome) no Meta
 - [ ] Custom Audience criada a partir da lista de clientes
 - [ ] Lookalike 1% e Lookalike 2–3% gerados
 - [ ] Público de engajamento Instagram configurado (últimos 60 dias)
-- [ ] Criativos de IV prontos: Reels antes/depois, cases (Mystery Labs, Taupé, Inside Wellness)
-- [ ] Formulário nativo Meta criado (campos abaixo)
+- [ ] Públicos de vídeo configurados (50%+ e 75%+)
+- [ ] Criativos prontos por etapa (mapa abaixo)
 
 ---
 
 ## Campanha 1 — Topo
 
-**Nome:** `[NOWA] IDV | Topo | Alcance`
-**Objetivo:** Alcance (Reach)
+**Nome:** `[NOWA] IDV | Topo | ThruPlay`
+**Objetivo:** Reproduções de vídeo (ThruPlay)
 **Tipo de orçamento:** ABO (por conjunto de anúncios)
 **Total topo:** R$55/dia
+
+> **Migração do topo atual:** o topo que já roda está em *Alcance* — o Meta não permite trocar objetivo de campanha existente. Cria este topo novo em ThruPlay, **roda os dois em paralelo por 3 dias**, depois **pausa o topo de Alcance**. Motivo: ThruPlay constrói o pool de retargeting 3-5x mais rápido, que é o gargalo do funil. Alcance entregava reach alto mas pool raso.
 
 ### Ad Set A
 **Nome:** `[NOWA] IDV | Topo | LAL 1% — Clientes`
@@ -62,7 +75,7 @@
 **Público:** Lookalike 1% da lista de clientes
 **Exclusão:** Custom Audience lista de clientes (não mostrar pra quem já é cliente)
 **Placement:** Reels + Feed
-**Otimização:** Alcance
+**Otimização:** ThruPlay
 **Criativos:** AD1 Video · AD8 Video · AD10 Video
 
 ### Ad Set B
@@ -71,7 +84,7 @@
 **Público:** Lookalike 2–3% da lista de clientes
 **Exclusão:** Custom Audience lista de clientes + Lookalike 1%
 **Placement:** Reels + Feed
-**Otimização:** Alcance
+**Otimização:** ThruPlay
 **Criativos:** AD1 Video · AD8 Video · AD10 Video
 
 ### Ad Set C
@@ -80,7 +93,7 @@
 **Público:** Pessoas que engajaram com o perfil Instagram nos últimos 60 dias
 **Exclusão:** Custom Audience lista de clientes
 **Placement:** Reels + Feed
-**Otimização:** Alcance
+**Otimização:** ThruPlay
 **Criativos:** AD1 Video · AD8 Video · AD10 Video
 
 ### Criativos — Topo
@@ -123,12 +136,13 @@
 
 ## Campanha 2 — Meio
 
-**Nome:** `[NOWA] IDV | Meio | Retargeting — Video + Engaja`
-**Objetivo:** Tráfego
+**Nome:** `[NOWA] IDV | Meio | ThruPlay`
+**Objetivo:** Reproduções de vídeo (ThruPlay)
 **Tipo de orçamento:** CBO
 **Budget:** R$20/dia
+**Status:** Ativo (pools já construídos após 2 semanas de topo)
 
-> Ativar assim que o pool de 50%+ views tiver 500+ pessoas.
+> Objetivo ThruPlay e não Tráfego: o meio aquece e empurra quem assistiu 50% para 75% (fundo-ready). Mandar pra LP aqui é prematuro — quem ainda está no meio não está quente o suficiente pra converter.
 
 ### Ad Set A
 **Nome:** `[NOWA] IDV | Meio | Video 50% — 30d`
@@ -173,32 +187,33 @@
 
 ## Campanha 3 — Fundo
 
-**Nome:** `[NOWA] IDV | Fundo | Lead Gen — Formulário`
-**Objetivo:** Leads (formulário nativo Meta)
+**Nome:** `[NOWA] IDV | Fundo | Tráfego LP`
+**Objetivo:** Tráfego → branding.nowacompany.com.br
 **Tipo de orçamento:** CBO
 **Budget:** R$25/dia
+**Status:** Ativo
+
+> **Por que Tráfego → LP e não formulário nativo:** ticket de R$4–6K consultivo exige lead de qualidade, não volume. A LP (já corrigida) filtra sozinha — quem lê e preenche tem intenção real. Formulário nativo gera lead impulsivo que queima reunião do comercial.
+>
+> **Por que não Conversão:** R$25/dia gera ~1 lead a cada 5-6 dias; o objetivo Conversão precisa de ~50 conversões/semana pra otimizar e nunca sairia do aprendizado. Tráfego funciona bem nesse orçamento.
+>
+> **Sobre os 403 cliques / 0 leads anteriores:** não foi a LP — era público frio (lookalike) batendo direto no fundo. Com retargeting quente (75%+ vídeo + visitou LP) + LP corrigida, ela converte.
 
 ### Ad Set A
 **Nome:** `[NOWA] IDV | Fundo | Video 75% — 30d`
 **Público:** Pessoas que assistiram 75%+ dos vídeos nos últimos 30 dias
-**Exclusão:** Quem já preencheu o formulário
+**Exclusão:** Quem já preencheu o formulário da LP
 
 ### Ad Set B
 **Nome:** `[NOWA] IDV | Fundo | Visitou LP — 14d`
 **Público:** Pessoas que visitaram branding.nowacompany.com.br nos últimos 14 dias
-**Exclusão:** Quem já preencheu o formulário
+**Exclusão:** Quem já preencheu o formulário da LP
 
-### Formulário nativo Meta
-**Título:** "Análise de marca gratuita — NOWA"
-**Introdução:** "Em 24h um especialista da NOWA entra em contato para entender seu negócio."
-
-**Campos:**
-1. Nome completo (pré-preenchido)
-2. WhatsApp (pré-preenchido)
-3. Segmento do negócio → dropdown: E-commerce · Saúde · Serviços · Varejo · Outro
-4. Principal desafio da marca → dropdown: Não me destaco · Perco por preço · Marca inconsistente · Estou lançando
-
-**Mensagem de confirmação:** "Recebemos sua solicitação. Nossa equipe entra em contato em até 24 horas úteis pelo WhatsApp."
+### Destino e qualificação
+Tráfego direcionado para `branding.nowacompany.com.br`. A qualificação acontece no próprio formulário da LP:
+- Nome · WhatsApp · E-mail
+- Segmento do negócio
+- Principal desafio da marca
 
 ### Criativos — Fundo
 
@@ -233,17 +248,17 @@
 ## Fluxo do Funil
 
 ```
-TOPO — R$55/dia
+TOPO — R$55/dia · ThruPlay
   LAL 1% + LAL 2-3% + Engaja Insta
-  Objetivo: alcançar 200k+ pessoas e construir pool de vídeo
+  Objetivo: construir pool de quem assiste vídeo (50%+)
       ↓
-MEIO — R$20/dia
+MEIO — R$20/dia · ThruPlay
   Quem assistiu 50%+ + engajou com Instagram
-  Objetivo: aquecer com cases, metodologia e prova social
+  Objetivo: aquecer com cases/metodologia e empurrar 50% → 75%
       ↓
-FUNDO — R$25/dia
+FUNDO — R$25/dia · Tráfego → LP
   Quem assistiu 75%+ ou visitou a LP
-  Objetivo: formulário de lead → reunião → contrato
+  Objetivo: LP converte → reunião → contrato
 ```
 
 ---
@@ -251,14 +266,14 @@ FUNDO — R$25/dia
 ## Cronograma de Ativação
 
 ```
-Semana 1     →  Topo rodando (já ativo) — ajusta para ABO
-                Cria Meio + Fundo (ainda pausados)
+Agora        →  Cria Topo novo em ThruPlay (roda junto com o de Alcance)
+                Cria e ATIVA Meio (ThruPlay) e Fundo (Tráfego → LP)
+                Pools já existem após 2 semanas de topo
 
-Semana 2     →  Ativa Meio quando pool 50%+ atingir 500 pessoas
-                Ativa Fundo quando pool 75%+ atingir 200 pessoas
+Dia +3       →  Pausa o topo antigo de Alcance
+                Funil completo rodando só em ThruPlay + Fundo
 
-Semana 3–4   →  Funil completo rodando
-                Primeiros leads chegando
+Semana 1–2   →  Primeiros leads chegando pela LP
                 Otimização baseada em dados reais
 
 Mês 2+       →  Escala o que converte
@@ -274,8 +289,8 @@ Mês 2+       →  Escala o que converte
 |---------|-----------|
 | Alcance total (topo) | 180.000 – 250.000 pessoas |
 | Pool 50%+ views acumulado | 3.000 – 8.000 |
-| Visitas à LP (meio/fundo) | 100 – 300 |
-| Leads gerados (formulário) | 5 – 15 |
+| Visitas à LP (fundo) | 100 – 300 |
+| Leads gerados (form da LP) | 5 – 15 |
 | Reuniões marcadas | 3 – 8 |
 | Contratos fechados | 1 – 3 |
 | CAC estimado | R$1.000 – R$3.000 |
@@ -285,8 +300,9 @@ Mês 2+       →  Escala o que converte
 
 ## Observações
 
-- Fundo usa formulário nativo Meta (não LP) — remove fricção de conversão
+- Topo e meio em ThruPlay — o pool de vídeo é o gargalo do funil, não o alcance
+- Fundo manda pra LP corrigida (não formulário nativo) — qualidade de lead para ticket alto
 - Lookalike 1% é o público mais qualificado do topo — prioridade de budget
 - AD SET C (Engaja Insta) limitado a R$16/dia para não dominar o budget
+- R$25/dia no fundo não otimiza Conversão (precisa ~50/semana) — por isso Tráfego
 - CAC alto no mês 1 é esperado — algoritmo em aprendizado; mês 2 otimiza
-- Meio só ativa quando pool tiver volume suficiente — não antes
