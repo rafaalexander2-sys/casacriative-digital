@@ -83,6 +83,35 @@
 **Otimização:** Alcance
 **Criativos:** AD1 Video · AD8 Video · AD10 Video
 
+### Criativos — Topo
+
+**Vídeos (Reels) — todos os ad sets do topo**
+
+| Código | Apresentadora | Gancho | Ângulo |
+|--------|--------------|--------|--------|
+| REEL 2 | Aline | "Se sua empresa já fatura mais de 100k..." | Crescimento ficou difícil e caro |
+| REEL 4 | Aline | "Sua empresa fatura mais mas fica substituível" | Comoditização silenciosa |
+| REEL 5 | Paula | "Investe em marketing mas sem crescimento" | Tráfego acelera o que já existe |
+| REEL 9 | Aline | Cenário macroeconômico | Diferenciação vs commodity |
+
+**Estáticos (Carrosels)**
+
+| Código | Apresentadora | Tema | Estrutura |
+|--------|--------------|------|-----------|
+| REEL 3 | Aline | "Pressionado por preço?" | Problema → Consequência → Solução → CTA |
+| REEL 6 | Aline | "Empresas 100k+ perdem margem" | Estatística 60% → Ciclo → Causa → CTA |
+
+**Referência de design:**
+- Design limpo · Cores NOWA · Stats em 48pt+ · 4–5 slides · Último slide = CTA
+
+**Mapeamento de anúncios nos ad sets:**
+
+| Anúncio no Gerenciador | Criativo |
+|------------------------|---------|
+| AD1 Video | REEL 2 (Aline) |
+| AD8 Video | REEL 4 (Aline) |
+| AD10 Video | REEL 9 (Aline) |
+
 ### KPIs — Topo
 | Métrica | Meta |
 |---------|------|
@@ -115,10 +144,24 @@
 **Placement:** Reels + Feed + Stories
 
 ### Criativos — Meio
-- Case real de cliente com resultado (antes/depois com métricas)
-- Reel de metodologia NOWA (como funciona o processo)
-- Depoimento em vídeo de cliente
-- Carrossel: portfólio Mystery Labs · Taupé · Inside Wellness
+
+**Vídeos (Reels)**
+
+| Código | Apresentadora | Gancho | Ângulo |
+|--------|--------------|--------|--------|
+| REEL 1 | Paula | "Sempre começamos pelo storytelling" | Narrativa estratégica — fundador como ativo financeiro |
+| REEL 8 | Paula | "200+ marcas estruturadas pela NOWA" | Metodologia proprietária, inteligência de negócio |
+
+> Dica de produção REEL 8: logos reais em grid · transições rápidas · fechar com case
+
+**Estáticos (Carrosels + Singles)**
+
+| Formato | Tema | Estrutura |
+|---------|------|-----------|
+| Carrossel 5 slides | Metodologia NOWA | Storytelling → Fundador como ativo → Processo → Resultado → CTA |
+| Carrossel 3 slides | Cases por setor | Antes/depois em métricas: E-commerce · B2B · Saúde |
+| Single | Grid 200+ logos | Mosaico organizado por setor |
+| Single | Depoimento | Foto do founder do cliente + quote + métrica de resultado |
 
 ### KPIs — Meio
 | Métrica | Meta |
@@ -159,9 +202,23 @@
 **Mensagem de confirmação:** "Recebemos sua solicitação. Nossa equipe entra em contato em até 24 horas úteis pelo WhatsApp."
 
 ### Criativos — Fundo
-- Antes/depois de identidade visual + CTA "Análise gratuita"
-- Reel de resultado: "zero para 7 dígitos" (prova social forte)
-- Oferta de escassez: "Atendemos projetos limitados por mês"
+
+**Vídeos (Reels)**
+
+| Código | Apresentadora | Gancho | Ângulo |
+|--------|--------------|--------|--------|
+| REEL 7 | Paula | Jeff Bezos: "Branding é o que dizem quando você não está na mesa" | Poder de mercado vs defender preço |
+| REEL 10 | Paula | "Acabei de receber esse feedback" (print WhatsApp real) | Prova de resultado: zero para 7 dígitos |
+
+> Dica de produção: REEL 7 com split-screen Bezos · REEL 10 com tela de celular real · música animada
+
+**Estáticos (Conversão direta)**
+
+| Formato | Tema | Detalhe |
+|---------|------|---------|
+| Single Antes/Depois | Split 50/50 | Design genérico vs identidade NOWA + métricas de resultado |
+| Single Escassez | Vagas limitadas | "Atendemos um número reduzido de projetos por mês — garante sua análise" |
+| Carrossel ROI | Calculadora de valor | Marca sem posicionamento → custo invisível → o que muda com a NOWA → CTA |
 
 ### KPIs — Fundo
 | Métrica | Meta |
