@@ -1,7 +1,8 @@
 # NOWA Creative Marketing — Estratégia Meta Ads
-**Elaborado por:** Rafael Alexander Barbosa  
-**Data:** Maio 2026  
-**Serviço em campanha:** Identidade Visual  
+**Elaborado por:** Rafael Alexander Barbosa
+**Atualizado em:** Maio 2026
+**Serviço:** Identidade Visual
+**Orçamento total:** R$3.000/mês (100% Meta Ads)
 
 ---
 
@@ -9,111 +10,227 @@
 
 | Item | Detalhe |
 |------|---------|
-| Ticket médio (IV) | R$4.000 – R$6.000 |
-| Ticket médio (Branding completo) | R$10.000 – R$15.000 |
-| Margem atual | 20% |
-| Meta de margem | 30–35% |
-| LP principal | branding.nowacompany.com.br |
+| Serviço em campanha | Identidade Visual |
+| Ticket médio | R$4.000 – R$6.000 |
 | Tipo de venda | Consultiva (reunião obrigatória) |
+| LP principal | branding.nowacompany.com.br |
+| Objetivo do mês 1 | Construir audiência + gerar primeiros leads |
 
 ---
 
-## Orçamento Mensal
+## Orçamento
 
-| Canal | Valor |
-|-------|-------|
-| Meta Ads | R$2.200 |
-| Google Ads (branded) | R$300 |
-| **Total** | **R$2.500** |
+| | Diário | Mensal |
+|-|--------|--------|
+| **Total Meta Ads** | **R$100** | **R$3.000** |
+
+### Distribuição por etapa do funil
+
+| Etapa | Campanha | Diário | Mensal | % |
+|-------|----------|--------|--------|---|
+| Topo | Alcance + Audiência | R$55 | R$1.650 | 55% |
+| Meio | Retargeting | R$20 | R$600 | 20% |
+| Fundo | Geração de Lead | R$25 | R$750 | 25% |
+| **Total** | | **R$100** | **R$3.000** | 100% |
 
 ---
 
 ## Pré-launch — Checklist
 
 - [ ] Corrigir números zerados na LP (`+0 marcas`, `R$0k`, `0%`)
-- [ ] Corrigir bug `"60–60 DIAS"` na LP de Digital Intelligence
 - [ ] Substituir `"Cliente NOWA"` por nomes reais no carrossel de logos
-- [ ] Meta Pixel instalado na LP + evento de conversão (form submit)
+- [ ] Meta Pixel instalado na LP + evento de conversão configurado (form submit)
 - [ ] Upload da lista de clientes (email + telefone + nome) no Meta
-- [ ] Criar Custom Audience da lista de clientes
-- [ ] Criar Lookalike 1% e 2–3% a partir da lista
-- [ ] Criativos de IV prontos (antes/depois, ângulo visual)
-- [ ] Google Ads configurado com keywords branded
+- [ ] Custom Audience criada a partir da lista de clientes
+- [ ] Lookalike 1% e Lookalike 2–3% gerados
+- [ ] Público de engajamento Instagram configurado (últimos 60 dias)
+- [ ] Criativos de IV prontos: Reels antes/depois, cases (Mystery Labs, Taupé, Inside Wellness)
+- [ ] Formulário nativo Meta criado (campos abaixo)
 
 ---
 
-## Estrutura de Campanhas
+## Campanha 1 — Topo
 
-### Google Ads — R$300/mês
-- Objetivo: Capturar busca branded
-- Keywords: `"NOWA"` · `"NOWA agência"` · `"NOWA branding"` · `"NOWA identidade visual"`
-- Destino: `branding.nowacompany.com.br`
+**Nome:** `[NOWA] IDV | Topo | Alcance`
+**Objetivo:** Alcance (Reach)
+**Tipo de orçamento:** ABO (por conjunto de anúncios)
+**Total topo:** R$55/dia
+
+### Ad Set A
+**Nome:** `[NOWA] IDV | Topo | LAL 1% — Clientes`
+**Budget:** R$22/dia
+**Público:** Lookalike 1% da lista de clientes
+**Exclusão:** Custom Audience lista de clientes (não mostrar pra quem já é cliente)
+**Placement:** Reels + Feed
+**Otimização:** Alcance
+**Criativos:** AD1 Video · AD8 Video · AD10 Video
+
+### Ad Set B
+**Nome:** `[NOWA] IDV | Topo | LAL 2-3% — Clientes`
+**Budget:** R$17/dia
+**Público:** Lookalike 2–3% da lista de clientes
+**Exclusão:** Custom Audience lista de clientes + Lookalike 1%
+**Placement:** Reels + Feed
+**Otimização:** Alcance
+**Criativos:** AD1 Video · AD8 Video · AD10 Video
+
+### Ad Set C
+**Nome:** `[NOWA] IDV | Topo | Engajamento Instagram 60d`
+**Budget:** R$16/dia
+**Público:** Pessoas que engajaram com o perfil Instagram nos últimos 60 dias
+**Exclusão:** Custom Audience lista de clientes
+**Placement:** Reels + Feed
+**Otimização:** Alcance
+**Criativos:** AD1 Video · AD8 Video · AD10 Video
+
+### KPIs — Topo
+| Métrica | Meta |
+|---------|------|
+| CPM | < R$5 |
+| Alcance mensal | 200.000+ pessoas |
+| ThruPlays | > 500/mês |
+| Pool 50%+ views (acumulado) | 1.000+ para ativar meio com força |
 
 ---
 
-### META — Fase 1: Topo (Semanas 1–2 de campanha ativa)
+## Campanha 2 — Meio
 
-**Objetivo:** Video Views / ThruPlay  
-**Budget:** R$73/dia (100% do budget Meta)
+**Nome:** `[NOWA] IDV | Meio | Retargeting — Video + Engaja`
+**Objetivo:** Tráfego
+**Tipo de orçamento:** CBO
+**Budget:** R$20/dia
 
-| Ad Set | Público | Exclusão |
-|--------|---------|---------|
-| A | Lookalike 1% da lista de clientes | Clientes atuais |
-| B | Lookalike 2–3% | Clientes atuais + Lookalike 1% |
-| C | Engajamento Instagram 60 dias | Clientes atuais |
+> Ativar assim que o pool de 50%+ views tiver 500+ pessoas.
 
-**Criativos:** Reels de IV — antes/depois de marca, "a primeira impressão que o cliente tem antes de te ouvir", cases do portfólio (Mystery Labs, Taupé, Inside Wellness)
+### Ad Set A
+**Nome:** `[NOWA] IDV | Meio | Video 50% — 30d`
+**Público:** Pessoas que assistiram 50%+ dos vídeos nos últimos 30 dias
+**Exclusão:** Quem já preencheu o formulário de lead
+**Placement:** Reels + Feed + Stories
+
+### Ad Set B
+**Nome:** `[NOWA] IDV | Meio | Engajamento Instagram — 21d`
+**Público:** Pessoas que engajaram com o perfil Instagram nos últimos 21 dias
+**Exclusão:** Quem já preencheu o formulário de lead
+**Placement:** Reels + Feed + Stories
+
+### Criativos — Meio
+- Case real de cliente com resultado (antes/depois com métricas)
+- Reel de metodologia NOWA (como funciona o processo)
+- Depoimento em vídeo de cliente
+- Carrossel: portfólio Mystery Labs · Taupé · Inside Wellness
+
+### KPIs — Meio
+| Métrica | Meta |
+|---------|------|
+| CTR | > 2% |
+| Visualizações de vídeo 75%+ | > 30% do alcance |
+| Visitas à LP | 100+/mês |
 
 ---
 
-### META — Fase 2: Topo + Fundo (Semanas 3–4)
+## Campanha 3 — Fundo
 
-> Ativar quando pool de 50%+ views atingir 1.000+ pessoas.
+**Nome:** `[NOWA] IDV | Fundo | Lead Gen — Formulário`
+**Objetivo:** Leads (formulário nativo Meta)
+**Tipo de orçamento:** CBO
+**Budget:** R$25/dia
 
-**Campanha Topo continua:** R$45/dia — mesma estrutura
-
-**Campanha Fundo — Traffic → LP:** R$28/dia
-
-| Ad Set | Público |
-|--------|---------|
-| A | Assistiu 50%+ dos vídeos nos últimos 14 dias |
-| B | Visitou a LP mas não preencheu o formulário |
-
-**Criativos:** CTA direto — antes/depois + *"Solicitar análise de marca — sem compromisso"*  
+### Ad Set A
+**Nome:** `[NOWA] IDV | Fundo | Video 75% — 30d`
+**Público:** Pessoas que assistiram 75%+ dos vídeos nos últimos 30 dias
 **Exclusão:** Quem já preencheu o formulário
 
+### Ad Set B
+**Nome:** `[NOWA] IDV | Fundo | Visitou LP — 14d`
+**Público:** Pessoas que visitaram branding.nowacompany.com.br nos últimos 14 dias
+**Exclusão:** Quem já preencheu o formulário
+
+### Formulário nativo Meta
+**Título:** "Análise de marca gratuita — NOWA"
+**Introdução:** "Em 24h um especialista da NOWA entra em contato para entender seu negócio."
+
+**Campos:**
+1. Nome completo (pré-preenchido)
+2. WhatsApp (pré-preenchido)
+3. Segmento do negócio → dropdown: E-commerce · Saúde · Serviços · Varejo · Outro
+4. Principal desafio da marca → dropdown: Não me destaco · Perco por preço · Marca inconsistente · Estou lançando
+
+**Mensagem de confirmação:** "Recebemos sua solicitação. Nossa equipe entra em contato em até 24 horas úteis pelo WhatsApp."
+
+### Criativos — Fundo
+- Antes/depois de identidade visual + CTA "Análise gratuita"
+- Reel de resultado: "zero para 7 dígitos" (prova social forte)
+- Oferta de escassez: "Atendemos projetos limitados por mês"
+
+### KPIs — Fundo
+| Métrica | Meta |
+|---------|------|
+| Custo por lead | < R$150 |
+| Leads/mês | 5 – 15 |
+| Taxa de conversão lead → reunião | > 40% |
+| Reuniões/mês | 3 – 8 |
+| Contratos fechados/mês | 1 – 3 |
+
 ---
 
-## Cronograma
+## Fluxo do Funil
 
 ```
-Semana 1–2   →  Pré-launch: fixes LP + Pixel + lista + criativos
-Semana 3–4   →  Fase 1: só topo rodando | R$73/dia
-                 Objetivo: popular pool de audiência de vídeo
-Semana 5–6   →  Fase 2: topo R$45/dia + fundo R$28/dia
-                 Retargeting ativa | leads começam a chegar
+TOPO — R$55/dia
+  LAL 1% + LAL 2-3% + Engaja Insta
+  Objetivo: alcançar 200k+ pessoas e construir pool de vídeo
+      ↓
+MEIO — R$20/dia
+  Quem assistiu 50%+ + engajou com Instagram
+  Objetivo: aquecer com cases, metodologia e prova social
+      ↓
+FUNDO — R$25/dia
+  Quem assistiu 75%+ ou visitou a LP
+  Objetivo: formulário de lead → reunião → contrato
 ```
 
 ---
 
-## Projeções Mês 1
+## Cronograma de Ativação
+
+```
+Semana 1     →  Topo rodando (já ativo) — ajusta para ABO
+                Cria Meio + Fundo (ainda pausados)
+
+Semana 2     →  Ativa Meio quando pool 50%+ atingir 500 pessoas
+                Ativa Fundo quando pool 75%+ atingir 200 pessoas
+
+Semana 3–4   →  Funil completo rodando
+                Primeiros leads chegando
+                Otimização baseada em dados reais
+
+Mês 2+       →  Escala o que converte
+                Testa novos criativos no topo
+                Aumenta budget no fundo conforme CAC se estabiliza
+```
+
+---
+
+## Projeções Mês 1 (funil completo)
 
 | Métrica | Estimativa |
 |---------|-----------|
-| Alcance total | 60.000 – 90.000 pessoas |
-| Assistiram 50%+ do vídeo | 3.000 – 7.000 |
-| Visitas à LP (fundo) | 150 – 350 |
-| Formulários preenchidos | 6 – 15 |
+| Alcance total (topo) | 180.000 – 250.000 pessoas |
+| Pool 50%+ views acumulado | 3.000 – 8.000 |
+| Visitas à LP (meio/fundo) | 100 – 300 |
+| Leads gerados (formulário) | 5 – 15 |
 | Reuniões marcadas | 3 – 8 |
 | Contratos fechados | 1 – 3 |
-| CAC estimado | R$730 – R$2.200 |
+| CAC estimado | R$1.000 – R$3.000 |
+| Receita potencial | R$4.000 – R$18.000 |
 
 ---
 
 ## Observações
 
-- Público frio no mês 1 — fundo de funil só ativa após acúmulo de audiência de vídeo
-- Lookalike 1% da lista de clientes é o público principal do topo (superior a interesses genéricos)
-- Lista de clientes: 500–2.000 contatos com email + telefone + nome completo
-- CAC alto no mês 1 é normal — custo de aprendizado do algoritmo; mês 2 otimiza
-- Google Ads só branded até orçamento escalar para R$5.000/mês
+- Fundo usa formulário nativo Meta (não LP) — remove fricção de conversão
+- Lookalike 1% é o público mais qualificado do topo — prioridade de budget
+- AD SET C (Engaja Insta) limitado a R$16/dia para não dominar o budget
+- CAC alto no mês 1 é esperado — algoritmo em aprendizado; mês 2 otimiza
+- Meio só ativa quando pool tiver volume suficiente — não antes
