@@ -187,33 +187,40 @@ Fundo (Tráfego)  → manda o quente pra LP converter
 
 ## Campanha 3 — Fundo
 
-**Nome:** `[NOWA] IDV | Fundo | Tráfego LP`
-**Objetivo:** Tráfego → branding.nowacompany.com.br
+**Nome:** `[NOWA] IDV | Fundo | Leads`
+**Objetivo:** Leads — Formulário Instantâneo (Instant Form)
 **Tipo de orçamento:** CBO
 **Budget:** R$25/dia
 **Status:** Ativo
 
-> **Por que Tráfego → LP e não formulário nativo:** ticket de R$4–6K consultivo exige lead de qualidade, não volume. A LP (já corrigida) filtra sozinha — quem lê e preenche tem intenção real. Formulário nativo gera lead impulsivo que queima reunião do comercial.
+> **Por que Leads + Instant Form e não Tráfego para LP:** o fundo está em público quente (assistiu 75%+ do vídeo). Quem chegou aqui foi pré-qualificado pelo próprio conteúdo. Formulário instantâneo com perguntas de qualificação funciona perfeitamente nesse contexto — é o objetivo correto para geração de lead. Tráfego para LP não otimiza para lead, apenas envia cliques.
 >
-> **Por que não Conversão:** R$25/dia gera ~1 lead a cada 5-6 dias; o objetivo Conversão precisa de ~50 conversões/semana pra otimizar e nunca sairia do aprendizado. Tráfego funciona bem nesse orçamento.
->
-> **Sobre os 403 cliques / 0 leads anteriores:** não foi a LP — era público frio (lookalike) batendo direto no fundo. Com retargeting quente (75%+ vídeo + visitou LP) + LP corrigida, ela converte.
+> **Sobre qualidade de lead:** a pergunta de faturamento no formulário filtra quem não tem budget para o ticket de R$4–6K antes de chegar no comercial.
 
 ### Ad Set A
 **Nome:** `[NOWA] IDV | Fundo | Video 75% — 30d`
 **Público:** Pessoas que assistiram 75%+ dos vídeos nos últimos 30 dias
-**Exclusão:** Quem já preencheu o formulário da LP
+**Exclusão:** Quem já preencheu o formulário
 
 ### Ad Set B
 **Nome:** `[NOWA] IDV | Fundo | Visitou LP — 14d`
 **Público:** Pessoas que visitaram branding.nowacompany.com.br nos últimos 14 dias
-**Exclusão:** Quem já preencheu o formulário da LP
+**Exclusão:** Quem já preencheu o formulário
 
-### Destino e qualificação
-Tráfego direcionado para `branding.nowacompany.com.br`. A qualificação acontece no próprio formulário da LP:
-- Nome · WhatsApp · E-mail
-- Segmento do negócio
-- Principal desafio da marca
+### Formulário Instantâneo — configuração
+
+**Título:** `Análise de marca gratuita — NOWA`
+**Introdução:** `Em 24h um especialista da NOWA entra em contato para entender seu negócio.`
+
+| Campo | Tipo |
+|-------|------|
+| Nome completo | Pré-preenchido |
+| WhatsApp | Pré-preenchido |
+| Segmento do negócio | Dropdown: E-commerce · Saúde · Serviços · Varejo · Outro |
+| Principal desafio da marca | Dropdown: Não me destaco · Perco por preço · Marca inconsistente · Estou lançando |
+| Faturamento mensal | Dropdown: Até R$30k · R$30k–R$80k · R$80k–R$150k · Acima de R$150k |
+
+**Confirmação:** `Recebemos sua solicitação. Nossa equipe entra em contato em até 24 horas úteis pelo WhatsApp.`
 
 ### Criativos — Fundo
 
@@ -256,9 +263,9 @@ MEIO — R$20/dia · ThruPlay
   Quem assistiu 50%+ + engajou com Instagram
   Objetivo: aquecer com cases/metodologia e empurrar 50% → 75%
       ↓
-FUNDO — R$25/dia · Tráfego → LP
+FUNDO — R$25/dia · Leads (Instant Form)
   Quem assistiu 75%+ ou visitou a LP
-  Objetivo: LP converte → reunião → contrato
+  Objetivo: formulário qualificado → reunião → contrato
 ```
 
 ---
@@ -301,8 +308,8 @@ Mês 2+       →  Escala o que converte
 ## Observações
 
 - Topo e meio em ThruPlay — o pool de vídeo é o gargalo do funil, não o alcance
-- Fundo manda pra LP corrigida (não formulário nativo) — qualidade de lead para ticket alto
+- Fundo usa Leads + Instant Form com pergunta de faturamento para filtrar qualidade
 - Lookalike 1% é o público mais qualificado do topo — prioridade de budget
 - AD SET C (Engaja Insta) limitado a R$16/dia para não dominar o budget
-- R$25/dia no fundo não otimiza Conversão (precisa ~50/semana) — por isso Tráfego
+- Público quente no fundo (75%+ vídeo) pré-qualifica antes do formulário
 - CAC alto no mês 1 é esperado — algoritmo em aprendizado; mês 2 otimiza
