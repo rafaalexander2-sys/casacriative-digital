@@ -1,0 +1,330 @@
+/* ============================================
+   PUPPIES NEST — Global Design System
+   Versão 1.0 | Wix Velo CSS
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap');
+
+/* === DESIGN TOKENS === */
+:root {
+  --pn-primary:       #E8452A;
+  --pn-primary-hover: #C73318;
+  --pn-primary-light: #FFF1EF;
+  --pn-black:         #1A1A1A;
+  --pn-gray-700:      #3D3633;
+  --pn-gray-500:      #6B6360;
+  --pn-gray-300:      #C8BEBB;
+  --pn-gray-100:      #F5F0EE;
+  --pn-bg-warm:       #FFF8F6;
+  --pn-white:         #FFFFFF;
+  --pn-success:       #2A7D4F;
+
+  --pn-font-head:     'Nunito', sans-serif;
+  --pn-font-body:     'Inter', sans-serif;
+
+  --pn-r-sm:   8px;
+  --pn-r-md:   14px;
+  --pn-r-lg:   20px;
+  --pn-r-pill: 100px;
+
+  --pn-shadow-sm:   0 2px 8px rgba(26,26,26,0.06);
+  --pn-shadow-md:   0 6px 24px rgba(26,26,26,0.10);
+  --pn-shadow-lift: 0 12px 40px rgba(232,69,42,0.14);
+}
+
+/* === BASE === */
+body {
+  font-family: var(--pn-font-body) !important;
+  color: var(--pn-black) !important;
+  background: var(--pn-white) !important;
+  -webkit-font-smoothing: antialiased !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+/* === TYPOGRAPHY === */
+h1, h2, h3, h4, h5,
+[data-hook="title"],
+[class*="heading"] {
+  font-family: var(--pn-font-head) !important;
+  font-weight: 800 !important;
+  color: var(--pn-black) !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.025em !important;
+}
+
+p, span, a,
+[data-hook="description"],
+[class*="paragraph"] {
+  font-family: var(--pn-font-body) !important;
+  line-height: 1.7 !important;
+}
+
+/* === NAVIGATION === */
+[data-hook="header-root"] {
+  background: rgba(255,255,255,0.96) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid var(--pn-gray-100) !important;
+  box-shadow: 0 1px 0 var(--pn-gray-100) !important;
+}
+
+/* Nav links */
+[data-hook="header-root"] a,
+[data-hook="menu-item"] {
+  font-family: var(--pn-font-body) !important;
+  font-weight: 500 !important;
+  font-size: 15px !important;
+  color: var(--pn-gray-700) !important;
+  letter-spacing: 0.01em !important;
+  transition: color 0.15s ease !important;
+}
+
+[data-hook="header-root"] a:hover {
+  color: var(--pn-primary) !important;
+}
+
+/* === BUTTONS — PRIMARY === */
+[class*="StylableButton"][class*="primary"],
+[data-hook="add-to-cart-button"],
+[data-hook="checkout-button"] {
+  background: var(--pn-primary) !important;
+  color: var(--pn-white) !important;
+  font-family: var(--pn-font-head) !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  border-radius: var(--pn-r-pill) !important;
+  border: none !important;
+  padding: 14px 32px !important;
+  letter-spacing: 0.01em !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 4px 16px rgba(232,69,42,0.28) !important;
+}
+
+[class*="StylableButton"][class*="primary"]:hover,
+[data-hook="add-to-cart-button"]:hover {
+  background: var(--pn-primary-hover) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 24px rgba(232,69,42,0.36) !important;
+}
+
+/* === BUTTONS — SECONDARY === */
+[class*="StylableButton"][class*="secondary"] {
+  background: transparent !important;
+  color: var(--pn-black) !important;
+  font-family: var(--pn-font-head) !important;
+  font-weight: 700 !important;
+  border: 2px solid var(--pn-black) !important;
+  border-radius: var(--pn-r-pill) !important;
+  padding: 12px 30px !important;
+  transition: all 0.2s ease !important;
+}
+
+[class*="StylableButton"][class*="secondary"]:hover {
+  background: var(--pn-black) !important;
+  color: var(--pn-white) !important;
+}
+
+/* === PRODUCT CARDS === */
+[data-hook="product-item-root"],
+[class*="ProductThumbnail"],
+[class*="productItem"] {
+  border-radius: var(--pn-r-md) !important;
+  overflow: hidden !important;
+  background: var(--pn-white) !important;
+  box-shadow: var(--pn-shadow-sm) !important;
+  border: 1px solid var(--pn-gray-100) !important;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1) !important;
+}
+
+[data-hook="product-item-root"]:hover {
+  transform: translateY(-5px) !important;
+  box-shadow: var(--pn-shadow-lift) !important;
+  border-color: transparent !important;
+}
+
+/* Product image */
+[data-hook="product-item-root"] img {
+  transition: transform 0.4s ease !important;
+}
+
+[data-hook="product-item-root"]:hover img {
+  transform: scale(1.04) !important;
+}
+
+/* Product name */
+[data-hook="product-item-name"],
+[class*="productName"] {
+  font-family: var(--pn-font-head) !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  color: var(--pn-black) !important;
+  line-height: 1.3 !important;
+}
+
+/* Product price */
+[data-hook="product-item-price-to-pay"],
+[data-hook="formatted-primary-price"],
+[class*="price"] {
+  font-family: var(--pn-font-head) !important;
+  font-weight: 800 !important;
+  font-size: 18px !important;
+  color: var(--pn-primary) !important;
+}
+
+/* Strikethrough price */
+[data-hook="product-item-price-before-discount"],
+[data-hook="formatted-secondary-price"] {
+  font-family: var(--pn-font-body) !important;
+  color: var(--pn-gray-500) !important;
+  font-size: 13px !important;
+}
+
+/* Sale badge */
+[data-hook="product-item-ribbon"],
+[class*="ribbon"] {
+  background: var(--pn-primary) !important;
+  font-family: var(--pn-font-head) !important;
+  font-weight: 700 !important;
+  border-radius: var(--pn-r-sm) !important;
+  font-size: 12px !important;
+  letter-spacing: 0.03em !important;
+}
+
+/* === PRODUCT PAGE === */
+[data-hook="product-page-product-name"],
+[class*="productPageTitle"] {
+  font-family: var(--pn-font-head) !important;
+  font-weight: 900 !important;
+  font-size: clamp(26px, 4vw, 42px) !important;
+  letter-spacing: -0.03em !important;
+}
+
+[data-hook="product-page-price-wrapper"],
+[class*="productPagePrice"] {
+  font-family: var(--pn-font-head) !important;
+  font-weight: 800 !important;
+  font-size: 28px !important;
+  color: var(--pn-primary) !important;
+}
+
+/* === CART / MINI-CART === */
+[data-hook="cart-icon-widget"],
+[class*="CartIcon"] {
+  color: var(--pn-black) !important;
+}
+
+/* Cart count badge */
+[data-hook="cart-icon-widget"] [class*="itemsCount"],
+[class*="cartCount"] {
+  background: var(--pn-primary) !important;
+  font-family: var(--pn-font-head) !important;
+  font-weight: 700 !important;
+  border-radius: 50% !important;
+}
+
+/* === INPUT FIELDS === */
+input[type="text"],
+input[type="email"],
+textarea,
+[class*="TextField"] {
+  font-family: var(--pn-font-body) !important;
+  border-radius: var(--pn-r-md) !important;
+  border: 1.5px solid var(--pn-gray-300) !important;
+  font-size: 15px !important;
+  color: var(--pn-black) !important;
+  transition: border-color 0.15s ease !important;
+}
+
+input:focus,
+textarea:focus {
+  border-color: var(--pn-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(232,69,42,0.12) !important;
+}
+
+/* === FOOTER === */
+[data-hook="footer-root"],
+[class*="Footer"] {
+  background: var(--pn-black) !important;
+}
+
+[data-hook="footer-root"] *,
+[class*="Footer"] * {
+  font-family: var(--pn-font-body) !important;
+}
+
+[data-hook="footer-root"] a,
+[class*="Footer"] a {
+  color: var(--pn-gray-300) !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  transition: color 0.15s ease !important;
+}
+
+[data-hook="footer-root"] a:hover {
+  color: var(--pn-white) !important;
+}
+
+/* === DIVIDERS === */
+hr, [class*="Divider"] {
+  border-color: var(--pn-gray-100) !important;
+}
+
+/* === ANNOUNCEMENT BAR === */
+#comp-announcementBar,
+[class*="AnnouncementBar"] {
+  background: var(--pn-primary) !important;
+  font-family: var(--pn-font-body) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--pn-white) !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* === UTILITY CLASSES (usar em elementos custom do Wix) === */
+.pn-heading {
+  font-family: var(--pn-font-head) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.15 !important;
+}
+
+.pn-pill-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: var(--pn-primary-light) !important;
+  color: var(--pn-primary) !important;
+  font-family: var(--pn-font-head) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  padding: 6px 14px !important;
+  border-radius: var(--pn-r-pill) !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+}
+
+.pn-section-warm {
+  background: var(--pn-bg-warm) !important;
+}
+
+.pn-section-dark {
+  background: var(--pn-black) !important;
+  color: var(--pn-white) !important;
+}
+
+/* === SCROLL ANIMATIONS (activadas via JS) === */
+.pn-fade-up {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.pn-fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pn-fade-up-delay-1 { transition-delay: 0.1s !important; }
+.pn-fade-up-delay-2 { transition-delay: 0.2s !important; }
+.pn-fade-up-delay-3 { transition-delay: 0.3s !important; }
