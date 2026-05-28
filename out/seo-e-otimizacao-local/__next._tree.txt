@@ -1,4 +1,4 @@
 :HL["/_next/static/chunks/10k5rbu~kaidu.css","style"]
 :HL["https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap","style"]
 :HL["https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/cb3278242480505.696e3f0b8bd95.png","image"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"seo-e-otimizacao-local","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"5HTdeA3_b5vyo3YIReRV6"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"seo-e-otimizacao-local","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"k-gtexLcMvApIP5H9msez"}
