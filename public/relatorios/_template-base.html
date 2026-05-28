@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<!--
+═══════════════════════════════════════════════════════════════════
+  Nowa · Template Base de Relatório de Mídia Paga
+  ═════════════════════════════════════════════════════════════════
+  Como usar:
+    1. Copiar este arquivo para public/relatorios/<cliente>-<periodo>.html
+    2. Substituir os placeholders {{...}} com os dados
+    3. Gerar PDF: node scripts/gerar-pdf.js public/relatorios/<arquivo>.html
+
+  Tokens do design system Nowa estão em :root
+  Fontes Playfair Display + Inter via ../fonts/nowa-fonts.css
+═══════════════════════════════════════════════════════════════════
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../fonts/nowa-fonts.css">
+  <title>{{CLIENTE}} · Relatório · {{PERIODO}}</title>
+  <style>
+    :root {
+      --ink:        #0B0B11;
+      --mono-bg:    #0E0E12;
+      --graphite:   #2A2A33;
+      --stone:      #6B6B73;
+      --mist:       #BFBFC4;
+      --bone:       #E6E6E6;
+      --paper:      #FAFAF7;
+      --cream:      #F5F2EC;
+      --lav-pale:   #F2EBFB;
+      --lav-mute:   #DCD4F0;
+      --lavender:   #E8D8F8;
+      --indigo:     #4D4C9A;
+      --indigo-dp:  #353377;
+      --meta:       #1877F2;
+      --google:     #4285F4;
+      --linkedin:   #0A66C2;
+      --green:      #16A34A;
+      --green-bg:   #F0FDF4;
+      --amber:      #D97706;
+      --amber-bg:   #FFFBEB;
+      --red:        #DC2626;
+      --red-bg:     #FEF2F2;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      background: #C8C8CC;
+      color: var(--ink);
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      background: var(--paper);
+      margin: 0 auto 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 56px rgba(0,0,0,0.22);
+    }
+
+    @media (max-width: 820px) { .page { width: 100%; } }
+
+    @media print {
+      @page { margin: 0; size: A4; }
+      body { background: white; }
+      .page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        break-after: page;
+      }
+      .page:last-child { page-break-after: avoid; break-after: avoid; }
+    }
+
+    /* CAPA */
+    .cover { background: var(--mono-bg); min-height: 297mm; display: flex; flex-direction: column; }
+    .cover-top { padding: 32px 48px; display: flex; justify-content: space-between; align-items: center; }
+    .logotype { font-size: 13px; font-weight: 800; letter-spacing: 0.18em; color: var(--lavender); text-transform: uppercase; }
+    .platform-badge { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--stone); }
+    .platform-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--meta); }
+    .cover-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; padding: 40px 48px 0; position: relative; }
+    .deco-circle-1 { position: absolute; top: -100px; right: -100px; width: 380px; height: 380px; border-radius: 50%; background: var(--indigo); opacity: 0.1; }
+    .deco-circle-2 { position: absolute; bottom: 60px; right: 40px; width: 160px; height: 160px; border-radius: 50%; background: var(--lavender); opacity: 0.07; }
+    .cover-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--stone); margin-bottom: 18px; position: relative; z-index: 1; }
+    .cover-title { font-family: 'Playfair Display', Georgia, serif; font-size: 80px; font-weight: 900; font-style: italic; color: var(--lavender); line-height: 0.93; margin-bottom: 32px; position: relative; z-index: 1; }
+    .cover-client { font-size: 18px; font-weight: 600; color: var(--mist); margin-bottom: 8px; position: relative; z-index: 1; }
+    .cover-period { font-size: 13px; color: var(--stone); position: relative; z-index: 1; }
+    .cover-foot { margin-top: 56px; padding: 20px 48px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; }
+    .cover-foot-left, .cover-foot-right { font-size: 11px; color: var(--stone); }
+
+    /* CONTEÚDO */
+    .content { padding: 44px 48px; display: flex; flex-direction: column; gap: 32px; min-height: 297mm; }
+    .sec-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--indigo); margin-bottom: 6px; }
+    .sec-title { font-family: 'Playfair Display', Georgia, serif; font-size: 26px; font-weight: 700; color: var(--ink); }
+    .sec-rule { width: 44px; height: 3px; background: var(--indigo); margin: 10px 0 22px; }
+
+    /* KPIs */
+    .kpi-row { display: grid; gap: 10px; }
+    .kpi-row-3 { grid-template-columns: repeat(3, 1fr); }
+    .kpi-row-4 { grid-template-columns: repeat(4, 1fr); }
+    .kpi { border-radius: 10px; padding: 18px 16px; }
+    .kpi-dark { background: var(--mono-bg); }
+    .kpi-lav { background: var(--lav-pale); border: 1px solid var(--lav-mute); }
+    .kpi-cream { background: var(--cream); border: 1px solid var(--bone); }
+    .kpi-warn { background: var(--amber-bg); border: 1px solid #FDE68A; }
+    .kpi-lbl { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+    .kpi-dark .kpi-lbl, .kpi-lav .kpi-lbl, .kpi-cream .kpi-lbl { color: var(--stone); }
+    .kpi-warn .kpi-lbl { color: #92400E; }
+    .kpi-val { font-family: 'Playfair Display', Georgia, serif; font-weight: 900; line-height: 1; margin-bottom: 4px; font-size: 26px; }
+    .kpi-dark .kpi-val { color: var(--lavender); }
+    .kpi-lav .kpi-val, .kpi-cream .kpi-val { color: var(--ink); }
+    .kpi-warn .kpi-val { color: #92400E; }
+    .kpi-sub { font-size: 10px; }
+    .kpi-dark .kpi-sub, .kpi-lav .kpi-sub, .kpi-cream .kpi-sub { color: var(--stone); }
+    .kpi-warn .kpi-sub { color: #B45309; }
+
+    /* GRUPOS / TABELAS */
+    .group-hd { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+    .group-hd-name { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+    .group-hd-meta { font-size: 12px; color: var(--stone); }
+    .camp-table-wrap { border: 1px solid var(--bone); border-radius: 10px; overflow: hidden; }
+    .camp-table { width: 100%; border-collapse: collapse; }
+    .camp-table thead th { font-size: 9px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--stone); text-align: left; padding: 9px 14px; background: var(--cream); border-bottom: 1px solid var(--bone); white-space: nowrap; }
+    .camp-table tbody td { padding: 10px 14px; font-size: 11px; color: var(--graphite); border-bottom: 1px solid var(--bone); vertical-align: middle; }
+    .camp-table tbody tr:last-child td { border-bottom: none; }
+    .camp-table tbody tr.dim { opacity: 0.6; }
+    .td-name { font-weight: 700; color: var(--ink); font-size: 12px; white-space: nowrap; }
+    .td-sub { font-size: 10px; color: var(--stone); font-weight: 400; }
+    .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+    .badge-on { background: #DCFCE7; color: #15803D; }
+    .badge-off { background: #FEE2E2; color: #B91C1C; }
+    .num { font-weight: 700; color: var(--ink); font-size: 12px; }
+    .num-good { font-weight: 700; color: var(--green); font-size: 12px; }
+    .num-bad { font-weight: 700; color: var(--red); font-size: 12px; }
+    .num-warn { font-weight: 700; color: var(--amber); font-size: 12px; }
+    .unit { font-size: 9px; color: var(--stone); font-weight: 400; }
+
+    /* HIGHLIGHT BOXES */
+    .highlight { display: flex; gap: 12px; padding: 12px 16px; border-radius: 8px; margin-top: 10px; font-size: 12px; line-height: 1.5; }
+    .hl-good { background: var(--green-bg); border-left: 3px solid var(--green); }
+    .hl-warn { background: var(--amber-bg); border-left: 3px solid var(--amber); }
+    .hl-bad { background: var(--red-bg); border-left: 3px solid var(--red); }
+    .hl-good strong { color: #14532D; } .hl-good p { color: #166534; }
+    .hl-warn strong { color: #78350F; } .hl-warn p { color: #92400E; }
+    .hl-bad strong { color: #7F1D1D; } .hl-bad p { color: #991B1B; }
+
+    /* INSIGHTS */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .insight-card { border-radius: 10px; padding: 20px; }
+    .ic-good { background: var(--lav-pale); border: 1px solid var(--lav-mute); }
+    .ic-warn { background: #FFF7ED; border: 1px solid #FED7AA; }
+    .ic-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+    .ic-good .ic-title { color: var(--indigo); }
+    .ic-warn .ic-title { color: #C2410C; }
+    .ic-item { display: flex; gap: 10px; margin-bottom: 11px; align-items: flex-start; }
+    .ic-item:last-child { margin-bottom: 0; }
+    .ic-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .ic-good .ic-dot { background: var(--indigo); }
+    .ic-warn .ic-dot { background: #EA580C; }
+    .ic-text { font-size: 12px; color: var(--graphite); line-height: 1.55; }
+    .ic-text strong { color: var(--ink); }
+
+    /* PASSOS */
+    .steps { display: flex; flex-direction: column; gap: 11px; }
+    .step { display: flex; gap: 13px; align-items: flex-start; }
+    .step-n { width: 22px; height: 22px; border-radius: 50%; background: var(--indigo); color: white; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .step-txt { font-size: 12px; color: var(--graphite); line-height: 1.55; }
+    .step-txt strong { color: var(--ink); font-weight: 700; }
+
+    /* FOOTER */
+    .pg-foot { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--bone); display: flex; justify-content: space-between; align-items: center; }
+    .pg-brand { font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--indigo); }
+    .pg-info { font-size: 10px; color: var(--mist); text-align: right; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     CAPA
+═══════════════════════════════════════════ -->
+<div class="page cover">
+  <div class="cover-top">
+    <div class="logotype">NOWA</div>
+    <div class="platform-badge">
+      <div class="platform-dot"></div>
+      {{PLATAFORMA}}
+    </div>
+  </div>
+
+  <div class="cover-body">
+    <div class="deco-circle-1"></div>
+    <div class="deco-circle-2"></div>
+    <div class="cover-eyebrow">{{TIPO_RELATORIO}}</div>
+    <div class="cover-title">{{TITULO_LINHA1}}<br>{{TITULO_LINHA2}}</div>
+    <div class="cover-client">{{CLIENTE}}</div>
+    <div class="cover-period">{{PERIODO}}</div>
+  </div>
+
+  <div class="cover-foot">
+    <div class="cover-foot-left">Nowa Mídias · Gestão de Anúncios</div>
+    <div class="cover-foot-right">Documento confidencial</div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     PÁG 2 — DADOS (exemplo)
+═══════════════════════════════════════════ -->
+<div class="page">
+  <div class="content">
+
+    <div>
+      <div class="sec-label">{{SUBTITULO_PERIODO}}</div>
+      <div class="sec-title">Visão Geral</div>
+      <div class="sec-rule"></div>
+
+      <div class="kpi-row kpi-row-3">
+        <div class="kpi kpi-dark">
+          <div class="kpi-lbl">Investimento Total</div>
+          <div class="kpi-val">R$ {{INVESTIMENTO}}</div>
+          <div class="kpi-sub">{{INVESTIMENTO_SUB}}</div>
+        </div>
+        <div class="kpi kpi-lav">
+          <div class="kpi-lbl">Impressões</div>
+          <div class="kpi-val">{{IMPRESSOES}}</div>
+          <div class="kpi-sub">{{IMPRESSOES_SUB}}</div>
+        </div>
+        <div class="kpi kpi-lav">
+          <div class="kpi-lbl">Alcance</div>
+          <div class="kpi-val">{{ALCANCE}}</div>
+          <div class="kpi-sub">{{ALCANCE_SUB}}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela de campanhas, highlights, etc. -->
+
+    <div class="pg-foot">
+      <div class="pg-brand">NOWA</div>
+      <div class="pg-info">{{CLIENTE}} · {{PLATAFORMA}} · {{PERIODO}}</div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

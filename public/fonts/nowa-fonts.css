@@ -1,0 +1,57 @@
+/* ═══════════════════════════════════════════════════════════════
+   Nowa Design System · Fontes Oficiais
+   Playfair Display (display) + Inter (sans-serif)
+   ═══════════════════════════════════════════════════════════════
+   Uso em relatórios:
+     <link rel="stylesheet" href="../fonts/nowa-fonts.css">
+   ═══════════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  src: url('playfair-700.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 900;
+  src: url('playfair-900.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 700;
+  src: url('playfair-italic-700.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 900;
+  src: url('playfair-italic-900.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  src: url('inter-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  src: url('inter-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  src: url('inter-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 800;
+  src: url('inter-800.woff2') format('woff2');
+}
