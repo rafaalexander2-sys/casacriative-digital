@@ -1,113 +1,97 @@
 # /relatorio-midia
 
-Gera um relatório de performance de mídia paga em PDF a partir de CSVs do Meta Ads (ou Google/LinkedIn).
+Gera qualquer documento no design system da Nowa — relatórios, propostas, briefings, apresentações — e entrega em PDF.
 
 ## Como usar
 
-O utilizador envia os ficheiros CSV na conversa (podem ser múltiplos: campanhas, conjuntos, anúncios). Depois digita `/relatorio-midia`.
+O utilizador descreve o tipo de documento e envia os dados (CSVs, texto, tabelas, ou descreve o conteúdo). Depois digita `/relatorio-midia`.
+
+Se o contexto não for claro, perguntar:
+1. **Que tipo de documento?** (relatório de mídia, proposta comercial, briefing, análise, outro)
+2. **Para quem é?** (cliente, interno, apresentação)
+3. **Quais dados ou conteúdo incluir?**
 
 ---
 
-## O que fazer passo a passo
+## Tipos de documento suportados
 
-### 1. Ler os CSVs
+### Relatório de mídia paga (Meta Ads / Google Ads / LinkedIn Ads)
+Ler CSVs enviados na conversa. Identificar nível de campanha, conjuntos e anúncios.
+- Calcular: investimento total, impressões, alcance, CPM, custo por resultado
+- Agrupar campanhas por prefixo no nome
+- Detectar campanhas sem resultado ou pausadas com gasto relevante
+- Alertas: CPA > 3× a média ⚠, ThruPlay < R$0,05 ✓, visita LP < R$0,60 ✓
 
-Ler todos os CSVs que o utilizador enviou na conversa. Identificar:
+### Proposta comercial
+Estrutura: Capa → Contexto/Problema → Solução → Escopo → Investimento → Próximos Passos
 
-- **Nível de campanhas** (campo "Nome da campanha") — usar como fonte principal dos totais
-- **Nível de conjuntos** — detalhe por ad set
-- **Nível de anúncios** — detalhe por criativo
+### Briefing de campanha
+Estrutura: Capa → Objetivo → Público → Mensagem → Canais → Cronograma → Budget
 
-Dados a extrair de cada linha:
-- Nome, status (active/inactive), valor usado (BRL), impressões, alcance, resultados, indicador de resultados, custo por resultado
-
-### 2. Identificar grupos
-
-Agrupar as campanhas por prefixo/padrão no nome:
-- Campanhas com `[Rafa]` ou `[RAFA]` → grupo "Funil de Performance"
-- Campanhas com `PEAKX` → grupo "PEAKX"
-- Outros padrões → criar grupo com o prefixo identificado
-
-Perguntar ao utilizador se quiser confirmar os grupos, mas só se houver ambiguidade clara.
-
-### 3. Calcular totais
-
-Usar sempre o **nível de campanhas** para somar investimento, impressões e alcance (evitar dupla contagem).
-
-Calcular:
-- Total investido (soma de todos os valores usados)
-- Total impressões e alcance
-- CPM médio = (investimento / impressões) × 1000
-- Resultado principal de cada campanha (converter indicador para label legível)
-- Detectar campanhas pausadas (status ≠ active)
-- Detectar campanhas sem resultado (campo vazio)
-
-### 4. Gerar HTML
-
-Criar um novo ficheiro em `public/relatorios/<cliente>-<plataforma>-<periodo>.html` com base em `public/relatorios/_template-base.html`.
-
-Regras de nomenclatura:
-- Cliente: nome limpo sem espaços (ex: `nowa-company`)
-- Plataforma: `meta`, `google`, `linkedin`
-- Período: `mmm-aaaa` (ex: `mai-2026`) ou `dd-mmm-aaaa` para períodos semanais
-
-Estrutura de páginas do relatório:
-1. **Capa** — cliente, plataforma, período, Nowa branding
-2. **Visão Geral** — KPIs totais + tabela do grupo principal
-3. **Grupos secundários** — uma página por grupo adicional (se existirem)
-4. **Insights & Recomendações** — o que funcionou vs. pontos de atenção (2 colunas)
-5. **Próximos Passos** — lista numerada com ações concretas
-
-Cada página deve ter altura máxima de 297mm. Se o conteúdo de uma página exceder ~1100px, dividir em duas páginas.
-
-Fontes: obrigatório incluir `<link rel="stylesheet" href="../fonts/nowa-fonts.css">` no `<head>`.
-
-### 5. Gerar PDF
-
-Rodar:
-```bash
-node scripts/gerar-pdf.js public/relatorios/<arquivo>.html
-```
-
-Verificar visualmente com screenshot (`.page` elements) antes de entregar. Confirmar que nenhuma página tem conteúdo cortado.
-
-### 6. Entregar
-
-Enviar o PDF ao utilizador com `SendUserFile`.
-
-Incluir na mensagem um resumo compacto:
-- Total investido
-- Impressões e alcance
-- 1-2 destaques (melhor resultado, maior alerta)
-
-### 7. Commit e push
-
-```bash
-git add public/relatorios/<arquivo>.html public/relatorios/<arquivo>.pdf
-git commit -m "relatorio: <cliente> <plataforma> <periodo>"
-git push -u origin <branch-atual>
-```
+### Análise / relatório genérico
+Adaptar estrutura ao conteúdo fornecido. Sempre: Capa → Contexto → Dados/Análise → Conclusões → Próximos Passos
 
 ---
 
-## Alertas automáticos a identificar
+## Gerar HTML
 
-| Situação | Tipo |
-|---|---|
-| CPA / custo por resultado > 3× a média | ⚠ warn |
-| Campanha com investimento mas zero resultados | ⚠ warn |
-| Campanha pausada com investimento significativo (>15% do total) | ⚠ warn |
-| Custo por ThruPlay < R$0,05 | ✓ destaque positivo |
-| Custo por visita LP < R$0,60 | ✓ destaque positivo |
+Criar ficheiro em `public/relatorios/<cliente>-<tipo>-<periodo>.html`.
+
+Nomenclatura:
+- Cliente: nome limpo sem espaços (ex: `advant`, `nowa-company`)
+- Tipo: `google`, `meta`, `proposta`, `briefing`, `analise`
+- Período ou data: `mai-2026`, `jun-2026`, `12-29mai2026`
+
+**Estrutura base de páginas:**
+1. **Capa** — título do documento, cliente, período, Nowa branding
+2. **Conteúdo principal** — adaptar ao tipo de documento
+3. **Insights & Recomendações** (se aplicável)
+4. **Próximos Passos** (se aplicável)
+
+Cada página: `height: 297mm`, `page-break-after: always`.
+Se o conteúdo exceder ~1100px, dividir em duas páginas.
+
+**Obrigatório no `<head>`:**
+```html
+<link rel="stylesheet" href="../fonts/nowa-fonts.css">
+```
 
 ---
 
 ## Design system
 
-- Fontes: `Playfair Display` (display/números grandes), `Inter` (corpo)
-- Cores principais: `--indigo: #4D4C9A`, `--lavender: #E8D8F8`, `--mono-bg: #0E0E12`
+- Fontes: `Playfair Display` (títulos, números grandes, itálico na capa), `Inter` (corpo)
+- Cores: `--indigo: #4D4C9A`, `--lavender: #E8D8F8`, `--mono-bg: #0E0E12`
+- Capa: fundo escuro `--mono-bg`, título em Playfair Display italic lavender
 - KPI escuro: fundo `--mono-bg`, valor em `--lavender`
-- KPI claro: fundo `--lav-pale`, borda `--lav-mute`
+- KPI claro: fundo `--lav-pale: #F5EFFF`, borda `--lav-mute: #C4B0E8`
 - Destaque positivo: borda esquerda verde `#16A34A`
 - Alerta: borda esquerda âmbar `#D97706`
 - Erro/pausa: borda esquerda vermelho `#DC2626`
+- Tema alternativo por plataforma: Google → `#4285F4`, LinkedIn → `#0A66C2`
+
+---
+
+## Gerar PDF
+
+```bash
+node scripts/gerar-pdf.js public/relatorios/<arquivo>.html
+```
+
+Verificar cada `.page` com screenshot antes de entregar. Nenhuma página pode ter conteúdo cortado.
+
+---
+
+## Entregar
+
+Enviar o PDF com `SendUserFile` + resumo compacto do documento (3-4 linhas).
+
+---
+
+## Commit e push
+
+```bash
+git add public/relatorios/<arquivo>.html public/relatorios/<arquivo>.pdf
+git commit -m "relatorio: <cliente> <tipo> <periodo>"
+git push -u origin <branch-atual>
+```
