@@ -40,5 +40,10 @@
 
 ### Observações
 - As 39 campanhas pausadas sem métricas não tiveram entrega nos últimos 30 dias.
-- Ainda não foram extraídas métricas de conversão (compras/ROAS) — só tráfego e entrega.
 - Todos os IDs completos estão nos JSONs da pasta `dados-campanhas-vitaree/`.
+
+## ATUALIZAÇÃO 10/06 — Conversões extraídas (ver `conversoes-30d.json`)
+- **~R$1.800 gastos em 30 dias geraram ~2 compras atribuídas.** ROAS: 0,61 (FAST) e 0,49 (Seguidores). Muito abaixo de qualquer break-even.
+- **Funil quebra no checkout:** ~20 checkouts iniciados → ~2 compras (~10%; típico é 30–50%). Suspeitos: frete/pagamento na Shopify OU evento Purchase mal configurado (CAPI/pixel).
+- A campanha "Colágeno" (melhor CTR da conta) otimizava para **ADD_TO_CART**, não compra — métricas enganosas.
+- **Conclusão: NÃO escalar para R$6k ainda.** Primeiro: (1) validar evento Purchase/CAPI no Events Manager, (2) investigar o checkout da loja, (3) consolidar estrutura com a verba atual e comprovar CPA < break-even. Só então escalar.
