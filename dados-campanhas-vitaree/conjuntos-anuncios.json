@@ -1,0 +1,135 @@
+{
+  "conta": "CA - VITARE SUPLEMENTOS (2079717816155914)",
+  "periodo_metricas": "últimos 30 dias (11 mai – 9 jun 2026)",
+  "extraido_em": "2026-06-10",
+  "conjuntos_anuncios": [
+    {
+      "id": "120242176613430609",
+      "nome": "Mulheres 30–55 · BR · sinal de cabelo/queda · exclui compradores 40d",
+      "status": "ACTIVE",
+      "campanha_id": "120242176613440609",
+      "campanha_nome": "[Nowa} VIT | AQ | COMPRA-HAIR | JUN26",
+      "meta_otimizacao": "OFFSITE_CONVERSIONS",
+      "orcamento_diario": "no nível da campanha (CBO) ou não disponível",
+      "gasto": "R$381,08",
+      "impressoes": 5392,
+      "cliques": 138,
+      "ctr": "2,56%",
+      "cpc": "R$2,76",
+      "alcance": 4089
+    },
+    {
+      "id": "120242166334010609",
+      "nome": "VIT | FAST | INTERESSES-INTENCAO | GERAL",
+      "status": "ACTIVE",
+      "campanha_id": "120242163576000609",
+      "campanha_nome": "[Nowa] VIT | FAST | COMPRA | JUN26",
+      "meta_otimizacao": "OFFSITE_CONVERSIONS",
+      "orcamento_diario": "R$68,00",
+      "gasto": "R$365,49",
+      "impressoes": 5506,
+      "cliques": 190,
+      "ctr": "3,45%",
+      "cpc": "R$1,92",
+      "alcance": 4502
+    },
+    {
+      "id": "120242163576010609",
+      "nome": "VIT | FAST | LAL1-CARRINHO | GERAL",
+      "status": "PAUSED",
+      "campanha_id": "120242163576000609",
+      "campanha_nome": "[Nowa] VIT | FAST | COMPRA | JUN26",
+      "meta_otimizacao": "OFFSITE_CONVERSIONS",
+      "orcamento_diario": "R$68,00",
+      "gasto": "R$53,35",
+      "impressoes": 344,
+      "cliques": 13,
+      "ctr": "3,78%",
+      "cpc": "R$4,10",
+      "alcance": 330
+    },
+    {
+      "id": "120234966884160609",
+      "nome": "Novo conjunto de anúncios de Vendas",
+      "status": "PAUSED",
+      "campanha_id": "120234966884180609",
+      "meta_otimizacao": "OFFSITE_CONVERSIONS",
+      "orcamento_diario": "R$20,00",
+      "metricas_30d": null
+    },
+    {
+      "id": "120234943488530609",
+      "nome": "Novo conjunto de anúncios de Vendas",
+      "status": "PAUSED",
+      "campanha_id": "120234943488550609",
+      "meta_otimizacao": "OFFSITE_CONVERSIONS",
+      "orcamento_diario": "R$30,00",
+      "metricas_30d": null
+    },
+    {
+      "id": "120234586603060609",
+      "nome": "Post do Instagram: Creatina em goma 💥 Sem pó. Sem...",
+      "status": "PAUSED",
+      "campanha_id": "120234586602530609",
+      "meta_otimizacao": "VISIT_INSTAGRAM_PROFILE",
+      "metricas_30d": null
+    },
+    {
+      "id": "120234586546740609",
+      "nome": "Post do Instagram: Eu troquei a creatina em pó...",
+      "status": "PAUSED",
+      "campanha_id": "120234586546570609",
+      "meta_otimizacao": "VISIT_INSTAGRAM_PROFILE",
+      "metricas_30d": null
+    },
+    {
+      "id": "120234574572310609",
+      "nome": "Novo conjunto de anúncios de Vendas",
+      "status": "PAUSED",
+      "campanha_id": "120234574572300609",
+      "meta_otimizacao": "OFFSITE_CONVERSIONS",
+      "metricas_30d": null
+    },
+    {
+      "id": "120234538637160609",
+      "nome": "Post do Instagram: Creatina em goma 💥 Sem pó. Sem...",
+      "status": "PAUSED",
+      "campanha_id": "120234538637030609",
+      "meta_otimizacao": "VISIT_INSTAGRAM_PROFILE",
+      "metricas_30d": null
+    },
+    {
+      "id": "120234538620520609",
+      "nome": "Post do Instagram: Eu troquei a creatina em pó...",
+      "status": "PAUSED",
+      "campanha_id": "120234538619790609",
+      "meta_otimizacao": "VISIT_INSTAGRAM_PROFILE",
+      "metricas_30d": null
+    },
+    {
+      "id": "120234252470110609",
+      "nome": "Post do Instagram: Não é só suplemento. É...",
+      "status": "PAUSED",
+      "campanha_id": "120234252470010609",
+      "meta_otimizacao": "VISIT_INSTAGRAM_PROFILE",
+      "metricas_30d": null
+    },
+    {
+      "id": "120234042791800609",
+      "nome": "Novo objetivo Tráfego Conjunto de anúncios com configurações recomendadas",
+      "status": "PAUSED",
+      "campanha_id": "120234042791790609",
+      "meta_otimizacao": "PROFILE_VISIT",
+      "metricas_30d": null
+    },
+    {
+      "id": "120233832875640609",
+      "nome": "Novo objetivo Tráfego Conjunto de anúncios com configurações recomendadas",
+      "status": "PAUSED",
+      "campanha_id": "120233832875630609",
+      "meta_otimizacao": "LANDING_PAGE_VIEWS",
+      "orcamento_diario": "R$10,00",
+      "metricas_30d": null
+    }
+  ]
+}
