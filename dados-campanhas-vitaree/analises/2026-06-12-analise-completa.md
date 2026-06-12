@@ -27,7 +27,14 @@ Gargalo: pagamento. Marcos tentou 2× no domingo e desistiu 2×. Shopify: 5 aban
 Núcleo real: 35–54. Ajustar sugestão de idade da CBO para 30–60 quando houver dados.
 
 ## 4. Tracking (EMQ)
-EMQ 6,1 (ATC/IC/VC), 5,8 (PageView). Chaves presentes: IP, user_agent, external_id, fbc (100%). **Ausentes: e-mail (em) e telefone (ph).** Ação: ativar compartilhamento máximo de dados na integração Shopify↔Meta (correspondência avançada + CAPI com dados de cliente). Evento Purchase sem EMQ reportado (volume baixo demais). Opportunity Score Meta: sem recomendações pendentes.
+EMQ 6,1 (ATC/IC/VC), 5,8 (PageView). Chaves presentes: IP, user_agent, external_id, fbc (100%).
+
+**CORREÇÃO (12/06, após verificação fonte a fonte):** o compartilhamento Shopify↔Meta JÁ estava no nível Máximo e a API de Conversões está ativa e saudável — eventos de servidor fluindo em volume igual/superior ao navegador, deduplicação correta (compra de 09/06 visível nas duas fontes, contada 1×). A ausência de e-mail/telefone nas chaves dos eventos ATC/IC/PageView/VC é NORMAL (visitante anônimo ainda não digitou dados); o evento Purchase, que carrega e-mail, não pontua EMQ por volume baixo (2–3/semana). **Nenhuma ação necessária no data sharing.**
+
+Pendência real do tracking: aviso de Diagnóstico no Events Manager — confirmar domínio `vitaree.com.br` (lista de permissões via botão "Analisar domínios" + verificação completa no BM em Segurança da marca → Domínios, meta-tag no theme.liquid da Shopify ou TXT no DNS).
+
+Achado lateral: servidor registrou ~3 compras na loja em 7d, só 1 atribuída a anúncio — a loja vende também por orgânico/direto (relevante p/ MER).
+Evento Purchase sem EMQ reportado (volume baixo). Opportunity Score Meta: sem recomendações pendentes.
 
 ## 5. Campanhas (estado 12/06)
 - **CBO NOVA [Nowa] VIT | CBO | COMPRA | COLAGENO+HAIR (120242752450390609)**, R$100/dia, ativa desde 11/06: CTR 3,6–4,6%, CPC R$0,55–0,73, CPM R$22 (−40% vs antigas). Conjuntos: COLAGENO Mulheres 25+ (3 ads) e HAIR Mulheres 30-55 (5 ads). Reel Especialista: CPC R$0,35, CTR 5,5% — aposta.
