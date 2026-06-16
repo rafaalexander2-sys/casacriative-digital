@@ -33,6 +33,7 @@ yarn-error.log*
 
 # local env files
 .env*.local
+google-ads-mcp/.env
 
 # vercel
 .vercel
