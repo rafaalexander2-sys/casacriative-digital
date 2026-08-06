@@ -4,4 +4,4 @@
 :HL["https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/0ef78a191970475.65d48cba9bd53.png","image"]
 :HL["https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/a4c389163229265.63e27fada59e4.png","image"]
 :HL["/portfolio-revista.png","image"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"design-grafico","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"5HTdeA3_b5vyo3YIReRV6"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"design-grafico","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"Drurim3sgqcEzhhRquAuy"}
