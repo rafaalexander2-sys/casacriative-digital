@@ -33,40 +33,45 @@ import {
   type MemberRole,
 } from '@/lib/crm-types'
 
-const BRONZE = '#c47a4a'
-const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
+// ---- design tokens (estilo Pipedrive, claro) ----
+const C = {
+  bg: '#f6f7f9',
+  panel: '#ffffff',
+  border: '#e6e8eb',
+  text: '#1f2430',
+  muted: '#7b8493',
+  brand: '#c47a4a',
+  brandDark: '#8b4513',
+  col: '#eceef1',
+}
 const BRL = (n?: number | null) =>
   n == null ? '—' : n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+type View = 'pipeline' | 'relatorios' | 'clientes' | 'config'
 
 export default function CrmPage() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setLoading(false)
-    })
+    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setLoading(false) })
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
     return () => sub.subscription.unsubscribe()
   }, [])
 
-  if (loading)
-    return <Shell><p style={{ color: '#86868b' }}>A carregar…</p></Shell>
-
-  return session ? <Board session={session} /> : <Login />
+  if (loading) return <Center><p style={{ color: C.muted }}>A carregar…</p></Center>
+  return session ? <App session={session} /> : <Login />
 }
 
-// ---------------------------------------------------------------- Shell
-function Shell({ children }: { children: React.ReactNode }) {
+function Center({ children }: { children: React.ReactNode }) {
   return (
-    <main style={{ background: '#000', minHeight: '100vh', color: '#fff', fontFamily: 'Outfit, system-ui, sans-serif' }}>
+    <main style={{ background: C.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Outfit, system-ui, sans-serif' }}>
       {children}
     </main>
   )
 }
 
-// ---------------------------------------------------------------- Login
+// ================================================================ LOGIN
 function Login() {
   const [mode, setMode] = useState<'password' | 'magic'>('password')
   const [email, setEmail] = useState('')
@@ -76,265 +81,335 @@ function Login() {
   const [busy, setBusy] = useState(false)
 
   const signIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setBusy(true)
-    setErr('')
-    setMsg('')
+    e.preventDefault(); setBusy(true); setErr(''); setMsg('')
     if (mode === 'password') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setErr(error.message)
     } else {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: typeof window !== 'undefined' ? window.location.href : undefined },
-      })
-      if (error) setErr(error.message)
-      else setMsg('Enviámos um link de acesso para o seu e-mail. Abra-o para entrar.')
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: typeof window !== 'undefined' ? window.location.href : undefined } })
+      if (error) setErr(error.message); else setMsg('Enviámos um link de acesso para o seu e-mail.')
     }
     setBusy(false)
   }
 
   return (
-    <Shell>
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <form onSubmit={signIn} style={{ width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>
-            <span style={{ background: BG, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CRM</span> Casa Criative
-          </h1>
-          <p style={{ color: '#86868b', fontSize: 14, marginBottom: 12 }}>
-            {mode === 'password' ? 'Entre com seu e-mail e senha.' : 'Receba um link de acesso no seu e-mail.'}
-          </p>
-          <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="E-mail" required style={inputStyle} />
-          {mode === 'password' && (
-            <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Senha" required style={inputStyle} />
-          )}
-          {err && <p style={{ color: '#ef4444', fontSize: 13 }}>{err}</p>}
-          {msg && <p style={{ color: '#22c55e', fontSize: 13 }}>{msg}</p>}
-          <button type="submit" disabled={busy} style={btnStyle}>
-            {busy ? '…' : mode === 'password' ? 'Entrar' : 'Enviar link de acesso'}
-          </button>
-          <button
-            type="button"
-            onClick={() => { setMode(mode === 'password' ? 'magic' : 'password'); setErr(''); setMsg('') }}
-            style={{ background: 'none', border: 'none', color: '#86868b', cursor: 'pointer', fontSize: 13, marginTop: 4 }}
-          >
-            {mode === 'password' ? 'Entrar com link mágico (sem senha)' : 'Entrar com senha'}
-          </button>
-        </form>
-      </div>
-    </Shell>
+    <Center>
+      <form onSubmit={signIn} style={{ width: '100%', maxWidth: 380, background: C.panel, border: `1px solid ${C.border}`, borderRadius: 16, padding: 32, display: 'flex', flexDirection: 'column', gap: 12, boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
+        <div style={{ fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 2 }}>
+          <span style={{ color: C.brand }}>CRM</span> Casa Criative
+        </div>
+        <p style={{ color: C.muted, fontSize: 14, marginBottom: 10 }}>{mode === 'password' ? 'Entre com seu e-mail e senha.' : 'Receba um link de acesso no e-mail.'}</p>
+        <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="E-mail" required style={input} />
+        {mode === 'password' && <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Senha" required style={input} />}
+        {err && <p style={{ color: '#dc2626', fontSize: 13 }}>{err}</p>}
+        {msg && <p style={{ color: '#16a34a', fontSize: 13 }}>{msg}</p>}
+        <button type="submit" disabled={busy} style={btn}>{busy ? '…' : mode === 'password' ? 'Entrar' : 'Enviar link'}</button>
+        <button type="button" onClick={() => { setMode(mode === 'password' ? 'magic' : 'password'); setErr(''); setMsg('') }} style={linkBtn}>
+          {mode === 'password' ? 'Entrar com link mágico (sem senha)' : 'Entrar com senha'}
+        </button>
+      </form>
+    </Center>
   )
 }
 
-// ---------------------------------------------------------------- Board
-function Board({ session }: { session: Session }) {
+// ================================================================ APP SHELL
+function App({ session }: { session: Session }) {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
-  const [wsId, setWsId] = useState<string>('')
-  const [leads, setLeads] = useState<Lead[]>([])
-  const [showAdd, setShowAdd] = useState(false)
-  const [showClients, setShowClients] = useState(false)
+  const [wsId, setWsId] = useState('')
   const [isAgency, setIsAgency] = useState(false)
-  const [dragId, setDragId] = useState<string | null>(null)
+  const [view, setView] = useState<View>('pipeline')
+  const [leads, setLeads] = useState<Lead[]>([])
   const [err, setErr] = useState('')
 
   const loadWorkspaces = useCallback(() => {
-    return getMyWorkspaces()
-      .then(ws => {
-        setWorkspaces(ws)
-        setWsId(cur => cur || ws[0]?.id || '')
-        return ws
-      })
-      .catch(e => setErr(e.message))
+    return getMyWorkspaces().then(ws => {
+      setWorkspaces(ws)
+      setWsId(cur => cur || ws[0]?.id || '')
+      return ws
+    }).catch(e => setErr(e.message))
   }, [])
 
   useEffect(() => {
-    // ao entrar: reclama convites pendentes, depois carrega workspaces e papel
-    acceptMyInvitations()
-      .catch(() => {}) // sem convites não é erro
+    acceptMyInvitations().catch(() => {})
       .then(() => loadWorkspaces())
       .then(() => isAgencyMember().then(setIsAgency).catch(() => {}))
   }, [loadWorkspaces])
 
-  const refresh = useCallback((id: string) => {
+  const refreshLeads = useCallback((id: string) => {
+    if (!id) return
     getLeads(id).then(setLeads).catch(e => setErr(e.message))
   }, [])
+  useEffect(() => { refreshLeads(wsId) }, [wsId, refreshLeads])
 
-  useEffect(() => {
-    if (wsId) refresh(wsId)
-  }, [wsId, refresh])
+  const ws = workspaces.find(w => w.id === wsId)
+  const nav: { id: View; label: string; icon: string; agency?: boolean }[] = [
+    { id: 'pipeline', label: 'Pipeline', icon: '▦' },
+    { id: 'relatorios', label: 'Relatórios', icon: '▤' },
+    { id: 'clientes', label: 'Clientes', icon: '◍', agency: true },
+    { id: 'config', label: 'Configurações', icon: '⚙' },
+  ]
+
+  return (
+    <main style={{ display: 'flex', height: '100vh', background: C.bg, color: C.text, fontFamily: 'Outfit, system-ui, sans-serif', overflow: 'hidden' }}>
+      {/* SIDEBAR */}
+      <aside style={{ width: 224, flexShrink: 0, background: C.panel, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', padding: '18px 14px' }}>
+        <div style={{ fontSize: 20, fontWeight: 800, padding: '0 8px 16px' }}>
+          <span style={{ color: C.brand }}>CRM</span> <span style={{ color: C.text }}>Casa Criative</span>
+        </div>
+
+        {/* workspace selector */}
+        <label style={{ fontSize: 11, color: C.muted, padding: '0 8px 4px', textTransform: 'uppercase', letterSpacing: '.05em' }}>Espaço</label>
+        <select value={wsId} onChange={e => setWsId(e.target.value)} style={{ ...input, padding: '9px 10px', marginBottom: 16 }}>
+          {workspaces.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+        </select>
+
+        {/* nav */}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {nav.filter(n => !n.agency || isAgency).map(n => (
+            <button key={n.id} onClick={() => setView(n.id)} style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              fontSize: 14, fontFamily: 'inherit', textAlign: 'left',
+              background: view === n.id ? 'rgba(196,122,74,0.12)' : 'transparent',
+              color: view === n.id ? C.brandDark : C.text, fontWeight: view === n.id ? 600 : 500,
+            }}>
+              <span style={{ width: 18, textAlign: 'center', opacity: .8 }}>{n.icon}</span>{n.label}
+            </button>
+          ))}
+        </nav>
+
+        <div style={{ marginTop: 'auto', borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+          <p style={{ fontSize: 12, color: C.muted, padding: '0 8px 8px', wordBreak: 'break-all' }}>{session.user.email}</p>
+          <button onClick={() => supabase.auth.signOut()} style={{ ...linkBtn, textAlign: 'left', padding: '0 8px' }}>Sair</button>
+        </div>
+      </aside>
+
+      {/* MAIN */}
+      <section style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        {err && <div style={{ background: '#fef2f2', color: '#dc2626', fontSize: 13, padding: '8px 20px', borderBottom: `1px solid ${C.border}` }}>{err}</div>}
+        {view === 'pipeline' && <PipelineView wsId={wsId} leads={leads} setLeads={setLeads} onErr={setErr} />}
+        {view === 'relatorios' && <ReportsView ws={ws} leads={leads} />}
+        {view === 'clientes' && isAgency && <ClientsView workspaces={workspaces} onChanged={loadWorkspaces} />}
+        {view === 'config' && <SettingsView session={session} ws={ws} leads={leads} />}
+      </section>
+    </main>
+  )
+}
+
+// ================================================================ PIPELINE
+function PipelineView({ wsId, leads, setLeads, onErr }: { wsId: string; leads: Lead[]; setLeads: React.Dispatch<React.SetStateAction<Lead[]>>; onErr: (m: string) => void }) {
+  const [showAdd, setShowAdd] = useState(false)
+  const [dragId, setDragId] = useState<string | null>(null)
 
   const onDrop = async (status: LeadStatus) => {
-    const lead = leads.find(l => l.id === dragId)
-    setDragId(null)
+    const lead = leads.find(l => l.id === dragId); setDragId(null)
     if (!lead || lead.status === status) return
-    setLeads(ls => ls.map(l => (l.id === lead.id ? { ...l, status } : l))) // otimista
-    try {
-      await updateLeadStatus(lead, status)
-    } catch (e: any) {
-      setErr(e.message)
-      refresh(wsId)
-    }
+    setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, status } : l))
+    try { await updateLeadStatus(lead, status) } catch (e: any) { onErr(e.message) }
   }
-
   const onDelete = async (id: string) => {
     setLeads(ls => ls.filter(l => l.id !== id))
-    try {
-      await deleteLead(id)
-    } catch (e: any) {
-      setErr(e.message)
-      refresh(wsId)
-    }
+    try { await deleteLead(id) } catch (e: any) { onErr(e.message) }
   }
 
-  // métricas rápidas
-  const ganhos = leads.filter(l => l.status === 'ganho')
-  const totalGanho = ganhos.reduce((s, l) => s + (l.value ?? 0), 0)
+  const ganho = leads.filter(l => l.status === 'ganho').reduce((s, l) => s + (l.value ?? 0), 0)
   const emAberto = leads.filter(l => !['ganho', 'perdido'].includes(l.status)).length
 
   return (
-    <Shell>
-      {/* Topo */}
-      <header style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: '0.5px solid rgba(255,210,160,0.15)', flexWrap: 'wrap' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700 }}>
-          <span style={{ background: BG, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CRM</span>
-        </h1>
-        {workspaces.length > 1 && (
-          <select value={wsId} onChange={e => setWsId(e.target.value)} style={{ ...inputStyle, width: 'auto', padding: '8px 12px' }}>
-            {workspaces.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-          </select>
-        )}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 20, alignItems: 'center', fontSize: 13 }}>
-          <span style={{ color: '#86868b' }}>Em aberto: <b style={{ color: '#fff' }}>{emAberto}</b></span>
-          <span style={{ color: '#86868b' }}>Ganho: <b style={{ color: '#22c55e' }}>{BRL(totalGanho)}</b></span>
-          {isAgency && (
-            <button onClick={() => setShowClients(true)} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 10, color: '#fff', cursor: 'pointer', fontSize: 13, padding: '9px 16px', fontFamily: 'inherit' }}>Clientes</button>
-          )}
-          <button onClick={() => setShowAdd(true)} style={{ ...btnStyle, padding: '9px 16px', width: 'auto' }}>+ Lead</button>
-          <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: 'none', color: '#86868b', cursor: 'pointer', fontSize: 13 }}>Sair</button>
+    <>
+      <Topbar title="Pipeline" right={
+        <>
+          <Stat label="Em aberto" value={String(emAberto)} />
+          <Stat label="Ganho" value={BRL(ganho)} color="#16a34a" />
+          <button onClick={() => setShowAdd(true)} style={{ ...btn, width: 'auto', padding: '9px 16px' }}>+ Lead</button>
+        </>
+      } />
+
+      <div style={{ flex: 1, overflow: 'hidden', padding: 16 }}>
+        <div style={{ display: 'flex', gap: 12, height: '100%', overflowX: 'auto', paddingBottom: 4 }}>
+          {PIPELINE.map(status => {
+            const col = leads.filter(l => l.status === status)
+            const colVal = col.reduce((s, l) => s + (l.value ?? 0), 0)
+            return (
+              <div key={status} onDragOver={e => e.preventDefault()} onDrop={() => onDrop(status)}
+                style={{ width: 264, flexShrink: 0, background: C.col, borderRadius: 12, display: 'flex', flexDirection: 'column', maxHeight: '100%' }}>
+                <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: `2px solid ${STATUS_COLORS[status]}` }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 4, background: STATUS_COLORS[status] }} />
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>{STATUS_LABELS[status]}</span>
+                  <span style={{ fontSize: 12, color: C.muted, marginLeft: 'auto' }}>{col.length}</span>
+                </div>
+                {colVal > 0 && <div style={{ fontSize: 11, color: C.muted, padding: '6px 14px 0' }}>{BRL(colVal)}</div>}
+                <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
+                  {col.map(lead => (
+                    <div key={lead.id} draggable onDragStart={() => setDragId(lead.id)}
+                      style={{ background: C.panel, borderRadius: 8, padding: 12, cursor: 'grab', border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                        <b style={{ fontSize: 14 }}>{lead.name}</b>
+                        <button onClick={() => onDelete(lead.id)} title="Apagar" style={{ background: 'none', border: 'none', color: '#cbd0d6', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
+                      </div>
+                      {lead.company && <p style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{lead.company}</p>}
+                      <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: 'rgba(196,122,74,0.12)', color: C.brandDark }}>{SOURCE_LABELS[lead.source]}</span>
+                        {lead.value != null && <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 700 }}>{BRL(lead.value)}</span>}
+                      </div>
+                      {(lead.phone || lead.email) && <p style={{ fontSize: 11, color: '#9aa1ab', marginTop: 6 }}>{lead.phone || lead.email}</p>}
+                    </div>
+                  ))}
+                  {col.length === 0 && <p style={{ fontSize: 12, color: '#b6bcc4', textAlign: 'center', padding: 10 }}>vazio</p>}
+                </div>
+              </div>
+            )
+          })}
         </div>
-      </header>
-
-      {err && <p style={{ color: '#ef4444', padding: '8px 24px', fontSize: 13 }}>{err}</p>}
-
-      {/* Kanban */}
-      <div style={{ display: 'flex', gap: 12, padding: 20, overflowX: 'auto', alignItems: 'flex-start' }}>
-        {PIPELINE.map(status => {
-          const col = leads.filter(l => l.status === status)
-          return (
-            <div
-              key={status}
-              onDragOver={e => e.preventDefault()}
-              onDrop={() => onDrop(status)}
-              style={{ minWidth: 260, flex: '1 0 260px', background: 'rgba(255,255,255,0.03)', borderRadius: 14, padding: 12, border: '0.5px solid rgba(255,255,255,0.06)' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 4, background: STATUS_COLORS[status] }} />
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{STATUS_LABELS[status]}</span>
-                <span style={{ marginLeft: 'auto', fontSize: 12, color: '#86868b' }}>{col.length}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {col.map(lead => (
-                  <div
-                    key={lead.id}
-                    draggable
-                    onDragStart={() => setDragId(lead.id)}
-                    style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: 12, cursor: 'grab', border: '0.5px solid rgba(255,210,160,0.1)' }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                      <b style={{ fontSize: 14 }}>{lead.name}</b>
-                      <button onClick={() => onDelete(lead.id)} title="Apagar" style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 14, lineHeight: 1 }}>×</button>
-                    </div>
-                    {lead.company && <p style={{ fontSize: 12, color: '#86868b', marginTop: 2 }}>{lead.company}</p>}
-                    <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                      <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 6, background: 'rgba(196,122,74,0.15)', color: BRONZE }}>{SOURCE_LABELS[lead.source]}</span>
-                      {lead.value != null && <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 600 }}>{BRL(lead.value)}</span>}
-                    </div>
-                    {(lead.phone || lead.email) && (
-                      <p style={{ fontSize: 11, color: '#666', marginTop: 6 }}>{lead.phone || lead.email}</p>
-                    )}
-                  </div>
-                ))}
-                {col.length === 0 && <p style={{ fontSize: 12, color: '#444', textAlign: 'center', padding: 12 }}>vazio</p>}
-              </div>
-            </div>
-          )
-        })}
       </div>
 
-      {showAdd && (
-        <AddLead
-          onClose={() => setShowAdd(false)}
-          onCreate={async input => {
-            const lead = await createLead(wsId, input)
-            setLeads(ls => [lead, ...ls])
-            setShowAdd(false)
-          }}
-        />
-      )}
-
-      {showClients && (
-        <ClientsManager
-          workspaces={workspaces}
-          onClose={() => setShowClients(false)}
-          onChanged={loadWorkspaces}
-        />
-      )}
-    </Shell>
+      {showAdd && <AddLead onClose={() => setShowAdd(false)} onCreate={async input => {
+        const lead = await createLead(wsId, input); setLeads(ls => [lead, ...ls]); setShowAdd(false)
+      }} />}
+    </>
   )
 }
 
-// ---------------------------------------------------------------- Clientes (agência)
-function ClientsManager({ workspaces, onClose, onChanged }: { workspaces: Workspace[]; onClose: () => void; onChanged: () => void }) {
-  const clients = workspaces.filter(w => !w.is_agency)
-  const [selected, setSelected] = useState<Workspace | null>(clients[0] ?? null)
+// ================================================================ RELATÓRIOS
+function ReportsView({ ws, leads }: { ws?: Workspace; leads: Lead[] }) {
+  const total = leads.length
+  const won = leads.filter(l => l.status === 'ganho')
+  const lost = leads.filter(l => l.status === 'perdido')
+  const open = leads.filter(l => !['ganho', 'perdido'].includes(l.status))
+  const wonVal = won.reduce((s, l) => s + (l.value ?? 0), 0)
+  const openVal = open.reduce((s, l) => s + (l.value ?? 0), 0)
+  const conv = won.length + lost.length > 0 ? Math.round((won.length / (won.length + lost.length)) * 100) : 0
+  const ticket = won.length ? wonVal / won.length : 0
+
+  const bySource = (Object.keys(SOURCE_LABELS) as LeadSource[])
+    .map(s => ({ s, n: leads.filter(l => l.source === s).length })).filter(x => x.n > 0)
+  const maxSource = Math.max(1, ...bySource.map(x => x.n))
+
+  return (
+    <>
+      <Topbar title="Relatórios" subtitle={ws?.name} />
+      <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
+          <Card title="Total de leads" value={String(total)} />
+          <Card title="Em aberto" value={String(open.length)} sub={BRL(openVal) + ' em pipeline'} />
+          <Card title="Ganhos" value={String(won.length)} sub={BRL(wonVal)} color="#16a34a" />
+          <Card title="Perdidos" value={String(lost.length)} color="#dc2626" />
+          <Card title="Taxa de conversão" value={conv + '%'} />
+          <Card title="Ticket médio" value={BRL(ticket)} />
+        </div>
+
+        <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 12px' }}>Por etapa</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24, maxWidth: 560 }}>
+          {PIPELINE.map(s => {
+            const n = leads.filter(l => l.status === s).length
+            const pct = total ? (n / total) * 100 : 0
+            return (
+              <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 90, fontSize: 13, color: C.muted }}>{STATUS_LABELS[s]}</span>
+                <div style={{ flex: 1, background: C.col, borderRadius: 6, height: 20, overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, height: '100%', background: STATUS_COLORS[s], transition: 'width .3s' }} />
+                </div>
+                <span style={{ width: 28, textAlign: 'right', fontSize: 13, fontWeight: 600 }}>{n}</span>
+              </div>
+            )
+          })}
+        </div>
+
+        <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 12px' }}>Por origem</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 560 }}>
+          {bySource.length === 0 && <p style={{ fontSize: 13, color: C.muted }}>Sem dados ainda.</p>}
+          {bySource.map(({ s, n }) => (
+            <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ width: 90, fontSize: 13, color: C.muted }}>{SOURCE_LABELS[s]}</span>
+              <div style={{ flex: 1, background: C.col, borderRadius: 6, height: 20, overflow: 'hidden' }}>
+                <div style={{ width: `${(n / maxSource) * 100}%`, height: '100%', background: C.brand }} />
+              </div>
+              <span style={{ width: 28, textAlign: 'right', fontSize: 13, fontWeight: 600 }}>{n}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ================================================================ CONFIGURAÇÕES + BACKUP
+function SettingsView({ session, ws, leads }: { session: Session; ws?: Workspace; leads: Lead[] }) {
+  const exportCsv = () => {
+    const cols = ['name', 'company', 'email', 'phone', 'source', 'status', 'value', 'created_at']
+    const rows = leads.map(l => cols.map(c => JSON.stringify((l as any)[c] ?? '')).join(','))
+    download(`leads-${ws?.name ?? 'export'}.csv`, [cols.join(','), ...rows].join('\n'), 'text/csv')
+  }
+  const exportJson = () => download(`backup-${ws?.name ?? 'export'}.json`, JSON.stringify(leads, null, 2), 'application/json')
+
+  return (
+    <>
+      <Topbar title="Configurações" />
+      <div style={{ flex: 1, overflow: 'auto', padding: 20, maxWidth: 640 }}>
+        <Section title="Conta">
+          <Row k="E-mail" v={session.user.email ?? ''} />
+          <Row k="Espaço atual" v={ws?.name ?? '—'} />
+        </Section>
+
+        <Section title="Backup / Exportar">
+          <p style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>Baixe os leads deste espaço. O JSON pode ser guardado como backup.</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={exportCsv} style={{ ...btn, width: 'auto', padding: '10px 16px' }}>Exportar CSV</button>
+            <button onClick={exportJson} style={{ ...btnGhost, width: 'auto', padding: '10px 16px' }}>Backup JSON</button>
+          </div>
+        </Section>
+      </div>
+    </>
+  )
+}
+
+// ================================================================ CLIENTES (agência)
+function ClientsView({ workspaces, onChanged }: { workspaces: Workspace[]; onChanged: () => void }) {
+  // agência primeiro (equipe interna), depois os clientes
+  const ordered = [...workspaces].sort((a, b) => Number(b.is_agency) - Number(a.is_agency) || a.name.localeCompare(b.name))
+  const [selected, setSelected] = useState<Workspace | null>(ordered[0] ?? null)
   const [newName, setNewName] = useState('')
   const [err, setErr] = useState('')
 
+  useEffect(() => { if (!selected && ordered[0]) setSelected(ordered[0]) }, [ordered, selected])
+
   const addClient = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErr('')
+    e.preventDefault(); setErr('')
     if (!newName.trim()) return
-    try {
-      const ws = await createClient(newName.trim())
-      setNewName('')
-      await onChanged()
-      setSelected(ws)
-    } catch (e: any) { setErr(e.message) }
+    try { const w = await createClient(newName.trim()); setNewName(''); await onChanged(); setSelected(w) }
+    catch (e: any) { setErr(e.message) }
   }
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 50 }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 720, maxHeight: '85vh', overflow: 'auto', background: '#111', borderRadius: 16, padding: 28, border: '0.5px solid rgba(255,210,160,0.15)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700 }}>Clientes</h2>
-          <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#86868b', cursor: 'pointer', fontSize: 20 }}>×</button>
-        </div>
-
-        <form onSubmit={addClient} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nome do novo cliente" style={{ ...inputStyle, flex: 1 }} />
-          <button type="submit" style={{ ...btnStyle, width: 'auto', padding: '12px 20px' }}>+ Cliente</button>
+    <>
+      <Topbar title="Clientes" right={
+        <form onSubmit={addClient} style={{ display: 'flex', gap: 8 }}>
+          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Novo cliente" style={{ ...input, width: 180 }} />
+          <button type="submit" style={{ ...btn, width: 'auto', padding: '9px 16px' }}>+ Cliente</button>
         </form>
-        {err && <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 12 }}>{err}</p>}
-
-        <div style={{ display: 'flex', gap: 16 }}>
-          {/* lista de clientes */}
-          <div style={{ width: 200, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {clients.length === 0 && <p style={{ fontSize: 13, color: '#666' }}>Nenhum cliente ainda.</p>}
-            {clients.map(c => (
-              <button key={c.id} onClick={() => setSelected(c)} style={{ textAlign: 'left', background: selected?.id === c.id ? 'rgba(196,122,74,0.18)' : 'rgba(255,255,255,0.04)', border: 'none', borderRadius: 8, padding: '10px 12px', color: '#fff', cursor: 'pointer', fontSize: 14, fontFamily: 'inherit' }}>{c.name}</button>
-            ))}
-          </div>
-          {/* membros do cliente selecionado */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {selected ? <MembersPanel workspace={selected} /> : <p style={{ fontSize: 13, color: '#666' }}>Selecione um cliente.</p>}
-          </div>
+      } />
+      {err && <p style={{ color: '#dc2626', fontSize: 13, padding: '8px 20px' }}>{err}</p>}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <div style={{ width: 220, flexShrink: 0, borderRight: `1px solid ${C.border}`, overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {ordered.map(c => (
+            <button key={c.id} onClick={() => setSelected(c)} style={{
+              textAlign: 'left', background: selected?.id === c.id ? 'rgba(196,122,74,0.12)' : 'transparent',
+              color: selected?.id === c.id ? C.brandDark : C.text, fontWeight: selected?.id === c.id ? 600 : 500,
+              border: 'none', borderRadius: 8, padding: '10px 12px', cursor: 'pointer', fontSize: 14, fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+              {c.is_agency && <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: '#fff', background: C.brand, borderRadius: 4, padding: '2px 5px' }}>Equipe</span>}
+            </button>
+          ))}
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+          {selected ? <MembersPanel workspace={selected} /> : <p style={{ fontSize: 13, color: C.muted }}>Selecione um cliente.</p>}
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
-// ---------------------------------------------------------------- Membros + convites
 function MembersPanel({ workspace }: { workspace: Workspace }) {
   const [members, setMembers] = useState<Member[]>([])
   const [invites, setInvites] = useState<Invitation[]>([])
@@ -348,74 +423,59 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
   const load = useCallback(() => {
     setErr('')
     Promise.all([listMembers(workspace.id), listInvitations(workspace.id)])
-      .then(([m, i]) => { setMembers(m); setInvites(i) })
-      .catch(e => setErr(e.message))
+      .then(([m, i]) => { setMembers(m); setInvites(i) }).catch(e => setErr(e.message))
   }, [workspace.id])
-
-  useEffect(() => { load(); setLink(''); setErr('') }, [load])
+  useEffect(() => { load(); setLink('') }, [load])
 
   const invite = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErr('')
-    setLink('')
-    setCopied(false)
+    e.preventDefault(); setErr(''); setLink(''); setCopied(false)
     if (!email.trim()) return
     setBusy(true)
-    try {
-      const res = await addPerson(workspace.id, email, role)
-      setEmail('')
-      setLink(res.link)
-      load()
-    } catch (e: any) {
-      setErr(e.message)
-    }
+    try { const r = await addPerson(workspace.id, email, role); setEmail(''); setLink(r.link); load() }
+    catch (e: any) { setErr(e.message) }
     setBusy(false)
   }
-
-  const copyLink = async () => {
-    try { await navigator.clipboard.writeText(link); setCopied(true) } catch {}
-  }
+  const copy = async () => { try { await navigator.clipboard.writeText(link); setCopied(true) } catch {} }
 
   return (
     <div>
-      <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>{workspace.name}</h3>
-
+      <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>{workspace.name}</h3>
       <form onSubmit={invite} style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-        <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="e-mail da pessoa" style={{ ...inputStyle, flex: '1 1 160px' }} />
-        <select value={role} onChange={e => setRole(e.target.value as MemberRole)} style={{ ...inputStyle, width: 'auto' }}>
+        <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="e-mail da pessoa" style={{ ...input, flex: '1 1 180px' }} />
+        <select value={role} onChange={e => setRole(e.target.value as MemberRole)} style={{ ...input, width: 'auto' }}>
           {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <button type="submit" disabled={busy} style={{ ...btnStyle, width: 'auto', padding: '12px 18px' }}>{busy ? '…' : 'Adicionar'}</button>
+        <button type="submit" disabled={busy} style={{ ...btn, width: 'auto', padding: '10px 18px' }}>{busy ? '…' : 'Adicionar'}</button>
       </form>
-      {err && <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 8 }}>{err}</p>}
+      {err && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
       {link && (
-        <div style={{ background: 'rgba(34,197,94,0.1)', border: '0.5px solid rgba(34,197,94,0.3)', borderRadius: 10, padding: 12, marginBottom: 10 }}>
-          <p style={{ fontSize: 12, color: '#22c55e', marginBottom: 8 }}>✓ Conta criada. Envie este link de acesso à pessoa (ex.: WhatsApp):</p>
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: 12, marginBottom: 12 }}>
+          <p style={{ fontSize: 12, color: '#16a34a', marginBottom: 8 }}>✓ Conta criada. Envie este link à pessoa (ex.: WhatsApp):</p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <input readOnly value={link} onClick={e => (e.target as HTMLInputElement).select()} style={{ ...inputStyle, flex: 1, fontSize: 12, color: '#aaa' }} />
-            <button type="button" onClick={copyLink} style={{ ...btnStyle, width: 'auto', padding: '10px 16px' }}>{copied ? 'Copiado!' : 'Copiar'}</button>
+            <input readOnly value={link} onClick={e => (e.target as HTMLInputElement).select()} style={{ ...input, flex: 1, fontSize: 12 }} />
+            <button type="button" onClick={copy} style={{ ...btn, width: 'auto', padding: '10px 16px' }}>{copied ? 'Copiado!' : 'Copiar'}</button>
           </div>
         </div>
       )}
 
-      <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#666', margin: '10px 0 6px' }}>Membros</p>
-      {members.length === 0 && <p style={{ fontSize: 13, color: '#666' }}>Ninguém ainda.</p>}
+      <p style={label}>Membros</p>
+      {members.length === 0 && <p style={{ fontSize: 13, color: C.muted }}>Ninguém ainda.</p>}
       {members.map(m => (
-        <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+        <div key={m.user_id} style={rowLine}>
           <span style={{ fontSize: 14 }}>{m.email}</span>
-          <span style={{ fontSize: 11, color: '#c47a4a' }}>{ROLE_LABELS[m.role]}</span>
-          <button onClick={async () => { await removeMember(workspace.id, m.user_id); load() }} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 13 }}>remover</button>
+          <span style={{ fontSize: 11, color: C.brand }}>{ROLE_LABELS[m.role]}</span>
+          <button onClick={async () => { await removeMember(workspace.id, m.user_id); load() }} style={smallLink}>remover</button>
         </div>
       ))}
 
       {invites.length > 0 && (
         <>
-          <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#666', margin: '14px 0 6px' }}>Convites pendentes</p>
+          <p style={label}>Convites pendentes</p>
           {invites.map(i => (
-            <div key={i.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-              <span style={{ fontSize: 14, color: '#aaa' }}>{i.email}</span>
-              <span style={{ fontSize: 11, color: '#c47a4a' }}>{ROLE_LABELS[i.role]}</span>
-              <button onClick={async () => { await cancelInvitation(i.id); load() }} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 13 }}>cancelar</button>
+            <div key={i.id} style={rowLine}>
+              <span style={{ fontSize: 14, color: C.muted }}>{i.email}</span>
+              <span style={{ fontSize: 11, color: C.brand }}>{ROLE_LABELS[i.role]}</span>
+              <button onClick={async () => { await cancelInvitation(i.id); load() }} style={smallLink}>cancelar</button>
             </div>
           ))}
         </>
@@ -424,76 +484,93 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
   )
 }
 
-// ---------------------------------------------------------------- Add Lead
+// ================================================================ ADD LEAD
 function AddLead({ onClose, onCreate }: { onClose: () => void; onCreate: (i: Partial<Lead> & { name: string }) => Promise<void> }) {
   const [f, setF] = useState({ name: '', email: '', phone: '', company: '', source: 'manual' as LeadSource, value: '' })
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
   const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setBusy(true)
-    setErr('')
+    e.preventDefault(); setBusy(true); setErr('')
     try {
-      await onCreate({
-        name: f.name,
-        email: f.email || null,
-        phone: f.phone || null,
-        company: f.company || null,
-        source: f.source,
-        value: f.value ? Number(f.value) : null,
-      })
-    } catch (e: any) {
-      setErr(e.message)
-      setBusy(false)
-    }
+      await onCreate({ name: f.name, email: f.email || null, phone: f.phone || null, company: f.company || null, source: f.source, value: f.value ? Number(f.value) : null })
+    } catch (e: any) { setErr(e.message); setBusy(false) }
   }
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 50 }}>
-      <form onClick={e => e.stopPropagation()} onSubmit={submit} style={{ width: '100%', maxWidth: 400, background: '#111', borderRadius: 16, padding: 28, display: 'flex', flexDirection: 'column', gap: 10, border: '0.5px solid rgba(255,210,160,0.15)' }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Novo lead</h2>
-        <input placeholder="Nome *" required value={f.name} onChange={e => setF({ ...f, name: e.target.value })} style={inputStyle} />
-        <input placeholder="Empresa" value={f.company} onChange={e => setF({ ...f, company: e.target.value })} style={inputStyle} />
-        <input placeholder="E-mail" type="email" value={f.email} onChange={e => setF({ ...f, email: e.target.value })} style={inputStyle} />
-        <input placeholder="Telefone / WhatsApp" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} style={inputStyle} />
-        <input placeholder="Valor estimado (R$)" type="number" value={f.value} onChange={e => setF({ ...f, value: e.target.value })} style={inputStyle} />
-        <select value={f.source} onChange={e => setF({ ...f, source: e.target.value as LeadSource })} style={inputStyle}>
+    <Modal onClose={onClose}>
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Novo lead</h2>
+        <input placeholder="Nome *" required value={f.name} onChange={e => setF({ ...f, name: e.target.value })} style={input} />
+        <input placeholder="Empresa" value={f.company} onChange={e => setF({ ...f, company: e.target.value })} style={input} />
+        <input placeholder="E-mail" type="email" value={f.email} onChange={e => setF({ ...f, email: e.target.value })} style={input} />
+        <input placeholder="Telefone / WhatsApp" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} style={input} />
+        <input placeholder="Valor estimado (R$)" type="number" value={f.value} onChange={e => setF({ ...f, value: e.target.value })} style={input} />
+        <select value={f.source} onChange={e => setF({ ...f, source: e.target.value as LeadSource })} style={input}>
           {Object.entries(SOURCE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        {err && <p style={{ color: '#ef4444', fontSize: 13 }}>{err}</p>}
+        {err && <p style={{ color: '#dc2626', fontSize: 13 }}>{err}</p>}
         <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-          <button type="button" onClick={onClose} style={{ ...btnStyle, background: 'rgba(255,255,255,0.08)', color: '#fff' }}>Cancelar</button>
-          <button type="submit" disabled={busy} style={btnStyle}>{busy ? '…' : 'Criar'}</button>
+          <button type="button" onClick={onClose} style={btnGhost}>Cancelar</button>
+          <button type="submit" disabled={busy} style={btn}>{busy ? '…' : 'Criar'}</button>
         </div>
       </form>
-    </div>
+    </Modal>
   )
 }
 
-// ---------------------------------------------------------------- estilos
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  background: 'rgba(255,255,255,0.06)',
-  border: '0.5px solid rgba(255,210,160,0.2)',
-  borderRadius: 10,
-  padding: '12px 14px',
-  fontSize: 14,
-  color: '#fff',
-  outline: 'none',
-  fontFamily: 'inherit',
-  boxSizing: 'border-box',
+// ================================================================ UI helpers
+function Topbar({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
+  return (
+    <header style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', borderBottom: `1px solid ${C.border}`, background: C.panel, minHeight: 60 }}>
+      <div>
+        <h1 style={{ fontSize: 18, fontWeight: 700 }}>{title}</h1>
+        {subtitle && <p style={{ fontSize: 12, color: C.muted }}>{subtitle}</p>}
+      </div>
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 18 }}>{right}</div>
+    </header>
+  )
+}
+function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
+  return <span style={{ fontSize: 13, color: C.muted }}>{label}: <b style={{ color: color ?? C.text }}>{value}</b></span>
+}
+function Card({ title, value, sub, color }: { title: string; value: string; sub?: string; color?: string }) {
+  return (
+    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16 }}>
+      <p style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>{title}</p>
+      <p style={{ fontSize: 24, fontWeight: 800, color: color ?? C.text }}>{value}</p>
+      {sub && <p style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{sub}</p>}
+    </div>
+  )
+}
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 18, marginBottom: 16 }}>
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>{title}</h3>
+      {children}
+    </div>
+  )
+}
+function Row({ k, v }: { k: string; v: string }) {
+  return <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 14 }}><span style={{ color: C.muted }}>{k}</span><span>{v}</span></div>
+}
+function Modal({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(15,20,30,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 50 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: C.panel, borderRadius: 16, padding: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>{children}</div>
+    </div>
+  )
+}
+function download(name: string, content: string, type: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }))
+  const a = document.createElement('a'); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url)
 }
 
-const btnStyle: React.CSSProperties = {
-  flex: 1,
-  background: BG,
-  color: '#fff',
-  border: 'none',
-  borderRadius: 10,
-  padding: '13px 20px',
-  fontSize: 14,
-  fontWeight: 600,
-  cursor: 'pointer',
-  fontFamily: 'inherit',
-}
+// ---- estilos base ----
+const input: React.CSSProperties = { width: '100%', background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 12px', fontSize: 14, color: C.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }
+const btn: React.CSSProperties = { flex: 1, background: `linear-gradient(135deg,#e8c49a 0%,#c47a4a 55%,#8b4513 100%)`, color: '#fff', border: 'none', borderRadius: 8, padding: '11px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }
+const btnGhost: React.CSSProperties = { flex: 1, background: '#eef0f3', color: C.text, border: 'none', borderRadius: 8, padding: '11px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }
+const linkBtn: React.CSSProperties = { background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }
+const label: React.CSSProperties = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em', color: C.muted, margin: '16px 0 6px' }
+const rowLine: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, padding: '9px 0', borderBottom: `1px solid ${C.border}` }
+const smallLink: React.CSSProperties = { marginLeft: 'auto', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }

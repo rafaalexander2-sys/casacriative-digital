@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function WhatsAppFloat() {
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
   useEffect(() => { setMounted(true); }, []);
   if (!mounted) return null;
+  // Não mostrar dentro do CRM (é uma app, não o site)
+  if (pathname?.startsWith("/crm")) return null;
 
   return (
     <>
