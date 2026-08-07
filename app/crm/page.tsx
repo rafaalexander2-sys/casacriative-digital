@@ -14,9 +14,9 @@ import {
   createClient,
   listMembers,
   listInvitations,
-  inviteMember,
   cancelInvitation,
   removeMember,
+  addPerson,
 } from '@/lib/crm-api'
 import {
   PIPELINE,
@@ -341,7 +341,9 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<MemberRole>('member')
   const [err, setErr] = useState('')
-  const [msg, setMsg] = useState('')
+  const [link, setLink] = useState('')
+  const [copied, setCopied] = useState(false)
+  const [busy, setBusy] = useState(false)
 
   const load = useCallback(() => {
     setErr('')
@@ -350,19 +352,28 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
       .catch(e => setErr(e.message))
   }, [workspace.id])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load(); setLink(''); setErr('') }, [load])
 
   const invite = async (e: React.FormEvent) => {
     e.preventDefault()
     setErr('')
-    setMsg('')
+    setLink('')
+    setCopied(false)
     if (!email.trim()) return
+    setBusy(true)
     try {
-      await inviteMember(workspace.id, email, role)
+      const res = await addPerson(workspace.id, email, role)
       setEmail('')
-      setMsg('Convite criado. A pessoa entra pelo link mágico no /crm e é ligada automaticamente.')
+      setLink(res.link)
       load()
-    } catch (e: any) { setErr(e.message) }
+    } catch (e: any) {
+      setErr(e.message)
+    }
+    setBusy(false)
+  }
+
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(link); setCopied(true) } catch {}
   }
 
   return (
@@ -374,10 +385,18 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
         <select value={role} onChange={e => setRole(e.target.value as MemberRole)} style={{ ...inputStyle, width: 'auto' }}>
           {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <button type="submit" style={{ ...btnStyle, width: 'auto', padding: '12px 18px' }}>Convidar</button>
+        <button type="submit" disabled={busy} style={{ ...btnStyle, width: 'auto', padding: '12px 18px' }}>{busy ? '…' : 'Adicionar'}</button>
       </form>
       {err && <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 8 }}>{err}</p>}
-      {msg && <p style={{ color: '#22c55e', fontSize: 12, marginBottom: 8 }}>{msg}</p>}
+      {link && (
+        <div style={{ background: 'rgba(34,197,94,0.1)', border: '0.5px solid rgba(34,197,94,0.3)', borderRadius: 10, padding: 12, marginBottom: 10 }}>
+          <p style={{ fontSize: 12, color: '#22c55e', marginBottom: 8 }}>✓ Conta criada. Envie este link de acesso à pessoa (ex.: WhatsApp):</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input readOnly value={link} onClick={e => (e.target as HTMLInputElement).select()} style={{ ...inputStyle, flex: 1, fontSize: 12, color: '#aaa' }} />
+            <button type="button" onClick={copyLink} style={{ ...btnStyle, width: 'auto', padding: '10px 16px' }}>{copied ? 'Copiado!' : 'Copiar'}</button>
+          </div>
+        </div>
+      )}
 
       <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#666', margin: '10px 0 6px' }}>Membros</p>
       {members.length === 0 && <p style={{ fontSize: 13, color: '#666' }}>Ninguém ainda.</p>}

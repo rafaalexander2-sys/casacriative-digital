@@ -70,6 +70,27 @@ export async function inviteMember(workspaceId: string, email: string, role: Mem
   return data
 }
 
+// ---- Adicionar pessoa via Edge Function: cria conta + liga + devolve link ----
+export async function addPerson(
+  workspaceId: string,
+  email: string,
+  role: MemberRole,
+): Promise<{ link: string; email: string; role: MemberRole }> {
+  const { data, error } = await supabase.functions.invoke('invite-user', {
+    body: { workspace_id: workspaceId, email, role },
+  })
+  if (error) {
+    let msg = error.message
+    try {
+      const j = await (error as any).context?.json?.()
+      if (j?.error) msg = j.error
+    } catch {}
+    throw new Error(msg)
+  }
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
 // ---- Cancelar convite ----
 export async function cancelInvitation(id: string): Promise<void> {
   const { error } = await supabase.from('invitations').delete().eq('id', id)
