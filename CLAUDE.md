@@ -1,33 +1,42 @@
 # Casa Criative — Instruções para Claude
 
-## REGRA OBRIGATÓRIA: Deploy no Hostinger
+## Deploy: Cloudflare Pages (NÃO é Hostinger)
 
-O Hostinger serve ficheiros estáticos diretamente da pasta `out/`.
-**Não tem build step — só serve o que estiver no repositório.**
+O site é servido pelo **Cloudflare Pages** (projeto `casacriative-digital2`,
+domínio `casacriative.com.br`), conectado ao repo GitHub `rafaalexander2-sys/casacriative-digital`.
 
-### A cada mudança de código, SEMPRE:
+**O Cloudflare roda o próprio `npx next build` a cada push na `main`** (build
+command = `npx next build`, saída = `out`). Ou seja: **o `out/` commitado é
+ignorado** — quem gera o deploy é o build da Cloudflare.
+
+### A cada mudança de código:
 
 ```bash
-npm run build        # gera a pasta out/ atualizada
-git add out/ ...     # inclui a pasta out/ no commit
+git add ...
 git commit -m "..."
-git push origin main
+git push origin main   # dispara build + deploy automático na Cloudflare
 ```
 
-Se o `out/` não for commitado, **o site online não muda**.
+⚠️ **Se o build da Cloudflare falhar, a produção fica presa na versão anterior.**
+Causa comum: variável de ambiente faltando (ex.: `NEXT_PUBLIC_SUPABASE_*`).
+As env vars ficam em: Cloudflare → Workers e Pages → casacriative-digital2 →
+Configurações → Variáveis e segredos.
+
+Para ver logs de build com erro: aba **Implantações** → deploy → **Detalhes** → Log de build.
 
 ---
 
 ## Stack
 
 - **Next.js** com `output: 'export'` (site estático, sem servidor)
-- **Hostinger** — serve a pasta `out/` diretamente do repositório GitHub
-- **localStorage** — toda a persistência de dados é client-side (sem base de dados)
-- **Cloudflare Worker** — apenas para o formulário de contacto (`worker/index.js`)
+- **Cloudflare Pages** — build automático (`next build`) a cada push na `main`
+- **Supabase** — backend do CRM (Postgres + Auth + RLS) em `/crm` (ver [[crm-casa-criative]] na memória)
+- **localStorage** — persistência das ferramentas antigas (prospecção); CRM usa Supabase
+- **Cloudflare Worker** — formulário de contacto (`worker/index.js`)
 
 ## Branches
 
-- `main` → produção (Hostinger)
+- `main` → produção (Cloudflare Pages)
 - `claude/linkedin-smb-outreach-SjgyT` → branch de desenvolvimento
 
 ## Ficheiros principais
