@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { INGEST_URL } from '@/lib/track'
 import {
   getMyWorkspaces,
   getLeads,
@@ -480,6 +481,49 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
           ))}
         </>
       )}
+
+      <IngestBox workspace={workspace} />
+    </div>
+  )
+}
+
+// Webhook de captação: liga formulários/LPs deste cliente ao CRM
+function IngestBox({ workspace }: { workspace: Workspace }) {
+  const [copied, setCopied] = useState('')
+  const token = workspace.ingest_token
+  const copy = (text: string, tag: string) => { navigator.clipboard.writeText(text).then(() => { setCopied(tag); setTimeout(() => setCopied(''), 1500) }).catch(() => {}) }
+  const snippet = `fetch("${INGEST_URL}", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    token: "${token ?? 'RODE_O_SQL_schema-ingest'}",
+    name: "Nome do lead",
+    email: "email@exemplo.com",
+    phone: "+55 ...",
+    source: "form"
+  })
+})`
+
+  return (
+    <div style={{ marginTop: 22, borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+      <p style={label}>Captação de leads (webhook)</p>
+      <p style={{ fontSize: 13, color: C.muted, marginBottom: 10 }}>Use isto para ligar formulários/landing pages deste cliente. Todo lead cai direto aqui.</p>
+      {!token && <p style={{ fontSize: 12, color: '#dc2626', marginBottom: 8 }}>Rode o SQL <b>schema-ingest.sql</b> no Supabase para gerar o token.</p>}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <input readOnly value={INGEST_URL} onClick={e => (e.target as HTMLInputElement).select()} style={{ ...input, flex: 1, fontSize: 12 }} />
+        <button type="button" onClick={() => copy(INGEST_URL, 'url')} style={{ ...btnGhost, width: 'auto', padding: '10px 14px' }}>{copied === 'url' ? '✓' : 'URL'}</button>
+      </div>
+      {token && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <input readOnly value={token} onClick={e => (e.target as HTMLInputElement).select()} style={{ ...input, flex: 1, fontSize: 12 }} />
+          <button type="button" onClick={() => copy(token, 'tok')} style={{ ...btnGhost, width: 'auto', padding: '10px 14px' }}>{copied === 'tok' ? '✓' : 'Token'}</button>
+        </div>
+      )}
+      <details style={{ marginTop: 4 }}>
+        <summary style={{ fontSize: 12, color: C.brand, cursor: 'pointer' }}>Ver exemplo de código</summary>
+        <pre style={{ background: '#0f1420', color: '#cbd5e1', fontSize: 11, padding: 12, borderRadius: 8, overflow: 'auto', marginTop: 8 }}>{snippet}</pre>
+        <button type="button" onClick={() => copy(snippet, 'code')} style={{ ...btnGhost, width: 'auto', padding: '8px 14px', marginTop: 6 }}>{copied === 'code' ? 'Copiado!' : 'Copiar código'}</button>
+      </details>
     </div>
   )
 }

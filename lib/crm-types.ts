@@ -33,6 +33,7 @@ export interface Workspace {
   id: string
   name: string
   is_agency: boolean
+  ingest_token?: string | null
   created_at: string
 }
 

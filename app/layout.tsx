@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import WhatsAppFloat from '@/components/WhatsAppFloat'
+import TrackParams from '@/components/TrackParams'
 import './globals.css'
 
 const GA_ID = 'G-ZRFLKP3RVT'
@@ -111,6 +112,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         {children}
+        <TrackParams />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

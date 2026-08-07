@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { sendLead } from '@/lib/track'
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
 const BRONZE = { background: BG, WebkitBackgroundClip: 'text' as const, WebkitTextFillColor: 'transparent' as const, backgroundClip: 'text' as const }
@@ -16,6 +18,34 @@ const contatos = [
 ]
 
 export default function Contato() {
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [errMsg, setErrMsg] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    if (fd.get('_gotcha')) return // honeypot
+    const instagram = String(fd.get('instagram') || '')
+    const nicho = String(fd.get('nicho') || '')
+    const servico = String(fd.get('servico') || '')
+    const notes = [servico && `Serviço: ${servico}`, nicho && `Nicho: ${nicho}`, instagram && `Instagram: ${instagram}`]
+      .filter(Boolean).join(' | ')
+    setStatus('sending'); setErrMsg('')
+    try {
+      await sendLead({
+        name: String(fd.get('name') || ''),
+        email: String(fd.get('email') || ''),
+        phone: String(fd.get('phone') || ''),
+        source: 'form',
+        notes,
+      })
+      setStatus('sent')
+    } catch (err: any) {
+      setErrMsg(err.message || 'Erro ao enviar.')
+      setStatus('error')
+    }
+  }
+
   return (
     <main style={{ background: '#000', minHeight: '100vh' }}>
       <style>{`
@@ -114,22 +144,32 @@ export default function Contato() {
           {/* Formulário */}
           <div className="glass-card-contact">
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: BG, borderRadius: '16px 16px 0 0' }} />
-            <form onSubmit={e => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: 10, position: 'relative', zIndex: 1 }}>
+            {status === 'sent' ? (
+              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '40px 10px' }}>
+                <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f5f5f7', marginBottom: 10 }}>Mensagem enviada! ✅</h2>
+                <p style={{ fontSize: 14, fontWeight: 300, color: '#86868b' }}>Recebemos seu contato e retornamos em até 24h úteis.</p>
+              </div>
+            ) : (
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10, position: 'relative', zIndex: 1 }}>
               <h2 style={{ fontSize: 20, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.5px', marginBottom: 4 }}>Envie sua mensagem</h2>
               <p style={{ fontSize: 13, fontWeight: 300, color: '#86868b', marginBottom: 12 }}>Preencha abaixo e retornamos em até 24h.</p>
-              <input className="contact-input" type="text" placeholder="Nome completo" required />
-              <input className="contact-input" type="email" placeholder="E-mail" required />
-              <input className="contact-input" type="tel" placeholder="Telefone / WhatsApp" />
-              <input className="contact-input" type="text" placeholder="Instagram (@suamarca)" />
-              <input className="contact-input" type="text" placeholder="Nicho de atuação" />
-              <select className="contact-select">
+              <input name="name" className="contact-input" type="text" placeholder="Nome completo" required />
+              <input name="email" className="contact-input" type="email" placeholder="E-mail" required />
+              <input name="phone" className="contact-input" type="tel" placeholder="Telefone / WhatsApp" />
+              <input name="instagram" className="contact-input" type="text" placeholder="Instagram (@suamarca)" />
+              <input name="nicho" className="contact-input" type="text" placeholder="Nicho de atuação" />
+              <select name="servico" className="contact-select" defaultValue="">
                 <option value="" disabled>Serviço de interesse</option>
                 {servicos.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
-              <button type="submit" style={{ background: BG, color: '#fff', border: 'none', borderRadius: 10, padding: '14px 28px', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginTop: 6 }}>
-                Enviar mensagem
+              {/* honeypot anti-bot (invisível) */}
+              <input name="_gotcha" tabIndex={-1} autoComplete="off" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} aria-hidden="true" />
+              {status === 'error' && <p style={{ color: '#ff6b6b', fontSize: 13 }}>{errMsg} Tente novamente ou use o WhatsApp.</p>}
+              <button type="submit" disabled={status === 'sending'} style={{ background: BG, color: '#fff', border: 'none', borderRadius: 10, padding: '14px 28px', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginTop: 6, opacity: status === 'sending' ? 0.6 : 1 }}>
+                {status === 'sending' ? 'Enviando…' : 'Enviar mensagem'}
               </button>
             </form>
+            )}
           </div>
 
         </div>
