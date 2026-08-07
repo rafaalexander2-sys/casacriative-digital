@@ -5,4 +5,4 @@
 :HL["/portfolio-estetica.png","image"]
 :HL["https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/c59561242480249.696e3e2bd04f8.png","image"]
 :HL["https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/bf3fc0244029633.698dea0a7b92a.png","image"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"sites-e-landing-pages","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"L9M8a549ld4iIeHw59YCn"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"sites-e-landing-pages","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"jV28OW9zO2Vd0HNntC8Gc"}

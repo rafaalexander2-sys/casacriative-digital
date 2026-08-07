@@ -9,16 +9,28 @@ import {
   createLead,
   updateLeadStatus,
   deleteLead,
+  acceptMyInvitations,
+  isAgencyMember,
+  createClient,
+  listMembers,
+  listInvitations,
+  inviteMember,
+  cancelInvitation,
+  removeMember,
 } from '@/lib/crm-api'
 import {
   PIPELINE,
   STATUS_LABELS,
   STATUS_COLORS,
   SOURCE_LABELS,
+  ROLE_LABELS,
   type Lead,
   type LeadStatus,
   type LeadSource,
   type Workspace,
+  type Member,
+  type Invitation,
+  type MemberRole,
 } from '@/lib/crm-types'
 
 const BRONZE = '#c47a4a'
@@ -56,17 +68,29 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 // ---------------------------------------------------------------- Login
 function Login() {
+  const [mode, setMode] = useState<'password' | 'magic'>('password')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [err, setErr] = useState('')
+  const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
 
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setBusy(true)
     setErr('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setErr(error.message)
+    setMsg('')
+    if (mode === 'password') {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) setErr(error.message)
+    } else {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: typeof window !== 'undefined' ? window.location.href : undefined },
+      })
+      if (error) setErr(error.message)
+      else setMsg('Enviámos um link de acesso para o seu e-mail. Abra-o para entrar.')
+    }
     setBusy(false)
   }
 
@@ -77,11 +101,25 @@ function Login() {
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>
             <span style={{ background: BG, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CRM</span> Casa Criative
           </h1>
-          <p style={{ color: '#86868b', fontSize: 14, marginBottom: 12 }}>Entre com seu e-mail e senha.</p>
+          <p style={{ color: '#86868b', fontSize: 14, marginBottom: 12 }}>
+            {mode === 'password' ? 'Entre com seu e-mail e senha.' : 'Receba um link de acesso no seu e-mail.'}
+          </p>
           <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="E-mail" required style={inputStyle} />
-          <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Senha" required style={inputStyle} />
+          {mode === 'password' && (
+            <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Senha" required style={inputStyle} />
+          )}
           {err && <p style={{ color: '#ef4444', fontSize: 13 }}>{err}</p>}
-          <button type="submit" disabled={busy} style={btnStyle}>{busy ? '…' : 'Entrar'}</button>
+          {msg && <p style={{ color: '#22c55e', fontSize: 13 }}>{msg}</p>}
+          <button type="submit" disabled={busy} style={btnStyle}>
+            {busy ? '…' : mode === 'password' ? 'Entrar' : 'Enviar link de acesso'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode(mode === 'password' ? 'magic' : 'password'); setErr(''); setMsg('') }}
+            style={{ background: 'none', border: 'none', color: '#86868b', cursor: 'pointer', fontSize: 13, marginTop: 4 }}
+          >
+            {mode === 'password' ? 'Entrar com link mágico (sem senha)' : 'Entrar com senha'}
+          </button>
         </form>
       </div>
     </Shell>
@@ -94,17 +132,28 @@ function Board({ session }: { session: Session }) {
   const [wsId, setWsId] = useState<string>('')
   const [leads, setLeads] = useState<Lead[]>([])
   const [showAdd, setShowAdd] = useState(false)
+  const [showClients, setShowClients] = useState(false)
+  const [isAgency, setIsAgency] = useState(false)
   const [dragId, setDragId] = useState<string | null>(null)
   const [err, setErr] = useState('')
 
-  useEffect(() => {
-    getMyWorkspaces()
+  const loadWorkspaces = useCallback(() => {
+    return getMyWorkspaces()
       .then(ws => {
         setWorkspaces(ws)
-        if (ws[0]) setWsId(ws[0].id)
+        setWsId(cur => cur || ws[0]?.id || '')
+        return ws
       })
       .catch(e => setErr(e.message))
   }, [])
+
+  useEffect(() => {
+    // ao entrar: reclama convites pendentes, depois carrega workspaces e papel
+    acceptMyInvitations()
+      .catch(() => {}) // sem convites não é erro
+      .then(() => loadWorkspaces())
+      .then(() => isAgencyMember().then(setIsAgency).catch(() => {}))
+  }, [loadWorkspaces])
 
   const refresh = useCallback((id: string) => {
     getLeads(id).then(setLeads).catch(e => setErr(e.message))
@@ -157,6 +206,9 @@ function Board({ session }: { session: Session }) {
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 20, alignItems: 'center', fontSize: 13 }}>
           <span style={{ color: '#86868b' }}>Em aberto: <b style={{ color: '#fff' }}>{emAberto}</b></span>
           <span style={{ color: '#86868b' }}>Ganho: <b style={{ color: '#22c55e' }}>{BRL(totalGanho)}</b></span>
+          {isAgency && (
+            <button onClick={() => setShowClients(true)} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 10, color: '#fff', cursor: 'pointer', fontSize: 13, padding: '9px 16px', fontFamily: 'inherit' }}>Clientes</button>
+          )}
           <button onClick={() => setShowAdd(true)} style={{ ...btnStyle, padding: '9px 16px', width: 'auto' }}>+ Lead</button>
           <button onClick={() => supabase.auth.signOut()} style={{ background: 'none', border: 'none', color: '#86868b', cursor: 'pointer', fontSize: 13 }}>Sair</button>
         </div>
@@ -219,7 +271,137 @@ function Board({ session }: { session: Session }) {
           }}
         />
       )}
+
+      {showClients && (
+        <ClientsManager
+          workspaces={workspaces}
+          onClose={() => setShowClients(false)}
+          onChanged={loadWorkspaces}
+        />
+      )}
     </Shell>
+  )
+}
+
+// ---------------------------------------------------------------- Clientes (agência)
+function ClientsManager({ workspaces, onClose, onChanged }: { workspaces: Workspace[]; onClose: () => void; onChanged: () => void }) {
+  const clients = workspaces.filter(w => !w.is_agency)
+  const [selected, setSelected] = useState<Workspace | null>(clients[0] ?? null)
+  const [newName, setNewName] = useState('')
+  const [err, setErr] = useState('')
+
+  const addClient = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErr('')
+    if (!newName.trim()) return
+    try {
+      const ws = await createClient(newName.trim())
+      setNewName('')
+      await onChanged()
+      setSelected(ws)
+    } catch (e: any) { setErr(e.message) }
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 50 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 720, maxHeight: '85vh', overflow: 'auto', background: '#111', borderRadius: 16, padding: 28, border: '0.5px solid rgba(255,210,160,0.15)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700 }}>Clientes</h2>
+          <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#86868b', cursor: 'pointer', fontSize: 20 }}>×</button>
+        </div>
+
+        <form onSubmit={addClient} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nome do novo cliente" style={{ ...inputStyle, flex: 1 }} />
+          <button type="submit" style={{ ...btnStyle, width: 'auto', padding: '12px 20px' }}>+ Cliente</button>
+        </form>
+        {err && <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 12 }}>{err}</p>}
+
+        <div style={{ display: 'flex', gap: 16 }}>
+          {/* lista de clientes */}
+          <div style={{ width: 200, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {clients.length === 0 && <p style={{ fontSize: 13, color: '#666' }}>Nenhum cliente ainda.</p>}
+            {clients.map(c => (
+              <button key={c.id} onClick={() => setSelected(c)} style={{ textAlign: 'left', background: selected?.id === c.id ? 'rgba(196,122,74,0.18)' : 'rgba(255,255,255,0.04)', border: 'none', borderRadius: 8, padding: '10px 12px', color: '#fff', cursor: 'pointer', fontSize: 14, fontFamily: 'inherit' }}>{c.name}</button>
+            ))}
+          </div>
+          {/* membros do cliente selecionado */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {selected ? <MembersPanel workspace={selected} /> : <p style={{ fontSize: 13, color: '#666' }}>Selecione um cliente.</p>}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------- Membros + convites
+function MembersPanel({ workspace }: { workspace: Workspace }) {
+  const [members, setMembers] = useState<Member[]>([])
+  const [invites, setInvites] = useState<Invitation[]>([])
+  const [email, setEmail] = useState('')
+  const [role, setRole] = useState<MemberRole>('member')
+  const [err, setErr] = useState('')
+  const [msg, setMsg] = useState('')
+
+  const load = useCallback(() => {
+    setErr('')
+    Promise.all([listMembers(workspace.id), listInvitations(workspace.id)])
+      .then(([m, i]) => { setMembers(m); setInvites(i) })
+      .catch(e => setErr(e.message))
+  }, [workspace.id])
+
+  useEffect(() => { load() }, [load])
+
+  const invite = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErr('')
+    setMsg('')
+    if (!email.trim()) return
+    try {
+      await inviteMember(workspace.id, email, role)
+      setEmail('')
+      setMsg('Convite criado. A pessoa entra pelo link mágico no /crm e é ligada automaticamente.')
+      load()
+    } catch (e: any) { setErr(e.message) }
+  }
+
+  return (
+    <div>
+      <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>{workspace.name}</h3>
+
+      <form onSubmit={invite} style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+        <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="e-mail da pessoa" style={{ ...inputStyle, flex: '1 1 160px' }} />
+        <select value={role} onChange={e => setRole(e.target.value as MemberRole)} style={{ ...inputStyle, width: 'auto' }}>
+          {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <button type="submit" style={{ ...btnStyle, width: 'auto', padding: '12px 18px' }}>Convidar</button>
+      </form>
+      {err && <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 8 }}>{err}</p>}
+      {msg && <p style={{ color: '#22c55e', fontSize: 12, marginBottom: 8 }}>{msg}</p>}
+
+      <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#666', margin: '10px 0 6px' }}>Membros</p>
+      {members.length === 0 && <p style={{ fontSize: 13, color: '#666' }}>Ninguém ainda.</p>}
+      {members.map(m => (
+        <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+          <span style={{ fontSize: 14 }}>{m.email}</span>
+          <span style={{ fontSize: 11, color: '#c47a4a' }}>{ROLE_LABELS[m.role]}</span>
+          <button onClick={async () => { await removeMember(workspace.id, m.user_id); load() }} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 13 }}>remover</button>
+        </div>
+      ))}
+
+      {invites.length > 0 && (
+        <>
+          <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#666', margin: '14px 0 6px' }}>Convites pendentes</p>
+          {invites.map(i => (
+            <div key={i.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: 14, color: '#aaa' }}>{i.email}</span>
+              <span style={{ fontSize: 11, color: '#c47a4a' }}>{ROLE_LABELS[i.role]}</span>
+              <button onClick={async () => { await cancelInvitation(i.id); load() }} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 13 }}>cancelar</button>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
   )
 }
 

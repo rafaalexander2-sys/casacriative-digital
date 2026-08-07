@@ -36,6 +36,29 @@ export interface Workspace {
   created_at: string
 }
 
+export type MemberRole = 'owner' | 'admin' | 'member'
+
+export interface Member {
+  user_id: string
+  email: string
+  role: MemberRole
+}
+
+export interface Invitation {
+  id: string
+  workspace_id: string
+  email: string
+  role: MemberRole
+  accepted_at?: string | null
+  created_at: string
+}
+
+export const ROLE_LABELS: Record<MemberRole, string> = {
+  owner: 'Dono',
+  admin: 'Admin',
+  member: 'Membro',
+}
+
 // Ordem das colunas do Kanban
 export const PIPELINE: LeadStatus[] = ['novo', 'qualificado', 'proposta', 'ganho', 'perdido']
 

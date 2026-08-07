@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Lead, LeadStatus, Workspace } from './crm-types'
+import type { Lead, LeadStatus, Workspace, Member, Invitation, MemberRole } from './crm-types'
 
 // ---- Workspaces do utilizador logado ----
 export async function getMyWorkspaces(): Promise<Workspace[]> {
@@ -10,6 +10,80 @@ export async function getMyWorkspaces(): Promise<Workspace[]> {
     .order('name')
   if (error) throw error
   return data ?? []
+}
+
+// ---- Convites: reclamar os meus ao logar (liga user aos clientes) ----
+export async function acceptMyInvitations(): Promise<void> {
+  const { error } = await supabase.rpc('accept_my_invitations')
+  if (error) throw error
+}
+
+// ---- Sou membro da agência? ----
+export async function isAgencyMember(): Promise<boolean> {
+  const { data, error } = await supabase.rpc('is_agency_member')
+  if (error) throw error
+  return !!data
+}
+
+// ---- Criar cliente (novo workspace) ----
+export async function createClient(name: string): Promise<Workspace> {
+  const { data, error } = await supabase
+    .from('workspaces')
+    .insert({ name, is_agency: false })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ---- Membros de um cliente (com email, via RPC) ----
+export async function listMembers(workspaceId: string): Promise<Member[]> {
+  const { data, error } = await supabase.rpc('list_members', { ws: workspaceId })
+  if (error) throw error
+  return data ?? []
+}
+
+// ---- Convites pendentes de um cliente ----
+export async function listInvitations(workspaceId: string): Promise<Invitation[]> {
+  const { data, error } = await supabase
+    .from('invitations')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .is('accepted_at', null)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+// ---- Convidar pessoa para um cliente ----
+export async function inviteMember(workspaceId: string, email: string, role: MemberRole): Promise<Invitation> {
+  const { data: userData } = await supabase.auth.getUser()
+  const { data, error } = await supabase
+    .from('invitations')
+    .upsert(
+      { workspace_id: workspaceId, email: email.trim().toLowerCase(), role, created_by: userData.user?.id ?? null, accepted_at: null },
+      { onConflict: 'workspace_id,email' },
+    )
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ---- Cancelar convite ----
+export async function cancelInvitation(id: string): Promise<void> {
+  const { error } = await supabase.from('invitations').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ---- Remover membro de um cliente ----
+export async function removeMember(workspaceId: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('memberships')
+    .delete()
+    .eq('workspace_id', workspaceId)
+    .eq('user_id', userId)
+  if (error) throw error
 }
 
 // ---- Leads de um workspace ----
