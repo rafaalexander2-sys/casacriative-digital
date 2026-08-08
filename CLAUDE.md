@@ -1,5 +1,23 @@
 # Casa Criative — Instruções para Claude
 
+## Fluxo de trabalho OBRIGATÓRIO (Issues + Pull Requests)
+
+Qualquer agente, de qualquer modelo, DEVE seguir este padrão **antes de implementar** mudanças:
+
+1. **Toda tarefa vira uma Issue no GitHub**, categorizada com uma etiqueta:
+   - `Correção` — corrige comportamento quebrado
+   - `Melhoria` — aprimora algo existente
+   - `Nova função` — funcionalidade nova
+2. **Entregas são feitas via Pull Request** (nunca commitar direto na `main` para features/correções). Crie uma branch por tarefa (ex.: `fix/...`, `feat/...`, `docs/...`).
+3. **Todo Pull Request DEVE conter, na descrição:**
+   - **Issue relacionada** (ex.: `Closes #12`);
+   - **O que mudou** — resumo objetivo das alterações;
+   - **Como foi validado** — build, testes, verificações manuais;
+   - **Riscos, limitações e próximos passos**.
+4. Só fazer merge após o build da Cloudflare (preview/produção) passar.
+
+> O deploy de produção é disparado pelo merge na `main` (ver seção de Deploy).
+
 ## Deploy: Cloudflare Pages (NÃO é Hostinger)
 
 O site é servido pelo **Cloudflare Pages** (projeto `casacriative-digital2`,
