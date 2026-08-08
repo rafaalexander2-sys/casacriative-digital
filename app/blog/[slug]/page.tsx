@@ -158,7 +158,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {post.cover ? (
               <>
                 {post.cover.startsWith('http')
-                  ? <img src={post.cover} alt={post.titulo} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ? <img src={post.cover} alt={post.titulo} loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <Image src={post.cover} alt={post.titulo} fill style={{ objectFit: 'cover' }} priority />
                 }
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.5) 100%)' }} />

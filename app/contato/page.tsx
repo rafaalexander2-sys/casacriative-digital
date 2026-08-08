@@ -145,7 +145,7 @@ export default function Contato() {
           <div className="glass-card-contact">
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: BG, borderRadius: '16px 16px 0 0' }} />
             {status === 'sent' ? (
-              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '40px 10px' }}>
+              <div className="fade-in" style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '40px 10px' }}>
                 <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f5f5f7', marginBottom: 10 }}>Mensagem enviada! ✅</h2>
                 <p style={{ fontSize: 14, fontWeight: 300, color: '#86868b' }}>Recebemos seu contato e retornamos em até 24h úteis.</p>
               </div>

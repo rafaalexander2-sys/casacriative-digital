@@ -1,7 +1,7 @@
-:HL["/_next/static/chunks/069608udqzi1f.css","style"]
+:HL["/_next/static/chunks/0x8t6khgj~bgy.css","style"]
 :HL["https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap","style"]
 :HL["https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/ae4e52191063317.65c4dd441efba.png","image"]
 :HL["https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/0ef78a191970475.65d48cba9bd53.png","image"]
 :HL["https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/a4c389163229265.63e27fada59e4.png","image"]
 :HL["/portfolio-revista.png","image"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"design-grafico","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"ZL_gt71R_Wg6hT_wk21FG"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"design-grafico","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"dmo1v_heoxhYfMERrE_EW"}
