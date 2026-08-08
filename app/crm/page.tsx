@@ -108,6 +108,8 @@ function MotionStyles() {
       .cc-btn:disabled { opacity: .65; cursor: default }
       .cc-nav { transition: background .16s ease, color .16s ease }
       .cc-nav:hover { background: rgba(196,122,74,.08) }
+      .cc-open { opacity: 0; transition: opacity .15s ease }
+      .cc-card:hover .cc-open { opacity: 1 }
       .cc-skel { background: linear-gradient(90deg,#e9ebee 25%,#f4f6f8 37%,#e9ebee 63%); background-size: 900px 100%; animation: cc-shimmer 1.25s infinite linear; border-radius: 8px }
       .cc-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.45); border-top-color: #fff; border-radius: 50%; animation: cc-spin .7s linear infinite; vertical-align: -2px }
       .cc-spin-dark { border-color: rgba(31,36,48,.25); border-top-color: ${C.brand} }
@@ -308,11 +310,6 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
     setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, status: stage.key } : l))
     try { await updateLeadStatus(lead, stage) } catch (e: any) { onErr(e.message) }
   }
-  const onDelete = async (lead: Lead) => {
-    if (!confirm(`Apagar o lead "${lead.name}"? Esta ação não pode ser desfeita.`)) return
-    setLeads(ls => ls.filter(l => l.id !== lead.id))
-    try { await deleteLead(lead.id) } catch (e: any) { onErr(e.message) }
-  }
 
   const wonKeys = stages.filter(s => s.kind === 'won').map(s => s.key)
   const closedKeys = stages.filter(s => s.kind !== 'open').map(s => s.key)
@@ -347,18 +344,20 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
                 <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
                   {leadsLoading && [0, 1].map(i => <div key={i} className="cc-skel" style={{ height: 64, background: '#e3e6ea' }} />)}
                   {!leadsLoading && col.map(lead => (
-                    <div key={lead.id} draggable onDragStart={() => setDragId(lead.id)} onClick={() => setSelected(lead)} className="cc-card cc-fade-up"
-                      style={{ background: C.panel, borderRadius: 8, padding: 12, cursor: 'grab', border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                    <div key={lead.id} draggable onDragStart={() => setDragId(lead.id)} onClick={() => setSelected(lead)} className="cc-card cc-fade-up" title="Abrir para editar / adicionar notas"
+                      style={{ background: C.panel, borderRadius: 8, padding: 12, cursor: 'pointer', border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'baseline' }}>
                         <b style={{ fontSize: 14 }}>{lead.name}</b>
-                        <button onClick={e => { e.stopPropagation(); onDelete(lead) }} title="Apagar" style={{ background: 'none', border: 'none', color: '#cbd0d6', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
+                        <span className="cc-open" style={{ fontSize: 11, color: C.brand, fontWeight: 600, whiteSpace: 'nowrap' }}>Abrir ›</span>
                       </div>
                       {lead.company && <p style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{lead.company}</p>}
                       <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                         <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: 'rgba(196,122,74,0.12)', color: C.brandDark }}>{SOURCE_LABELS[lead.source]}</span>
+                        {lead.deal_type && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: '#eef2ff', color: '#4f46e5' }}>{lead.deal_type === 'mrr' ? 'MRR' : 'Único'}</span>}
                         {lead.value != null && <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 700 }}>{BRL(lead.value)}</span>}
                       </div>
-                      {(lead.phone || lead.email) && <p style={{ fontSize: 11, color: '#9aa1ab', marginTop: 6 }}>{lead.phone || lead.email}</p>}
+                      {lead.service && <p style={{ fontSize: 11, color: C.muted, marginTop: 6 }}>{lead.service}</p>}
+                      {(lead.phone || lead.email) && <p style={{ fontSize: 11, color: '#9aa1ab', marginTop: 4 }}>{lead.phone || lead.email}</p>}
                     </div>
                   ))}
                   {!leadsLoading && col.length === 0 && <p style={{ fontSize: 12, color: '#b6bcc4', textAlign: 'center', padding: 10 }}>vazio</p>}
