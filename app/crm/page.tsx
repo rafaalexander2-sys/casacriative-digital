@@ -620,9 +620,25 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
 // ================================================================ CONFIGURAÇÕES + BACKUP
 function SettingsView({ session, ws, leads }: { session: Session; ws?: Workspace; leads: Lead[] }) {
   const exportCsv = () => {
-    const cols = ['name', 'company', 'email', 'phone', 'source', 'status', 'value', 'created_at']
-    const rows = leads.map(l => cols.map(c => JSON.stringify((l as any)[c] ?? '')).join(','))
-    download(`leads-${ws?.name ?? 'export'}.csv`, [cols.join(','), ...rows].join('\n'), 'text/csv')
+    // Cabeçalhos amigáveis + ponto-e-vírgula (Excel pt-BR) + BOM UTF-8 (acentos)
+    const cols: [string, string][] = [
+      ['name', 'Nome'], ['company', 'Empresa'], ['email', 'E-mail'], ['phone', 'Telefone'],
+      ['service', 'Serviço'], ['deal_type', 'Cobrança'], ['status', 'Etapa'], ['value', 'Valor'],
+      ['source', 'Origem'], ['notes', 'Anotações'], ['created_at', 'Criado em'],
+    ]
+    const cell = (v: any) => {
+      const s = v == null ? '' : String(v)
+      return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
+    }
+    const BOM = String.fromCharCode(0xfeff)
+    const header = cols.map(c => c[1]).join(';')
+    const rows = leads.map(l => cols.map(([k]) => {
+      let v = (l as any)[k]
+      if (k === 'deal_type') v = v === 'mrr' ? 'Recorrente (MRR)' : v === 'one_time' ? 'Serviço único' : ''
+      if (k === 'created_at' && v) v = new Date(v).toLocaleDateString('pt-BR')
+      return cell(v)
+    }).join(';'))
+    download(`leads-${ws?.name ?? 'export'}.csv`, BOM + [header, ...rows].join('\r\n'), 'text/csv;charset=utf-8')
   }
   const exportJson = () => download(`backup-${ws?.name ?? 'export'}.json`, JSON.stringify(leads, null, 2), 'application/json')
 
