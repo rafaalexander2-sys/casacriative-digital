@@ -223,9 +223,10 @@ function PipelineView({ wsId, leads, setLeads, stages, canManage, onStagesChange
     setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, status: stage.key } : l))
     try { await updateLeadStatus(lead, stage) } catch (e: any) { onErr(e.message) }
   }
-  const onDelete = async (id: string) => {
-    setLeads(ls => ls.filter(l => l.id !== id))
-    try { await deleteLead(id) } catch (e: any) { onErr(e.message) }
+  const onDelete = async (lead: Lead) => {
+    if (!confirm(`Apagar o lead "${lead.name}"? Esta ação não pode ser desfeita.`)) return
+    setLeads(ls => ls.filter(l => l.id !== lead.id))
+    try { await deleteLead(lead.id) } catch (e: any) { onErr(e.message) }
   }
 
   const wonKeys = stages.filter(s => s.kind === 'won').map(s => s.key)
@@ -264,7 +265,7 @@ function PipelineView({ wsId, leads, setLeads, stages, canManage, onStagesChange
                       style={{ background: C.panel, borderRadius: 8, padding: 12, cursor: 'grab', border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                         <b style={{ fontSize: 14 }}>{lead.name}</b>
-                        <button onClick={() => onDelete(lead.id)} title="Apagar" style={{ background: 'none', border: 'none', color: '#cbd0d6', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
+                        <button onClick={() => onDelete(lead)} title="Apagar" style={{ background: 'none', border: 'none', color: '#cbd0d6', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
                       </div>
                       {lead.company && <p style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{lead.company}</p>}
                       <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>

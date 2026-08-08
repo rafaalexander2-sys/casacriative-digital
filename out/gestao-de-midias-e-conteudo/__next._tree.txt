@@ -4,4 +4,4 @@
 :HL["https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/b181c4163232439.681e6866de54f.jpg","image"]
 :HL["https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/fea4c4235860779.68dfc1f892a5a.png","image"]
 :HL["https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/0ef78a191970475.65d48cba9bd53.png","image"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"gestao-de-midias-e-conteudo","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"5Pibun_4LZFacMabr5tNe"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"gestao-de-midias-e-conteudo","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"ZL_gt71R_Wg6hT_wk21FG"}
