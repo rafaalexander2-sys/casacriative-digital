@@ -24,11 +24,15 @@ import {
   updateStage,
   deleteStage,
   reorderStages,
+  updateLead,
+  getLeadEvents,
+  addNote,
 } from '@/lib/crm-api'
 import {
   SOURCE_LABELS,
   ROLE_LABELS,
   KIND_LABELS,
+  DEAL_TYPE_LABELS,
   type Lead,
   type LeadSource,
   type Workspace,
@@ -37,6 +41,8 @@ import {
   type MemberRole,
   type PipelineStage,
   type StageKind,
+  type DealType,
+  type LeadEvent,
 } from '@/lib/crm-types'
 
 // ---- design tokens (estilo Pipedrive, claro) ----
@@ -294,6 +300,7 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
   const [showAdd, setShowAdd] = useState(false)
   const [showFunnel, setShowFunnel] = useState(false)
   const [dragId, setDragId] = useState<string | null>(null)
+  const [selected, setSelected] = useState<Lead | null>(null)
 
   const onDrop = async (stage: PipelineStage) => {
     const lead = leads.find(l => l.id === dragId); setDragId(null)
@@ -340,11 +347,11 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
                 <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
                   {leadsLoading && [0, 1].map(i => <div key={i} className="cc-skel" style={{ height: 64, background: '#e3e6ea' }} />)}
                   {!leadsLoading && col.map(lead => (
-                    <div key={lead.id} draggable onDragStart={() => setDragId(lead.id)} className="cc-card cc-fade-up"
+                    <div key={lead.id} draggable onDragStart={() => setDragId(lead.id)} onClick={() => setSelected(lead)} className="cc-card cc-fade-up"
                       style={{ background: C.panel, borderRadius: 8, padding: 12, cursor: 'grab', border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                         <b style={{ fontSize: 14 }}>{lead.name}</b>
-                        <button onClick={() => onDelete(lead)} title="Apagar" style={{ background: 'none', border: 'none', color: '#cbd0d6', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
+                        <button onClick={e => { e.stopPropagation(); onDelete(lead) }} title="Apagar" style={{ background: 'none', border: 'none', color: '#cbd0d6', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
                       </div>
                       {lead.company && <p style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{lead.company}</p>}
                       <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -368,7 +375,114 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
       }} />}
 
       {showFunnel && <FunnelEditor wsId={wsId} stages={stages} onClose={() => setShowFunnel(false)} onChanged={onStagesChanged} />}
+
+      {selected && <LeadDetail lead={selected} stages={stages}
+        onClose={() => setSelected(null)}
+        onSaved={u => { setLeads(ls => ls.map(l => l.id === u.id ? u : l)); setSelected(u) }}
+        onDeleted={id => { setLeads(ls => ls.filter(l => l.id !== id)); setSelected(null) }} />}
     </>
+  )
+}
+
+// ================================================================ LEAD DETAIL + HISTÓRICO
+function LeadDetail({ lead, stages, onClose, onSaved, onDeleted }: {
+  lead: Lead; stages: PipelineStage[]
+  onClose: () => void; onSaved: (l: Lead) => void; onDeleted: (id: string) => void
+}) {
+  const [f, setF] = useState({
+    name: lead.name, company: lead.company ?? '', email: lead.email ?? '', phone: lead.phone ?? '',
+    value: lead.value != null ? String(lead.value) : '', service: lead.service ?? '',
+    deal_type: (lead.deal_type ?? '') as '' | DealType, source: lead.source, notes: lead.notes ?? '',
+  })
+  const [events, setEvents] = useState<LeadEvent[]>([])
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+
+  const loadEvents = useCallback(() => { getLeadEvents(lead.id).then(setEvents).catch(() => {}) }, [lead.id])
+  useEffect(() => { loadEvents() }, [loadEvents])
+
+  const stageLabel = stages.find(s => s.key === lead.status)?.label ?? lead.status
+
+  const save = async () => {
+    setBusy(true); setErr('')
+    try {
+      const u = await updateLead(lead.id, {
+        name: f.name, company: f.company || null, email: f.email || null, phone: f.phone || null,
+        value: f.value ? Number(f.value) : null, service: f.service || null,
+        deal_type: (f.deal_type || null) as DealType | null, source: f.source, notes: f.notes || null,
+      })
+      onSaved(u)
+    } catch (e: any) { setErr(e.message) }
+    setBusy(false)
+  }
+
+  const submitNote = async () => {
+    if (!note.trim()) return
+    try { await addNote(lead, note.trim()); setNote(''); loadEvents() } catch (e: any) { setErr(e.message) }
+  }
+
+  const fmtEvent = (ev: LeadEvent) => {
+    if (ev.type === 'note') return ev.message
+    if (ev.type === 'status_change') {
+      const to = stages.find(s => s.key === ev.to_status)?.label ?? ev.to_status
+      const from = stages.find(s => s.key === ev.from_status)?.label ?? ev.from_status
+      return `Etapa: ${from ?? '—'} → ${to}`
+    }
+    if (ev.type === 'created') return 'Lead criado'
+    return ev.type
+  }
+  const when = (iso: string) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+
+  return (
+    <div onClick={onClose} className="cc-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(15,20,30,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 50 }}>
+      <div onClick={e => e.stopPropagation()} className="cc-modal" style={{ width: '100%', maxWidth: 560, maxHeight: '88vh', overflow: 'auto', background: C.panel, borderRadius: 16, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+          <span style={{ fontSize: 11, color: C.muted }}>Etapa atual: <b style={{ color: C.text }}>{stageLabel}</b></span>
+          <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 20 }}>×</button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+          <input value={f.name} onChange={e => setF({ ...f, name: e.target.value })} placeholder="Nome" style={{ ...input, gridColumn: '1 / -1' }} />
+          <input value={f.company} onChange={e => setF({ ...f, company: e.target.value })} placeholder="Empresa" style={input} />
+          <input value={f.service} onChange={e => setF({ ...f, service: e.target.value })} placeholder="Serviço" style={input} />
+          <input value={f.email} onChange={e => setF({ ...f, email: e.target.value })} placeholder="E-mail" style={input} />
+          <input value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} placeholder="Telefone" style={input} />
+          <input value={f.value} onChange={e => setF({ ...f, value: e.target.value })} type="number" placeholder="Valor (R$)" style={input} />
+          <select value={f.deal_type} onChange={e => setF({ ...f, deal_type: e.target.value as DealType | '' })} style={input}>
+            <option value="">Cobrança…</option>
+            {Object.entries(DEAL_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+          <select value={f.source} onChange={e => setF({ ...f, source: e.target.value as LeadSource })} style={{ ...input, gridColumn: '1 / -1' }}>
+            {Object.entries(SOURCE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </div>
+        <textarea value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} placeholder="Anotações (resumo)" rows={2} style={{ ...input, resize: 'vertical', marginBottom: 8 }} />
+        {err && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+          <button onClick={() => { if (confirm(`Apagar o lead "${lead.name}"?`)) { deleteLead(lead.id).then(() => onDeleted(lead.id)) } }} style={{ ...btnGhost, width: 'auto', padding: '10px 14px', color: '#dc2626' }}>Apagar</button>
+          <button onClick={save} disabled={busy} className="cc-btn" style={{ ...btn, marginLeft: 'auto', width: 'auto', padding: '10px 22px' }}>{busy ? <Spinner /> : 'Salvar'}</button>
+        </div>
+
+        <p style={label}>Histórico</p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <input value={note} onChange={e => setNote(e.target.value)} placeholder="Adicionar nota…" style={{ ...input, flex: 1 }} onKeyDown={e => e.key === 'Enter' && submitNote()} />
+          <button onClick={submitNote} className="cc-btn" style={{ ...btn, width: 'auto', padding: '10px 16px' }}>Nota</button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {events.length === 0 && <p style={{ fontSize: 13, color: C.muted }}>Sem eventos ainda.</p>}
+          {events.map(ev => (
+            <div key={ev.id} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: `1px solid ${C.border}` }}>
+              <span style={{ width: 8, height: 8, borderRadius: 4, background: ev.type === 'note' ? C.brand : ev.type === 'status_change' ? '#3b82f6' : '#cbd5e1', marginTop: 5, flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 13, color: C.text }}>{fmtEvent(ev)}</p>
+                <p style={{ fontSize: 11, color: C.muted }}>{when(ev.created_at)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -701,14 +815,14 @@ function IngestBox({ workspace }: { workspace: Workspace }) {
 
 // ================================================================ ADD LEAD
 function AddLead({ firstStage, onClose, onCreate }: { firstStage?: string; onClose: () => void; onCreate: (i: Partial<Lead> & { name: string }) => Promise<void> }) {
-  const [f, setF] = useState({ name: '', email: '', phone: '', company: '', source: 'manual' as LeadSource, value: '' })
+  const [f, setF] = useState({ name: '', email: '', phone: '', company: '', source: 'manual' as LeadSource, value: '', service: '', deal_type: '' as '' | DealType, notes: '' })
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true); setErr('')
     try {
-      await onCreate({ name: f.name, email: f.email || null, phone: f.phone || null, company: f.company || null, source: f.source, value: f.value ? Number(f.value) : null, ...(firstStage ? { status: firstStage } : {}) })
+      await onCreate({ name: f.name, email: f.email || null, phone: f.phone || null, company: f.company || null, source: f.source, value: f.value ? Number(f.value) : null, service: f.service || null, deal_type: f.deal_type || null, notes: f.notes || null, ...(firstStage ? { status: firstStage } : {}) })
     } catch (e: any) { setErr(e.message); setBusy(false) }
   }
 
@@ -720,7 +834,15 @@ function AddLead({ firstStage, onClose, onCreate }: { firstStage?: string; onClo
         <input placeholder="Empresa" value={f.company} onChange={e => setF({ ...f, company: e.target.value })} style={input} />
         <input placeholder="E-mail" type="email" value={f.email} onChange={e => setF({ ...f, email: e.target.value })} style={input} />
         <input placeholder="Telefone / WhatsApp" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} style={input} />
-        <input placeholder="Valor estimado (R$)" type="number" value={f.value} onChange={e => setF({ ...f, value: e.target.value })} style={input} />
+        <input placeholder="Serviço (ex.: Tráfego Pago)" value={f.service} onChange={e => setF({ ...f, service: e.target.value })} style={input} />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input placeholder="Valor (R$)" type="number" value={f.value} onChange={e => setF({ ...f, value: e.target.value })} style={{ ...input, flex: 1 }} />
+          <select value={f.deal_type} onChange={e => setF({ ...f, deal_type: e.target.value as DealType | '' })} style={{ ...input, flex: 1 }}>
+            <option value="">Cobrança…</option>
+            {Object.entries(DEAL_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </div>
+        <textarea placeholder="Anotações" value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} rows={2} style={{ ...input, resize: 'vertical' }} />
         <select value={f.source} onChange={e => setF({ ...f, source: e.target.value as LeadSource })} style={input}>
           {Object.entries(SOURCE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
