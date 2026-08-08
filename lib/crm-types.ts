@@ -12,7 +12,7 @@ export interface Lead {
   phone?: string | null
   company?: string | null
   source: LeadSource
-  status: LeadStatus
+  status: string
   value?: number | null
   notes?: string | null
   utm_source?: string | null
@@ -35,6 +35,24 @@ export interface Workspace {
   is_agency: boolean
   ingest_token?: string | null
   created_at: string
+}
+
+export type StageKind = 'open' | 'won' | 'lost'
+
+export interface PipelineStage {
+  id: string
+  workspace_id: string
+  key: string
+  label: string
+  position: number
+  color: string
+  kind: StageKind
+}
+
+export const KIND_LABELS: Record<StageKind, string> = {
+  open: 'Em aberto',
+  won: 'Ganho',
+  lost: 'Perdido',
 }
 
 export type MemberRole = 'owner' | 'admin' | 'member'

@@ -18,20 +18,25 @@ import {
   cancelInvitation,
   removeMember,
   addPerson,
+  getStages,
+  canManageFunnel,
+  createStage,
+  updateStage,
+  deleteStage,
+  reorderStages,
 } from '@/lib/crm-api'
 import {
-  PIPELINE,
-  STATUS_LABELS,
-  STATUS_COLORS,
   SOURCE_LABELS,
   ROLE_LABELS,
+  KIND_LABELS,
   type Lead,
-  type LeadStatus,
   type LeadSource,
   type Workspace,
   type Member,
   type Invitation,
   type MemberRole,
+  type PipelineStage,
+  type StageKind,
 } from '@/lib/crm-types'
 
 // ---- design tokens (estilo Pipedrive, claro) ----
@@ -120,6 +125,8 @@ function App({ session }: { session: Session }) {
   const [isAgency, setIsAgency] = useState(false)
   const [view, setView] = useState<View>('pipeline')
   const [leads, setLeads] = useState<Lead[]>([])
+  const [stages, setStages] = useState<PipelineStage[]>([])
+  const [canManage, setCanManage] = useState(false)
   const [err, setErr] = useState('')
 
   const loadWorkspaces = useCallback(() => {
@@ -140,7 +147,12 @@ function App({ session }: { session: Session }) {
     if (!id) return
     getLeads(id).then(setLeads).catch(e => setErr(e.message))
   }, [])
-  useEffect(() => { refreshLeads(wsId) }, [wsId, refreshLeads])
+  const loadStages = useCallback((id: string) => {
+    if (!id) return
+    getStages(id).then(setStages).catch(e => setErr(e.message))
+    canManageFunnel(id).then(setCanManage).catch(() => setCanManage(false))
+  }, [])
+  useEffect(() => { refreshLeads(wsId); loadStages(wsId) }, [wsId, refreshLeads, loadStages])
 
   const ws = workspaces.find(w => w.id === wsId)
   const nav: { id: View; label: string; icon: string; agency?: boolean }[] = [
@@ -187,8 +199,8 @@ function App({ session }: { session: Session }) {
       {/* MAIN */}
       <section style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         {err && <div style={{ background: '#fef2f2', color: '#dc2626', fontSize: 13, padding: '8px 20px', borderBottom: `1px solid ${C.border}` }}>{err}</div>}
-        {view === 'pipeline' && <PipelineView wsId={wsId} leads={leads} setLeads={setLeads} onErr={setErr} />}
-        {view === 'relatorios' && <ReportsView ws={ws} leads={leads} />}
+        {view === 'pipeline' && <PipelineView wsId={wsId} leads={leads} setLeads={setLeads} stages={stages} canManage={canManage} onStagesChanged={() => loadStages(wsId)} onErr={setErr} />}
+        {view === 'relatorios' && <ReportsView ws={ws} leads={leads} stages={stages} />}
         {view === 'clientes' && isAgency && <ClientsView workspaces={workspaces} onChanged={loadWorkspaces} />}
         {view === 'config' && <SettingsView session={session} ws={ws} leads={leads} />}
       </section>
@@ -197,23 +209,29 @@ function App({ session }: { session: Session }) {
 }
 
 // ================================================================ PIPELINE
-function PipelineView({ wsId, leads, setLeads, onErr }: { wsId: string; leads: Lead[]; setLeads: React.Dispatch<React.SetStateAction<Lead[]>>; onErr: (m: string) => void }) {
+function PipelineView({ wsId, leads, setLeads, stages, canManage, onStagesChanged, onErr }: {
+  wsId: string; leads: Lead[]; setLeads: React.Dispatch<React.SetStateAction<Lead[]>>
+  stages: PipelineStage[]; canManage: boolean; onStagesChanged: () => void; onErr: (m: string) => void
+}) {
   const [showAdd, setShowAdd] = useState(false)
+  const [showFunnel, setShowFunnel] = useState(false)
   const [dragId, setDragId] = useState<string | null>(null)
 
-  const onDrop = async (status: LeadStatus) => {
+  const onDrop = async (stage: PipelineStage) => {
     const lead = leads.find(l => l.id === dragId); setDragId(null)
-    if (!lead || lead.status === status) return
-    setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, status } : l))
-    try { await updateLeadStatus(lead, status) } catch (e: any) { onErr(e.message) }
+    if (!lead || lead.status === stage.key) return
+    setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, status: stage.key } : l))
+    try { await updateLeadStatus(lead, stage) } catch (e: any) { onErr(e.message) }
   }
   const onDelete = async (id: string) => {
     setLeads(ls => ls.filter(l => l.id !== id))
     try { await deleteLead(id) } catch (e: any) { onErr(e.message) }
   }
 
-  const ganho = leads.filter(l => l.status === 'ganho').reduce((s, l) => s + (l.value ?? 0), 0)
-  const emAberto = leads.filter(l => !['ganho', 'perdido'].includes(l.status)).length
+  const wonKeys = stages.filter(s => s.kind === 'won').map(s => s.key)
+  const closedKeys = stages.filter(s => s.kind !== 'open').map(s => s.key)
+  const ganho = leads.filter(l => wonKeys.includes(l.status)).reduce((s, l) => s + (l.value ?? 0), 0)
+  const emAberto = leads.filter(l => !closedKeys.includes(l.status)).length
 
   return (
     <>
@@ -221,21 +239,22 @@ function PipelineView({ wsId, leads, setLeads, onErr }: { wsId: string; leads: L
         <>
           <Stat label="Em aberto" value={String(emAberto)} />
           <Stat label="Ganho" value={BRL(ganho)} color="#16a34a" />
+          {canManage && <button onClick={() => setShowFunnel(true)} style={{ ...btnGhost, width: 'auto', padding: '9px 14px' }}>Editar funil</button>}
           <button onClick={() => setShowAdd(true)} style={{ ...btn, width: 'auto', padding: '9px 16px' }}>+ Lead</button>
         </>
       } />
 
       <div style={{ flex: 1, overflow: 'hidden', padding: 16 }}>
         <div style={{ display: 'flex', gap: 12, height: '100%', overflowX: 'auto', paddingBottom: 4 }}>
-          {PIPELINE.map(status => {
-            const col = leads.filter(l => l.status === status)
+          {stages.map(stage => {
+            const col = leads.filter(l => l.status === stage.key)
             const colVal = col.reduce((s, l) => s + (l.value ?? 0), 0)
             return (
-              <div key={status} onDragOver={e => e.preventDefault()} onDrop={() => onDrop(status)}
+              <div key={stage.id} onDragOver={e => e.preventDefault()} onDrop={() => onDrop(stage)}
                 style={{ width: 264, flexShrink: 0, background: C.col, borderRadius: 12, display: 'flex', flexDirection: 'column', maxHeight: '100%' }}>
-                <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: `2px solid ${STATUS_COLORS[status]}` }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 4, background: STATUS_COLORS[status] }} />
-                  <span style={{ fontSize: 13, fontWeight: 700 }}>{STATUS_LABELS[status]}</span>
+                <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: `2px solid ${stage.color}` }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 4, background: stage.color }} />
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>{stage.label}</span>
                   <span style={{ fontSize: 12, color: C.muted, marginLeft: 'auto' }}>{col.length}</span>
                 </div>
                 {colVal > 0 && <div style={{ fontSize: 11, color: C.muted, padding: '6px 14px 0' }}>{BRL(colVal)}</div>}
@@ -260,22 +279,94 @@ function PipelineView({ wsId, leads, setLeads, onErr }: { wsId: string; leads: L
               </div>
             )
           })}
+          {stages.length === 0 && <p style={{ fontSize: 13, color: C.muted, padding: 20 }}>Sem etapas. Rode o SQL schema-stages.sql.</p>}
         </div>
       </div>
 
-      {showAdd && <AddLead onClose={() => setShowAdd(false)} onCreate={async input => {
+      {showAdd && <AddLead firstStage={stages[0]?.key} onClose={() => setShowAdd(false)} onCreate={async input => {
         const lead = await createLead(wsId, input); setLeads(ls => [lead, ...ls]); setShowAdd(false)
       }} />}
+
+      {showFunnel && <FunnelEditor wsId={wsId} stages={stages} onClose={() => setShowFunnel(false)} onChanged={onStagesChanged} />}
     </>
   )
 }
 
+// ---- Editor do funil (etapas) ----
+function FunnelEditor({ wsId, stages, onClose, onChanged }: { wsId: string; stages: PipelineStage[]; onClose: () => void; onChanged: () => void }) {
+  const [list, setList] = useState<PipelineStage[]>(stages)
+  const [newLabel, setNewLabel] = useState('')
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const reload = () => getStages(wsId).then(l => { setList(l); onChanged() }).catch(e => setErr(e.message))
+
+  const add = async () => {
+    if (!newLabel.trim()) return
+    setBusy(true); setErr('')
+    try { await createStage(wsId, { label: newLabel.trim(), position: list.length + 1 }); setNewLabel(''); await reload() }
+    catch (e: any) { setErr(e.message) }
+    setBusy(false)
+  }
+  const patch = async (id: string, p: Partial<PipelineStage>) => {
+    setList(ls => ls.map(s => s.id === id ? { ...s, ...p } : s))
+    try { await updateStage(id, p as any) } catch (e: any) { setErr(e.message) }
+  }
+  const remove = async (id: string) => {
+    if (!confirm('Apagar esta etapa? Os leads nela ficam sem etapa.')) return
+    try { await deleteStage(id); await reload() } catch (e: any) { setErr(e.message) }
+  }
+  const move = async (i: number, dir: -1 | 1) => {
+    const j = i + dir
+    if (j < 0 || j >= list.length) return
+    const next = [...list]; [next[i], next[j]] = [next[j], next[i]]
+    setList(next)
+    try { await reorderStages(next); onChanged() } catch (e: any) { setErr(e.message) }
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 14 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Editar funil</h2>
+        <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 20 }}>×</button>
+      </div>
+      {err && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14, maxHeight: '50vh', overflowY: 'auto' }}>
+        {list.map((s, i) => (
+          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 6, border: `1px solid ${C.border}`, borderRadius: 8, padding: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <button onClick={() => move(i, -1)} disabled={i === 0} style={arrowBtn}>▲</button>
+              <button onClick={() => move(i, 1)} disabled={i === list.length - 1} style={arrowBtn}>▼</button>
+            </div>
+            <input type="color" value={s.color} onChange={e => patch(s.id, { color: e.target.value })} style={{ width: 30, height: 30, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }} />
+            <input value={s.label} onChange={e => setList(ls => ls.map(x => x.id === s.id ? { ...x, label: e.target.value } : x))} onBlur={e => patch(s.id, { label: e.target.value })} style={{ ...input, flex: 1 }} />
+            <select value={s.kind} onChange={e => patch(s.id, { kind: e.target.value as StageKind })} style={{ ...input, width: 'auto' }}>
+              {Object.entries(KIND_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <button onClick={() => remove(s.id)} style={{ background: 'none', border: 'none', color: '#cbd0d6', cursor: 'pointer', fontSize: 18 }}>×</button>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Nova etapa" style={{ ...input, flex: 1 }} onKeyDown={e => e.key === 'Enter' && add()} />
+        <button onClick={add} disabled={busy} style={{ ...btn, width: 'auto', padding: '10px 18px' }}>+ Etapa</button>
+      </div>
+      <p style={{ fontSize: 11, color: C.muted, marginTop: 10 }}>Dica: marque uma etapa como <b>Ganho</b> ou <b>Perdido</b> — é o que conta na conversão e no que volta pro Meta/Google.</p>
+    </Modal>
+  )
+}
+
 // ================================================================ RELATÓRIOS
-function ReportsView({ ws, leads }: { ws?: Workspace; leads: Lead[] }) {
+function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; stages: PipelineStage[] }) {
+  const wonKeys = stages.filter(s => s.kind === 'won').map(s => s.key)
+  const lostKeys = stages.filter(s => s.kind === 'lost').map(s => s.key)
+  const closedKeys = [...wonKeys, ...lostKeys]
   const total = leads.length
-  const won = leads.filter(l => l.status === 'ganho')
-  const lost = leads.filter(l => l.status === 'perdido')
-  const open = leads.filter(l => !['ganho', 'perdido'].includes(l.status))
+  const won = leads.filter(l => wonKeys.includes(l.status))
+  const lost = leads.filter(l => lostKeys.includes(l.status))
+  const open = leads.filter(l => !closedKeys.includes(l.status))
   const wonVal = won.reduce((s, l) => s + (l.value ?? 0), 0)
   const openVal = open.reduce((s, l) => s + (l.value ?? 0), 0)
   const conv = won.length + lost.length > 0 ? Math.round((won.length / (won.length + lost.length)) * 100) : 0
@@ -300,14 +391,14 @@ function ReportsView({ ws, leads }: { ws?: Workspace; leads: Lead[] }) {
 
         <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 12px' }}>Por etapa</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24, maxWidth: 560 }}>
-          {PIPELINE.map(s => {
-            const n = leads.filter(l => l.status === s).length
+          {stages.map(s => {
+            const n = leads.filter(l => l.status === s.key).length
             const pct = total ? (n / total) * 100 : 0
             return (
-              <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ width: 90, fontSize: 13, color: C.muted }}>{STATUS_LABELS[s]}</span>
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 100, fontSize: 13, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</span>
                 <div style={{ flex: 1, background: C.col, borderRadius: 6, height: 20, overflow: 'hidden' }}>
-                  <div style={{ width: `${pct}%`, height: '100%', background: STATUS_COLORS[s], transition: 'width .3s' }} />
+                  <div style={{ width: `${pct}%`, height: '100%', background: s.color, transition: 'width .3s' }} />
                 </div>
                 <span style={{ width: 28, textAlign: 'right', fontSize: 13, fontWeight: 600 }}>{n}</span>
               </div>
@@ -529,7 +620,7 @@ function IngestBox({ workspace }: { workspace: Workspace }) {
 }
 
 // ================================================================ ADD LEAD
-function AddLead({ onClose, onCreate }: { onClose: () => void; onCreate: (i: Partial<Lead> & { name: string }) => Promise<void> }) {
+function AddLead({ firstStage, onClose, onCreate }: { firstStage?: string; onClose: () => void; onCreate: (i: Partial<Lead> & { name: string }) => Promise<void> }) {
   const [f, setF] = useState({ name: '', email: '', phone: '', company: '', source: 'manual' as LeadSource, value: '' })
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
@@ -537,7 +628,7 @@ function AddLead({ onClose, onCreate }: { onClose: () => void; onCreate: (i: Par
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true); setErr('')
     try {
-      await onCreate({ name: f.name, email: f.email || null, phone: f.phone || null, company: f.company || null, source: f.source, value: f.value ? Number(f.value) : null })
+      await onCreate({ name: f.name, email: f.email || null, phone: f.phone || null, company: f.company || null, source: f.source, value: f.value ? Number(f.value) : null, ...(firstStage ? { status: firstStage } : {}) })
     } catch (e: any) { setErr(e.message); setBusy(false) }
   }
 
@@ -618,3 +709,4 @@ const linkBtn: React.CSSProperties = { background: 'none', border: 'none', color
 const label: React.CSSProperties = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em', color: C.muted, margin: '16px 0 6px' }
 const rowLine: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, padding: '9px 0', borderBottom: `1px solid ${C.border}` }
 const smallLink: React.CSSProperties = { marginLeft: 'auto', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }
+const arrowBtn: React.CSSProperties = { background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 9, lineHeight: 1, padding: 1 }

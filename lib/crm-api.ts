@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Lead, LeadStatus, Workspace, Member, Invitation, MemberRole } from './crm-types'
+import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind } from './crm-types'
 
 // ---- Workspaces do utilizador logado ----
 export async function getMyWorkspaces(): Promise<Workspace[]> {
@@ -133,12 +133,14 @@ export async function createLead(
   return data
 }
 
-// ---- Mudar status (arrastar no Kanban) ----
-export async function updateLeadStatus(lead: Lead, to: LeadStatus): Promise<Lead> {
-  const patch: Partial<Lead> = { status: to }
-  if (to === 'ganho') patch.won_at = new Date().toISOString()
-  if (to === 'perdido') patch.lost_at = new Date().toISOString()
-
+// ---- Mudar etapa (arrastar no Kanban) ----
+export async function updateLeadStatus(lead: Lead, stage: PipelineStage): Promise<Lead> {
+  const now = new Date().toISOString()
+  const patch: Partial<Lead> = {
+    status: stage.key,
+    won_at: stage.kind === 'won' ? now : null,
+    lost_at: stage.kind === 'lost' ? now : null,
+  }
   const { data, error } = await supabase
     .from('leads')
     .update(patch)
@@ -150,9 +152,66 @@ export async function updateLeadStatus(lead: Lead, to: LeadStatus): Promise<Lead
   await logEvent(lead.workspace_id, lead.id, {
     type: 'status_change',
     from_status: lead.status,
-    to_status: to,
+    to_status: stage.key,
   })
   return data
+}
+
+// ---- Etapas do funil (por espaço) ----
+export async function getStages(workspaceId: string): Promise<PipelineStage[]> {
+  const { data, error } = await supabase
+    .from('pipeline_stages')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('position')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function canManageFunnel(workspaceId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('is_ws_admin', { ws: workspaceId })
+  if (error) return false
+  return !!data
+}
+
+function slugKey(label: string): string {
+  const base = label.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
+  return (base || 'etapa') + '_' + Math.random().toString(36).slice(2, 6)
+}
+
+export async function createStage(
+  workspaceId: string,
+  input: { label: string; color?: string; kind?: StageKind; position: number },
+): Promise<PipelineStage> {
+  const { data, error } = await supabase
+    .from('pipeline_stages')
+    .insert({
+      workspace_id: workspaceId,
+      key: slugKey(input.label),
+      label: input.label,
+      color: input.color ?? '#64748b',
+      kind: input.kind ?? 'open',
+      position: input.position,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateStage(id: string, patch: Partial<Pick<PipelineStage, 'label' | 'color' | 'kind' | 'position'>>): Promise<void> {
+  const { error } = await supabase.from('pipeline_stages').update(patch).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteStage(id: string): Promise<void> {
+  const { error } = await supabase.from('pipeline_stages').delete().eq('id', id)
+  if (error) throw error
+}
+
+// Persistir a ordem de todas as etapas
+export async function reorderStages(stages: PipelineStage[]): Promise<void> {
+  await Promise.all(stages.map((s, i) => supabase.from('pipeline_stages').update({ position: i + 1 }).eq('id', s.id)))
 }
 
 // ---- Editar campos gerais do lead ----
