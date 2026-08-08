@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { sendLead } from '@/lib/track'
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
 const BRONZE = { background: BG, WebkitBackgroundClip: 'text' as const, WebkitTextFillColor: 'transparent' as const, backgroundClip: 'text' as const }
@@ -20,6 +21,10 @@ export default function Contact() {
     e.preventDefault()
     if (!form.nome || !form.email || !form.servico) return
     setStatus('loading')
+    // Cria o lead no CRM (não bloqueia o envio de e-mail se falhar)
+    const notes = [form.servico && `Serviço: ${form.servico}`, form.nicho && `Nicho: ${form.nicho}`, form.instagram && `Instagram: ${form.instagram}`]
+      .filter(Boolean).join(' | ')
+    sendLead({ name: form.nome, email: form.email, phone: form.telefone, source: 'form', notes }).catch(() => {})
     try {
       const res = await fetch(WORKER_URL, {
         method: 'POST',
