@@ -702,7 +702,7 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<MemberRole>('member')
   const [err, setErr] = useState('')
-  const [link, setLink] = useState('')
+  const [creds, setCreds] = useState<{ email: string; password: string; existed: boolean } | null>(null)
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -711,17 +711,21 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
     Promise.all([listMembers(workspace.id), listInvitations(workspace.id)])
       .then(([m, i]) => { setMembers(m); setInvites(i) }).catch(e => setErr(e.message))
   }, [workspace.id])
-  useEffect(() => { load(); setLink('') }, [load])
+  useEffect(() => { load(); setCreds(null) }, [load])
 
   const invite = async (e: React.FormEvent) => {
-    e.preventDefault(); setErr(''); setLink(''); setCopied(false)
+    e.preventDefault(); setErr(''); setCreds(null); setCopied(false)
     if (!email.trim()) return
     setBusy(true)
-    try { const r = await addPerson(workspace.id, email, role); setEmail(''); setLink(r.link); load() }
+    try { const r = await addPerson(workspace.id, email, role); setEmail(''); setCreds({ email: r.email, password: r.password, existed: r.existed }); load() }
     catch (e: any) { setErr(e.message) }
     setBusy(false)
   }
-  const copy = async () => { try { await navigator.clipboard.writeText(link); setCopied(true) } catch {} }
+  const copyCreds = async () => {
+    if (!creds) return
+    const msg = `Acesso ao CRM Casa Criative:\n${window.location.origin.includes('crm.') ? window.location.origin : 'https://crm.casacriative.com.br'}\nE-mail: ${creds.email}\nSenha: ${creds.password}`
+    try { await navigator.clipboard.writeText(msg); setCopied(true) } catch {}
+  }
 
   return (
     <div>
@@ -734,13 +738,18 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
         <button type="submit" disabled={busy} className="cc-btn" style={{ ...btn, width: 'auto', padding: '10px 18px' }}>{busy ? <Spinner /> : 'Adicionar'}</button>
       </form>
       {err && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
-      {link && (
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: 12, marginBottom: 12 }}>
-          <p style={{ fontSize: 12, color: '#16a34a', marginBottom: 8 }}>✓ Conta criada. Envie este link à pessoa (ex.: WhatsApp):</p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input readOnly value={link} onClick={e => (e.target as HTMLInputElement).select()} style={{ ...input, flex: 1, fontSize: 12 }} />
-            <button type="button" onClick={copy} style={{ ...btn, width: 'auto', padding: '10px 16px' }}>{copied ? 'Copiado!' : 'Copiar'}</button>
+      {creds && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: 14, marginBottom: 12 }}>
+          <p style={{ fontSize: 12, color: '#16a34a', marginBottom: 10 }}>✓ {creds.existed ? 'Senha redefinida' : 'Conta criada'}. Envie estes dados à pessoa (ex.: WhatsApp). Ela entra em <b>crm.casacriative.com.br</b> com e-mail e senha.</p>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 12, color: C.muted, width: 52 }}>E-mail</span>
+            <input readOnly value={creds.email} onClick={e => (e.target as HTMLInputElement).select()} style={{ ...input, flex: 1, fontSize: 13 }} />
           </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 12, color: C.muted, width: 52 }}>Senha</span>
+            <input readOnly value={creds.password} onClick={e => (e.target as HTMLInputElement).select()} style={{ ...input, flex: 1, fontSize: 13, fontFamily: 'monospace' }} />
+          </div>
+          <button type="button" onClick={copyCreds} className="cc-btn" style={{ ...btn, width: '100%', padding: '10px 16px' }}>{copied ? 'Copiado!' : 'Copiar acesso (e-mail + senha + link)'}</button>
         </div>
       )}
 

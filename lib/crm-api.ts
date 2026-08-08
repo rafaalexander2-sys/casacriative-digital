@@ -75,7 +75,7 @@ export async function addPerson(
   workspaceId: string,
   email: string,
   role: MemberRole,
-): Promise<{ link: string; email: string; role: MemberRole }> {
+): Promise<{ email: string; password: string; role: MemberRole; existed: boolean }> {
   const { data, error } = await supabase.functions.invoke('invite-user', {
     body: { workspace_id: workspaceId, email, role },
   })
