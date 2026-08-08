@@ -134,7 +134,7 @@ export default function Contact() {
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: BG, borderRadius: '20px 20px 0 0' }} />
 
             {status === 'success' ? (
-              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '40px 0' }}>
+              <div className="fade-in" style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '40px 0' }}>
                 <div style={{ fontSize: 36, marginBottom: 16 }}>✓</div>
                 <p style={{ fontSize: 16, fontWeight: 600, color: '#f5f5f7', marginBottom: 8 }}>Mensagem enviada!</p>
                 <p style={{ fontSize: 14, fontWeight: 300, color: '#86868b', marginBottom: 24 }}>Entraremos em contato em breve.</p>

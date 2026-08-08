@@ -65,8 +65,12 @@ export default function CrmPage() {
     return () => sub.subscription.unsubscribe()
   }, [])
 
-  if (loading) return <Center><p style={{ color: C.muted }}>A carregar…</p></Center>
-  return session ? <App session={session} /> : <Login />
+  return (
+    <>
+      <MotionStyles />
+      {loading ? <SkeletonApp /> : session ? <App session={session} /> : <Login />}
+    </>
+  )
 }
 
 function Center({ children }: { children: React.ReactNode }) {
@@ -74,6 +78,76 @@ function Center({ children }: { children: React.ReactNode }) {
     <main style={{ background: C.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Outfit, system-ui, sans-serif' }}>
       {children}
     </main>
+  )
+}
+
+// ---- Motion: keyframes + utilitários (injetado uma vez) ----
+function MotionStyles() {
+  return (
+    <style>{`
+      @keyframes cc-fade-up { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+      @keyframes cc-overlay-in { from { opacity: 0 } to { opacity: 1 } }
+      @keyframes cc-modal-in { from { opacity: 0; transform: translateY(10px) scale(.985) } to { opacity: 1; transform: none } }
+      @keyframes cc-shimmer { 0% { background-position: -450px 0 } 100% { background-position: 450px 0 } }
+      @keyframes cc-spin { to { transform: rotate(360deg) } }
+      .cc-fade-up { animation: cc-fade-up .28s cubic-bezier(.2,0,0,1) both }
+      .cc-overlay { animation: cc-overlay-in .18s ease both }
+      .cc-modal { animation: cc-modal-in .26s cubic-bezier(.2,0,0,1) both }
+      .cc-card { transition: transform .16s cubic-bezier(.2,0,0,1), box-shadow .16s ease }
+      .cc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20,30,50,.12) }
+      .cc-card:active { transform: scale(.99) }
+      .cc-btn { transition: transform .12s ease, filter .16s ease, opacity .16s ease }
+      .cc-btn:hover:not(:disabled) { filter: brightness(1.06) }
+      .cc-btn:active:not(:disabled) { transform: translateY(1px) scale(.99) }
+      .cc-btn:disabled { opacity: .65; cursor: default }
+      .cc-nav { transition: background .16s ease, color .16s ease }
+      .cc-nav:hover { background: rgba(196,122,74,.08) }
+      .cc-skel { background: linear-gradient(90deg,#e9ebee 25%,#f4f6f8 37%,#e9ebee 63%); background-size: 900px 100%; animation: cc-shimmer 1.25s infinite linear; border-radius: 8px }
+      .cc-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.45); border-top-color: #fff; border-radius: 50%; animation: cc-spin .7s linear infinite; vertical-align: -2px }
+      .cc-spin-dark { border-color: rgba(31,36,48,.25); border-top-color: ${C.brand} }
+      /* feedback global consistente */
+      button { transition: filter .15s ease, transform .1s ease, background .15s ease, opacity .15s ease }
+      button:active:not(:disabled) { transform: translateY(1px) }
+      input, select, textarea { transition: border-color .15s ease, box-shadow .15s ease }
+      input:focus, select:focus, textarea:focus { border-color: ${C.brand}; box-shadow: 0 0 0 3px rgba(196,122,74,.14) }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important }
+      }
+    `}</style>
+  )
+}
+
+function Spinner({ dark }: { dark?: boolean }) {
+  return <span className={dark ? 'cc-spin cc-spin-dark' : 'cc-spin'} aria-label="a carregar" />
+}
+
+// ---- Skeleton do app inteiro (carregamento inicial) ----
+function SkeletonApp() {
+  return (
+    <main style={{ display: 'flex', height: '100vh', background: C.bg, fontFamily: 'Outfit, system-ui, sans-serif', overflow: 'hidden' }}>
+      <aside style={{ width: 224, flexShrink: 0, background: C.panel, borderRight: `1px solid ${C.border}`, padding: 18 }}>
+        <div className="cc-skel" style={{ height: 22, width: 140, marginBottom: 22 }} />
+        <div className="cc-skel" style={{ height: 38, marginBottom: 18 }} />
+        {[0, 1, 2, 3].map(i => <div key={i} className="cc-skel" style={{ height: 34, marginBottom: 8 }} />)}
+      </aside>
+      <section style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ height: 60, borderBottom: `1px solid ${C.border}`, background: C.panel, display: 'flex', alignItems: 'center', padding: '0 20px' }}>
+          <div className="cc-skel" style={{ height: 20, width: 120 }} />
+        </div>
+        <div style={{ display: 'flex', gap: 12, padding: 16 }}>
+          {[0, 1, 2, 3, 4].map(c => <SkeletonColumn key={c} />)}
+        </div>
+      </section>
+    </main>
+  )
+}
+
+function SkeletonColumn() {
+  return (
+    <div style={{ width: 264, flexShrink: 0, background: C.col, borderRadius: 12, padding: 12 }}>
+      <div className="cc-skel" style={{ height: 16, width: 100, marginBottom: 14 }} />
+      {[0, 1, 2].map(i => <div key={i} className="cc-skel" style={{ height: 64, marginBottom: 8, background: '#e3e6ea', borderRadius: 8 }} />)}
+    </div>
   )
 }
 
@@ -100,7 +174,7 @@ function Login() {
 
   return (
     <Center>
-      <form onSubmit={signIn} style={{ width: '100%', maxWidth: 380, background: C.panel, border: `1px solid ${C.border}`, borderRadius: 16, padding: 32, display: 'flex', flexDirection: 'column', gap: 12, boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
+      <form onSubmit={signIn} className="cc-fade-up" style={{ width: '100%', maxWidth: 380, background: C.panel, border: `1px solid ${C.border}`, borderRadius: 16, padding: 32, display: 'flex', flexDirection: 'column', gap: 12, boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
         <div style={{ fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 2 }}>
           <span style={{ color: C.brand }}>CRM</span> Casa Criative
         </div>
@@ -109,7 +183,7 @@ function Login() {
         {mode === 'password' && <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Senha" required style={input} />}
         {err && <p style={{ color: '#dc2626', fontSize: 13 }}>{err}</p>}
         {msg && <p style={{ color: '#16a34a', fontSize: 13 }}>{msg}</p>}
-        <button type="submit" disabled={busy} style={btn}>{busy ? '…' : mode === 'password' ? 'Entrar' : 'Enviar link'}</button>
+        <button type="submit" disabled={busy} className="cc-btn" style={btn}>{busy ? <Spinner /> : mode === 'password' ? 'Entrar' : 'Enviar link'}</button>
         <button type="button" onClick={() => { setMode(mode === 'password' ? 'magic' : 'password'); setErr(''); setMsg('') }} style={linkBtn}>
           {mode === 'password' ? 'Entrar com link mágico (sem senha)' : 'Entrar com senha'}
         </button>
@@ -125,6 +199,7 @@ function App({ session }: { session: Session }) {
   const [isAgency, setIsAgency] = useState(false)
   const [view, setView] = useState<View>('pipeline')
   const [leads, setLeads] = useState<Lead[]>([])
+  const [leadsLoading, setLeadsLoading] = useState(true)
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [canManage, setCanManage] = useState(false)
   const [err, setErr] = useState('')
@@ -145,7 +220,8 @@ function App({ session }: { session: Session }) {
 
   const refreshLeads = useCallback((id: string) => {
     if (!id) return
-    getLeads(id).then(setLeads).catch(e => setErr(e.message))
+    setLeadsLoading(true)
+    getLeads(id).then(setLeads).catch(e => setErr(e.message)).finally(() => setLeadsLoading(false))
   }, [])
   const loadStages = useCallback((id: string) => {
     if (!id) return
@@ -179,7 +255,7 @@ function App({ session }: { session: Session }) {
         {/* nav */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {nav.filter(n => !n.agency || isAgency).map(n => (
-            <button key={n.id} onClick={() => setView(n.id)} style={{
+            <button key={n.id} onClick={() => setView(n.id)} className="cc-nav" style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
               fontSize: 14, fontFamily: 'inherit', textAlign: 'left',
               background: view === n.id ? 'rgba(196,122,74,0.12)' : 'transparent',
@@ -199,19 +275,21 @@ function App({ session }: { session: Session }) {
       {/* MAIN */}
       <section style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         {err && <div style={{ background: '#fef2f2', color: '#dc2626', fontSize: 13, padding: '8px 20px', borderBottom: `1px solid ${C.border}` }}>{err}</div>}
-        {view === 'pipeline' && <PipelineView wsId={wsId} leads={leads} setLeads={setLeads} stages={stages} canManage={canManage} onStagesChanged={() => loadStages(wsId)} onErr={setErr} />}
-        {view === 'relatorios' && <ReportsView ws={ws} leads={leads} stages={stages} />}
-        {view === 'clientes' && isAgency && <ClientsView workspaces={workspaces} onChanged={loadWorkspaces} />}
-        {view === 'config' && <SettingsView session={session} ws={ws} leads={leads} />}
+        <div key={view} className="cc-fade-up" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          {view === 'pipeline' && <PipelineView wsId={wsId} leads={leads} setLeads={setLeads} stages={stages} leadsLoading={leadsLoading} canManage={canManage} onStagesChanged={() => loadStages(wsId)} onErr={setErr} />}
+          {view === 'relatorios' && <ReportsView ws={ws} leads={leads} stages={stages} />}
+          {view === 'clientes' && isAgency && <ClientsView workspaces={workspaces} onChanged={loadWorkspaces} />}
+          {view === 'config' && <SettingsView session={session} ws={ws} leads={leads} />}
+        </div>
       </section>
     </main>
   )
 }
 
 // ================================================================ PIPELINE
-function PipelineView({ wsId, leads, setLeads, stages, canManage, onStagesChanged, onErr }: {
+function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, onStagesChanged, onErr }: {
   wsId: string; leads: Lead[]; setLeads: React.Dispatch<React.SetStateAction<Lead[]>>
-  stages: PipelineStage[]; canManage: boolean; onStagesChanged: () => void; onErr: (m: string) => void
+  stages: PipelineStage[]; leadsLoading: boolean; canManage: boolean; onStagesChanged: () => void; onErr: (m: string) => void
 }) {
   const [showAdd, setShowAdd] = useState(false)
   const [showFunnel, setShowFunnel] = useState(false)
@@ -240,8 +318,8 @@ function PipelineView({ wsId, leads, setLeads, stages, canManage, onStagesChange
         <>
           <Stat label="Em aberto" value={String(emAberto)} />
           <Stat label="Ganho" value={BRL(ganho)} color="#16a34a" />
-          {canManage && <button onClick={() => setShowFunnel(true)} style={{ ...btnGhost, width: 'auto', padding: '9px 14px' }}>Editar funil</button>}
-          <button onClick={() => setShowAdd(true)} style={{ ...btn, width: 'auto', padding: '9px 16px' }}>+ Lead</button>
+          {canManage && <button onClick={() => setShowFunnel(true)} className="cc-btn" style={{ ...btnGhost, width: 'auto', padding: '9px 14px' }}>Editar funil</button>}
+          <button onClick={() => setShowAdd(true)} className="cc-btn" style={{ ...btn, width: 'auto', padding: '9px 16px' }}>+ Lead</button>
         </>
       } />
 
@@ -260,8 +338,9 @@ function PipelineView({ wsId, leads, setLeads, stages, canManage, onStagesChange
                 </div>
                 {colVal > 0 && <div style={{ fontSize: 11, color: C.muted, padding: '6px 14px 0' }}>{BRL(colVal)}</div>}
                 <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
-                  {col.map(lead => (
-                    <div key={lead.id} draggable onDragStart={() => setDragId(lead.id)}
+                  {leadsLoading && [0, 1].map(i => <div key={i} className="cc-skel" style={{ height: 64, background: '#e3e6ea' }} />)}
+                  {!leadsLoading && col.map(lead => (
+                    <div key={lead.id} draggable onDragStart={() => setDragId(lead.id)} className="cc-card cc-fade-up"
                       style={{ background: C.panel, borderRadius: 8, padding: 12, cursor: 'grab', border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                         <b style={{ fontSize: 14 }}>{lead.name}</b>
@@ -275,7 +354,7 @@ function PipelineView({ wsId, leads, setLeads, stages, canManage, onStagesChange
                       {(lead.phone || lead.email) && <p style={{ fontSize: 11, color: '#9aa1ab', marginTop: 6 }}>{lead.phone || lead.email}</p>}
                     </div>
                   ))}
-                  {col.length === 0 && <p style={{ fontSize: 12, color: '#b6bcc4', textAlign: 'center', padding: 10 }}>vazio</p>}
+                  {!leadsLoading && col.length === 0 && <p style={{ fontSize: 12, color: '#b6bcc4', textAlign: 'center', padding: 10 }}>vazio</p>}
                 </div>
               </div>
             )
@@ -538,7 +617,7 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
         <select value={role} onChange={e => setRole(e.target.value as MemberRole)} style={{ ...input, width: 'auto' }}>
           {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <button type="submit" disabled={busy} style={{ ...btn, width: 'auto', padding: '10px 18px' }}>{busy ? '…' : 'Adicionar'}</button>
+        <button type="submit" disabled={busy} className="cc-btn" style={{ ...btn, width: 'auto', padding: '10px 18px' }}>{busy ? <Spinner /> : 'Adicionar'}</button>
       </form>
       {err && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
       {link && (
@@ -648,7 +727,7 @@ function AddLead({ firstStage, onClose, onCreate }: { firstStage?: string; onClo
         {err && <p style={{ color: '#dc2626', fontSize: 13 }}>{err}</p>}
         <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
           <button type="button" onClick={onClose} style={btnGhost}>Cancelar</button>
-          <button type="submit" disabled={busy} style={btn}>{busy ? '…' : 'Criar'}</button>
+          <button type="submit" disabled={busy} className="cc-btn" style={btn}>{busy ? <Spinner /> : 'Criar'}</button>
         </div>
       </form>
     </Modal>
@@ -692,8 +771,8 @@ function Row({ k, v }: { k: string; v: string }) {
 }
 function Modal({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(15,20,30,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 50 }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: C.panel, borderRadius: 16, padding: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>{children}</div>
+    <div onClick={onClose} className="cc-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(15,20,30,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 50 }}>
+      <div onClick={e => e.stopPropagation()} className="cc-modal" style={{ width: '100%', maxWidth: 420, background: C.panel, borderRadius: 16, padding: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>{children}</div>
     </div>
   )
 }
