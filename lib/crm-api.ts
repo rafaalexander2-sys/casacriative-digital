@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind } from './crm-types'
+import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent } from './crm-types'
 
 // ---- Workspaces do utilizador logado ----
 export async function getMyWorkspaces(): Promise<Workspace[]> {
@@ -219,6 +219,22 @@ export async function updateLead(id: string, patch: Partial<Lead>): Promise<Lead
   const { data, error } = await supabase.from('leads').update(patch).eq('id', id).select().single()
   if (error) throw error
   return data
+}
+
+// ---- Histórico do lead ----
+export async function getLeadEvents(leadId: string): Promise<LeadEvent[]> {
+  const { data, error } = await supabase
+    .from('lead_events')
+    .select('*')
+    .eq('lead_id', leadId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+// ---- Adicionar nota ao histórico ----
+export async function addNote(lead: Lead, message: string): Promise<void> {
+  await logEvent(lead.workspace_id, lead.id, { type: 'note', message })
 }
 
 // ---- Apagar lead ----

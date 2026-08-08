@@ -4,6 +4,24 @@ export type LeadStatus = 'novo' | 'qualificado' | 'proposta' | 'ganho' | 'perdid
 
 export type LeadSource = 'form' | 'whatsapp' | 'meta_ads' | 'google_ads' | 'manual' | 'import'
 
+export type DealType = 'mrr' | 'one_time'
+
+export const DEAL_TYPE_LABELS: Record<DealType, string> = {
+  mrr: 'Recorrente (MRR)',
+  one_time: 'Serviço único',
+}
+
+export interface LeadEvent {
+  id: string
+  lead_id: string
+  workspace_id: string
+  type: string
+  from_status?: string | null
+  to_status?: string | null
+  message?: string | null
+  created_at: string
+}
+
 export interface Lead {
   id: string
   workspace_id: string
@@ -14,6 +32,8 @@ export interface Lead {
   source: LeadSource
   status: string
   value?: number | null
+  deal_type?: DealType | null
+  service?: string | null
   notes?: string | null
   utm_source?: string | null
   utm_medium?: string | null
