@@ -310,7 +310,7 @@ function FunnelEditor({ wsId, stages, onClose, onChanged }: { wsId: string; stag
   }
   const patch = async (id: string, p: Partial<PipelineStage>) => {
     setList(ls => ls.map(s => s.id === id ? { ...s, ...p } : s))
-    try { await updateStage(id, p as any) } catch (e: any) { setErr(e.message) }
+    try { await updateStage(id, p as any); onChanged() } catch (e: any) { setErr(e.message) }
   }
   const remove = async (id: string) => {
     if (!confirm('Apagar esta etapa? Os leads nela ficam sem etapa.')) return
