@@ -101,6 +101,10 @@ export default function Footer() {
           </div>
         </div>
         <div style={{ height: 1, background: 'linear-gradient(90deg,transparent,#c47a4a,#f0d5b0,#c47a4a,transparent)', marginBottom: 24 }} />
+        <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+          <Link href="/termos" style={{ fontSize: 11, color: '#86868b', textDecoration: 'none' }}>Termos de Uso</Link>
+          <Link href="/privacidade" style={{ fontSize: 11, color: '#86868b', textDecoration: 'none' }}>Política de Privacidade</Link>
+        </div>
         <p style={{ fontSize: 11, color: '#3a3a3c', textAlign: 'center' }}>© 2025 Casa Criative Digital. Todos os direitos reservados. Curitiba, PR.</p>
       </div>
     </footer>
