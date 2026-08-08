@@ -8,8 +8,11 @@ export default function WhatsAppFloat() {
   const pathname = usePathname();
   useEffect(() => { setMounted(true); }, []);
   if (!mounted) return null;
-  // Não mostrar dentro do CRM (é uma app, não o site)
-  if (pathname?.startsWith("/crm")) return null;
+  // Não mostrar dentro do CRM (é uma app, não o site).
+  // Cobre casacriative.com.br/crm e o subdomínio crm.casacriative.com.br
+  // (no subdomínio o path no navegador é "/", pois a reescrita é no servidor).
+  const host = typeof window !== "undefined" ? window.location.hostname : "";
+  if (pathname?.startsWith("/crm") || host.startsWith("crm.")) return null;
 
   return (
     <>
