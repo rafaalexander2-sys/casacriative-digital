@@ -68,7 +68,9 @@ Deno.serve(async (req) => {
       existed = true
       const { data: list } = await admin.auth.admin.listUsers()
       userId = list.users.find(u => u.email?.toLowerCase() === cleanEmail)?.id
-      if (userId) await admin.auth.admin.updateUserById(userId, { password })
+      // email_confirm: true — garante login por senha mesmo se a conta veio de um
+      // link mágico não concluído (senão o Supabase bloqueia com "credencial inválida")
+      if (userId) await admin.auth.admin.updateUserById(userId, { password, email_confirm: true })
     } else {
       userId = createdData.user?.id
     }
