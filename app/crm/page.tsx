@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import { INGEST_URL } from '@/lib/track'
+import { INGEST_URL, SUPABASE_ANON } from '@/lib/track'
 import {
   getMyWorkspaces,
   getLeads,
@@ -803,7 +803,10 @@ function IngestBox({ workspace }: { workspace: Workspace }) {
   const copy = (text: string, tag: string) => { navigator.clipboard.writeText(text).then(() => { setCopied(tag); setTimeout(() => setCopied(''), 1500) }).catch(() => {}) }
   const snippet = `fetch("${INGEST_URL}", {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json",
+    "apikey": "${SUPABASE_ANON}"
+  },
   body: JSON.stringify({
     token: "${token ?? 'RODE_O_SQL_schema-ingest'}",
     name: "Nome do lead",
