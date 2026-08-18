@@ -32,6 +32,12 @@ import {
   createActivity,
   updateActivity,
   deleteActivity,
+  getActivityStages,
+  createActivityStage,
+  updateActivityStage,
+  deleteActivityStage,
+  reorderActivityStages,
+  updateWorkspaceActivitiesEnabled,
   hasGoogleCalendar,
   connectGoogleCalendar,
   disconnectGoogleCalendar,
@@ -41,10 +47,8 @@ import {
   SOURCE_LABELS,
   ROLE_LABELS,
   KIND_LABELS,
+  ACTIVITY_KIND_LABELS,
   DEAL_TYPE_LABELS,
-  ACTIVITY_STATUS_ORDER,
-  ACTIVITY_STATUS_LABELS,
-  ACTIVITY_STATUS_COLORS,
   type Lead,
   type LeadSource,
   type Workspace,
@@ -56,7 +60,8 @@ import {
   type DealType,
   type LeadEvent,
   type Activity,
-  type ActivityStatus,
+  type ActivityStage,
+  type ActivityStageKind,
 } from '@/lib/crm-types'
 
 // ---- design tokens (estilo Pipedrive, claro) ----
@@ -265,9 +270,9 @@ function App({ session }: { session: Session }) {
   }, [])
 
   const ws = workspaces.find(w => w.id === wsId)
-  const nav: { id: View; label: string; icon: string; agency?: boolean }[] = [
+  const nav: { id: View; label: string; icon: string; agency?: boolean; requiresActivities?: boolean }[] = [
     { id: 'pipeline', label: 'Pipeline', icon: '▦' },
-    { id: 'atividades', label: 'Atividades', icon: '☑' },
+    { id: 'atividades', label: 'Atividades', icon: '☑', requiresActivities: true },
     { id: 'relatorios', label: 'Relatórios', icon: '▤' },
     { id: 'clientes', label: 'Clientes', icon: '◍', agency: true },
     { id: 'config', label: 'Configurações', icon: '⚙' },
@@ -289,7 +294,7 @@ function App({ session }: { session: Session }) {
 
         {/* nav */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {nav.filter(n => !n.agency || isAgency).map(n => (
+          {nav.filter(n => (!n.agency || isAgency) && (!n.requiresActivities || ws?.activities_enabled)).map(n => (
             <button key={n.id} onClick={() => setView(n.id)} className="cc-nav" style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
               fontSize: 14, fontFamily: 'inherit', textAlign: 'left',
@@ -312,7 +317,7 @@ function App({ session }: { session: Session }) {
         {err && <div style={{ background: '#fef2f2', color: '#dc2626', fontSize: 13, padding: '8px 20px', borderBottom: `1px solid ${C.border}` }}>{err}</div>}
         <div key={view} className="cc-fade-up" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {view === 'pipeline' && <PipelineView wsId={wsId} leads={leads} setLeads={setLeads} stages={stages} leadsLoading={leadsLoading} canManage={canManage} onStagesChanged={() => loadStages(wsId)} onErr={setErr} />}
-          {view === 'atividades' && <ActivitiesView wsId={wsId} leads={leads} onErr={setErr} />}
+          {view === 'atividades' && ws?.activities_enabled && <ActivitiesView wsId={wsId} leads={leads} onErr={setErr} />}
           {view === 'relatorios' && <ReportsView ws={ws} leads={leads} stages={stages} />}
           {view === 'clientes' && isAgency && <ClientsView workspaces={workspaces} onChanged={loadWorkspaces} />}
           {view === 'config' && <SettingsView session={session} ws={ws} leads={leads} />}
@@ -414,21 +419,30 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
 // ================================================================ ATIVIDADES (quadro estilo Trello)
 function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr: (m: string) => void }) {
   const [items, setItems] = useState<Activity[]>([])
+  const [stages, setStages] = useState<ActivityStage[]>([])
   const [loading, setLoading] = useState(true)
+  const [canManage, setCanManage] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
+  const [showFunnel, setShowFunnel] = useState(false)
   const [selected, setSelected] = useState<Activity | null>(null)
   const [dragId, setDragId] = useState<string | null>(null)
   const [cal, setCal] = useState<{ connected: boolean; email?: string | null }>({ connected: false })
+
+  const loadStages = useCallback(() => {
+    if (!wsId) return
+    getActivityStages(wsId).then(setStages).catch(e => onErr(e.message))
+    canManageFunnel(wsId).then(setCanManage).catch(() => setCanManage(false))
+  }, [wsId, onErr])
 
   const load = useCallback(() => {
     if (!wsId) return
     setLoading(true)
     getActivities(wsId).then(setItems).catch(e => onErr(e.message)).finally(() => setLoading(false))
   }, [wsId, onErr])
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load(); loadStages() }, [load, loadStages])
   useEffect(() => { if (wsId) hasGoogleCalendar(wsId).then(setCal).catch(() => setCal({ connected: false })) }, [wsId])
 
-  const onDrop = async (status: ActivityStatus) => {
+  const onDrop = async (status: string) => {
     const a = items.find(x => x.id === dragId); setDragId(null)
     if (!a || a.status === status) return
     setItems(ls => ls.map(x => x.id === a.id ? { ...x, status } : x))
@@ -440,18 +454,21 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
   return (
     <>
       <Topbar title="Atividades" subtitle={cal.connected ? `Google Agenda conectada${cal.email ? ' · ' + cal.email : ''}` : 'Quadro de tarefas do espaço'} right={
-        <button onClick={() => setShowAdd(true)} className="cc-btn" style={{ ...btn, width: 'auto', padding: '9px 16px' }}>+ Atividade</button>
+        <>
+          {canManage && <button onClick={() => setShowFunnel(true)} className="cc-btn" style={{ ...btnGhost, width: 'auto', padding: '9px 14px' }}>Editar quadro</button>}
+          <button onClick={() => setShowAdd(true)} className="cc-btn" style={{ ...btn, width: 'auto', padding: '9px 16px' }}>+ Atividade</button>
+        </>
       } />
       <div style={{ flex: 1, overflow: 'hidden', padding: 16 }}>
         <div style={{ display: 'flex', gap: 12, height: '100%', overflowX: 'auto', paddingBottom: 4 }}>
-          {ACTIVITY_STATUS_ORDER.map(status => {
-            const col = items.filter(a => a.status === status)
+          {stages.map(stage => {
+            const col = items.filter(a => a.status === stage.key)
             return (
-              <div key={status} onDragOver={e => e.preventDefault()} onDrop={() => onDrop(status)}
+              <div key={stage.id} onDragOver={e => e.preventDefault()} onDrop={() => onDrop(stage.key)}
                 style={{ width: 280, flexShrink: 0, background: C.col, borderRadius: 12, display: 'flex', flexDirection: 'column', maxHeight: '100%' }}>
-                <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: `2px solid ${ACTIVITY_STATUS_COLORS[status]}` }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 4, background: ACTIVITY_STATUS_COLORS[status] }} />
-                  <span style={{ fontSize: 13, fontWeight: 700 }}>{ACTIVITY_STATUS_LABELS[status]}</span>
+                <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: `2px solid ${stage.color}` }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 4, background: stage.color }} />
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>{stage.label}</span>
                   <span style={{ fontSize: 12, color: C.muted, marginLeft: 'auto' }}>{col.length}</span>
                 </div>
                 <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
@@ -477,11 +494,12 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
               </div>
             )
           })}
+          {stages.length === 0 && <p style={{ fontSize: 13, color: C.muted, padding: 20 }}>Sem colunas. Rode o SQL schema-activity-stages.sql.</p>}
         </div>
       </div>
 
       {showAdd && (
-        <ActivityModal wsId={wsId} leads={leads} calConnected={cal.connected}
+        <ActivityModal wsId={wsId} leads={leads} calConnected={cal.connected} firstStage={stages[0]?.key}
           onClose={() => setShowAdd(false)}
           onSaved={a => { setItems(ls => [a, ...ls]); setShowAdd(false) }} />
       )}
@@ -491,7 +509,75 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
           onSaved={a => { setItems(ls => ls.map(x => x.id === a.id ? a : x)); setSelected(null) }}
           onDeleted={id => { setItems(ls => ls.filter(x => x.id !== id)); setSelected(null) }} />
       )}
+
+      {showFunnel && <ActivityFunnelEditor wsId={wsId} stages={stages} onClose={() => setShowFunnel(false)} onChanged={loadStages} />}
     </>
+  )
+}
+
+// ---- Editor das colunas do quadro de Atividades (mesmo padrão do funil de leads) ----
+function ActivityFunnelEditor({ wsId, stages, onClose, onChanged }: { wsId: string; stages: ActivityStage[]; onClose: () => void; onChanged: () => void }) {
+  const [list, setList] = useState<ActivityStage[]>(stages)
+  const [newLabel, setNewLabel] = useState('')
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const reload = () => getActivityStages(wsId).then(l => { setList(l); onChanged() }).catch(e => setErr(e.message))
+
+  const add = async () => {
+    if (!newLabel.trim()) return
+    setBusy(true); setErr('')
+    try { await createActivityStage(wsId, { label: newLabel.trim(), position: list.length + 1 }); setNewLabel(''); await reload() }
+    catch (e: any) { setErr(e.message) }
+    setBusy(false)
+  }
+  const patch = async (id: string, p: Partial<ActivityStage>) => {
+    setList(ls => ls.map(s => s.id === id ? { ...s, ...p } : s))
+    try { await updateActivityStage(id, p as any); onChanged() } catch (e: any) { setErr(e.message) }
+  }
+  const remove = async (id: string) => {
+    if (!confirm('Apagar esta coluna? As atividades nela ficam sem coluna.')) return
+    try { await deleteActivityStage(id); await reload() } catch (e: any) { setErr(e.message) }
+  }
+  const move = async (i: number, dir: -1 | 1) => {
+    const j = i + dir
+    if (j < 0 || j >= list.length) return
+    const next = [...list]; [next[i], next[j]] = [next[j], next[i]]
+    setList(next)
+    try { await reorderActivityStages(next); onChanged() } catch (e: any) { setErr(e.message) }
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 14 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Editar quadro</h2>
+        <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 20 }}>×</button>
+      </div>
+      {err && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14, maxHeight: '50vh', overflowY: 'auto' }}>
+        {list.map((s, i) => (
+          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 6, border: `1px solid ${C.border}`, borderRadius: 8, padding: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <button onClick={() => move(i, -1)} disabled={i === 0} style={arrowBtn}>▲</button>
+              <button onClick={() => move(i, 1)} disabled={i === list.length - 1} style={arrowBtn}>▼</button>
+            </div>
+            <input type="color" value={s.color} onChange={e => patch(s.id, { color: e.target.value })} style={{ width: 30, height: 30, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }} />
+            <input value={s.label} onChange={e => setList(ls => ls.map(x => x.id === s.id ? { ...x, label: e.target.value } : x))} onBlur={e => patch(s.id, { label: e.target.value })} style={{ ...input, flex: 1 }} />
+            <select value={s.kind} onChange={e => patch(s.id, { kind: e.target.value as ActivityStageKind })} style={{ ...input, width: 'auto' }}>
+              {Object.entries(ACTIVITY_KIND_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <button onClick={() => remove(s.id)} style={{ background: 'none', border: 'none', color: '#cbd0d6', cursor: 'pointer', fontSize: 18 }}>×</button>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Nova coluna" style={{ ...input, flex: 1 }} onKeyDown={e => e.key === 'Enter' && add()} />
+        <button onClick={add} disabled={busy} style={{ ...btn, width: 'auto', padding: '10px 18px' }}>+ Coluna</button>
+      </div>
+      <p style={{ fontSize: 11, color: C.muted, marginTop: 10 }}>Dica: marque uma coluna como <b>Concluído</b> pra sinalizar tarefa terminada.</p>
+    </Modal>
   )
 }
 
@@ -501,8 +587,8 @@ function toLocalInput(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function ActivityModal({ wsId, leads, calConnected, activity, onClose, onSaved, onDeleted }: {
-  wsId: string; leads: Lead[]; calConnected: boolean; activity?: Activity
+function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClose, onSaved, onDeleted }: {
+  wsId: string; leads: Lead[]; calConnected: boolean; activity?: Activity; firstStage?: string
   onClose: () => void; onSaved: (a: Activity) => void; onDeleted?: (id: string) => void
 }) {
   const [f, setF] = useState({
@@ -521,7 +607,7 @@ function ActivityModal({ wsId, leads, calConnected, activity, onClose, onSaved, 
         title: f.title, description: f.description || null, due_date,
         lead_id: f.lead_id || null, assigned_to: f.assigned_to || null,
       }
-      let saved = activity ? await updateActivity(activity.id, patch) : await createActivity(wsId, { ...patch, status: 'todo' })
+      let saved = activity ? await updateActivity(activity.id, patch) : await createActivity(wsId, { ...patch, ...(firstStage ? { status: firstStage } : {}) })
 
       if (calConnected) {
         try {
@@ -938,14 +1024,14 @@ function ClientsView({ workspaces, onChanged }: { workspaces: Workspace[]; onCha
           ))}
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-          {selected ? <MembersPanel workspace={selected} /> : <p style={{ fontSize: 13, color: C.muted }}>Selecione um cliente.</p>}
+          {selected ? <MembersPanel workspace={selected} onChanged={onChanged} /> : <p style={{ fontSize: 13, color: C.muted }}>Selecione um cliente.</p>}
         </div>
       </div>
     </>
   )
 }
 
-function MembersPanel({ workspace }: { workspace: Workspace }) {
+function MembersPanel({ workspace, onChanged }: { workspace: Workspace; onChanged: () => void }) {
   const [members, setMembers] = useState<Member[]>([])
   const [invites, setInvites] = useState<Invitation[]>([])
   const [email, setEmail] = useState('')
@@ -954,6 +1040,18 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
   const [creds, setCreds] = useState<{ email: string; password: string; existed: boolean } | null>(null)
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [activitiesEnabled, setActivitiesEnabled] = useState(workspace.activities_enabled)
+  const [togglingActivities, setTogglingActivities] = useState(false)
+
+  useEffect(() => { setActivitiesEnabled(workspace.activities_enabled) }, [workspace.id, workspace.activities_enabled])
+
+  const toggleActivities = async () => {
+    const next = !activitiesEnabled
+    setTogglingActivities(true); setErr('')
+    try { await updateWorkspaceActivitiesEnabled(workspace.id, next); setActivitiesEnabled(next); onChanged() }
+    catch (e: any) { setErr(e.message) }
+    setTogglingActivities(false)
+  }
 
   const load = useCallback(() => {
     setErr('')
@@ -978,7 +1076,11 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
 
   return (
     <div>
-      <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>{workspace.name}</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{workspace.name}</h3>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: C.text, marginBottom: 14, cursor: 'pointer' }}>
+        <input type="checkbox" checked={activitiesEnabled} disabled={togglingActivities} onChange={toggleActivities} />
+        Ativar quadro de Atividades (Trello) pra este cliente
+      </label>
       <form onSubmit={invite} style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
         <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="e-mail da pessoa" style={{ ...input, flex: '1 1 180px' }} />
         <select value={role} onChange={e => setRole(e.target.value as MemberRole)} style={{ ...input, width: 'auto' }}>

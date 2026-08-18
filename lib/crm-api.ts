@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity } from './crm-types'
+import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity, ActivityStage, ActivityStageKind } from './crm-types'
 
 // Extrai uma mensagem legível do erro de uma Edge Function (supabase.functions.invoke)
 async function fnErrorMessage(error: any): Promise<string> {
@@ -33,6 +33,12 @@ export async function isAgencyMember(): Promise<boolean> {
   const { data, error } = await supabase.rpc('is_agency_member')
   if (error) throw error
   return !!data
+}
+
+// ---- Ativar/desativar o quadro de Atividades de um cliente ----
+export async function updateWorkspaceActivitiesEnabled(workspaceId: string, enabled: boolean): Promise<void> {
+  const { error } = await supabase.from('workspaces').update({ activities_enabled: enabled }).eq('id', workspaceId)
+  if (error) throw error
 }
 
 // ---- Criar cliente (novo workspace) ----
@@ -279,6 +285,51 @@ export async function updateActivity(id: string, patch: Partial<Activity>): Prom
 export async function deleteActivity(id: string): Promise<void> {
   const { error } = await supabase.from('activities').delete().eq('id', id)
   if (error) throw error
+}
+
+// ---- Colunas do quadro de Atividades (customizáveis por espaço) ----
+export async function getActivityStages(workspaceId: string): Promise<ActivityStage[]> {
+  const { data, error } = await supabase
+    .from('activity_stages')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('position')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function createActivityStage(
+  workspaceId: string,
+  input: { label: string; color?: string; kind?: ActivityStageKind; position: number },
+): Promise<ActivityStage> {
+  const { data, error } = await supabase
+    .from('activity_stages')
+    .insert({
+      workspace_id: workspaceId,
+      key: slugKey(input.label),
+      label: input.label,
+      color: input.color ?? '#64748b',
+      kind: input.kind ?? 'open',
+      position: input.position,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateActivityStage(id: string, patch: Partial<Pick<ActivityStage, 'label' | 'color' | 'kind' | 'position'>>): Promise<void> {
+  const { error } = await supabase.from('activity_stages').update(patch).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteActivityStage(id: string): Promise<void> {
+  const { error } = await supabase.from('activity_stages').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function reorderActivityStages(stages: ActivityStage[]): Promise<void> {
+  await Promise.all(stages.map((s, i) => supabase.from('activity_stages').update({ position: i + 1 }).eq('id', s.id)))
 }
 
 // ---- Google Agenda ----

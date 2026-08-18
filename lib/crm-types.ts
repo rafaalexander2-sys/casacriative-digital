@@ -54,6 +54,7 @@ export interface Workspace {
   name: string
   is_agency: boolean
   ingest_token?: string | null
+  activities_enabled: boolean
   created_at: string
 }
 
@@ -126,21 +127,22 @@ export const SOURCE_LABELS: Record<LeadSource, string> = {
   import: 'Importação',
 }
 
-// ---- Atividades (quadro estilo Trello) ----
-export type ActivityStatus = 'todo' | 'doing' | 'done'
+// ---- Atividades (quadro estilo Trello, colunas customizáveis por cliente) ----
+export type ActivityStageKind = 'open' | 'done'
 
-export const ACTIVITY_STATUS_ORDER: ActivityStatus[] = ['todo', 'doing', 'done']
-
-export const ACTIVITY_STATUS_LABELS: Record<ActivityStatus, string> = {
-  todo: 'A Fazer',
-  doing: 'Em andamento',
-  done: 'Concluído',
+export interface ActivityStage {
+  id: string
+  workspace_id: string
+  key: string
+  label: string
+  position: number
+  color: string
+  kind: ActivityStageKind
 }
 
-export const ACTIVITY_STATUS_COLORS: Record<ActivityStatus, string> = {
-  todo: '#64748b',
-  doing: '#3b82f6',
-  done: '#22c55e',
+export const ACTIVITY_KIND_LABELS: Record<ActivityStageKind, string> = {
+  open: 'Em aberto',
+  done: 'Concluído',
 }
 
 export interface Activity {
@@ -149,7 +151,7 @@ export interface Activity {
   lead_id?: string | null
   title: string
   description?: string | null
-  status: ActivityStatus
+  status: string
   due_date?: string | null
   assigned_to?: string | null
   position: number
