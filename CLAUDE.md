@@ -77,3 +77,29 @@ Para ver logs de build com erro: aba **Implantações** → deploy → **Detalhe
 
 - `cc_perplexity_key` — Perplexity API (geração de mensagens com IA)
 - `cc_apify_key` — Apify (scraping Instagram por hashtag)
+
+## CRM — Atividades (Trello) + Google Agenda
+
+- `app/crm/page.tsx` → `ActivitiesView` / `ActivityModal`: quadro de tarefas por espaço
+  (colunas fixas A Fazer/Em andamento/Concluído), com data, lead vinculado e responsável.
+- Tabela `activities` (`supabase/schema-activities.sql`), RLS igual aos `leads`.
+- Google Agenda: tokens ficam em `google_calendar_connections`
+  (`supabase/schema-google-calendar.sql`) — RLS sem policies, só a Edge Function
+  `google-calendar` (service role) acede. O front só sabe conectado sim/não via
+  `google_calendar_status()`.
+- Fluxo OAuth: `lib/google-calendar.ts` monta a URL de autorização; o Google
+  redireciona de volta pra `/crm?code=...&state=<workspace_id>`; `App` (em
+  `app/crm/page.tsx`) captura isso e chama a Edge Function pra trocar o code por tokens.
+
+**Setup necessário (uma vez, feito manualmente — o build da Cloudflare não faz isso):**
+1. Google Cloud Console → criar projeto → "APIs e serviços" → ativar **Google Calendar API**.
+2. Criar credencial **OAuth client ID** (tipo "Web application"). Origem autorizada:
+   `https://crm.casacriative.com.br`. URI de redirecionamento autorizado:
+   `https://crm.casacriative.com.br/crm`.
+3. Cloudflare Pages → variável `NEXT_PUBLIC_GOOGLE_CLIENT_ID` = Client ID.
+4. Supabase → Edge Functions → deploy `google-calendar` → Secrets:
+   `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` (o Client Secret nunca vai pro front).
+5. Rodar `schema-activities.sql` e `schema-google-calendar.sql` no SQL Editor.
+
+Sem esse setup, o botão "Conectar Google Agenda" mostra erro pedindo pra configurar
+— o resto do CRM (quadro de atividades, pipeline, etc.) funciona normalmente sem ele.

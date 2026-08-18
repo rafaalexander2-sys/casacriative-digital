@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { INGEST_URL, SUPABASE_ANON } from '@/lib/track'
+import { GOOGLE_CLIENT_ID, googleAuthUrl, googleRedirectUri } from '@/lib/google-calendar'
 import {
   getMyWorkspaces,
   getLeads,
@@ -27,11 +28,26 @@ import {
   updateLead,
   getLeadEvents,
   addNote,
+  getActivities,
+  createActivity,
+  updateActivity,
+  deleteActivity,
+  getActivityStages,
+  createActivityStage,
+  updateActivityStage,
+  deleteActivityStage,
+  reorderActivityStages,
+  updateWorkspaceActivitiesEnabled,
+  hasGoogleCalendar,
+  connectGoogleCalendar,
+  disconnectGoogleCalendar,
+  syncActivityToGoogle,
 } from '@/lib/crm-api'
 import {
   SOURCE_LABELS,
   ROLE_LABELS,
   KIND_LABELS,
+  ACTIVITY_KIND_LABELS,
   DEAL_TYPE_LABELS,
   type Lead,
   type LeadSource,
@@ -43,6 +59,9 @@ import {
   type StageKind,
   type DealType,
   type LeadEvent,
+  type Activity,
+  type ActivityStage,
+  type ActivityStageKind,
 } from '@/lib/crm-types'
 
 // ---- design tokens (estilo Pipedrive, claro) ----
@@ -59,7 +78,7 @@ const C = {
 const BRL = (n?: number | null) =>
   n == null ? '—' : n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-type View = 'pipeline' | 'relatorios' | 'clientes' | 'config'
+type View = 'pipeline' | 'atividades' | 'relatorios' | 'clientes' | 'config'
 
 export default function CrmPage() {
   const [session, setSession] = useState<Session | null>(null)
@@ -238,9 +257,22 @@ function App({ session }: { session: Session }) {
   }, [])
   useEffect(() => { refreshLeads(wsId); loadStages(wsId) }, [wsId, refreshLeads, loadStages])
 
+  // Volta do OAuth do Google Agenda: ?code=...&state=<workspace_id>
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+    const state = params.get('state')
+    if (!code || !state) return
+    window.history.replaceState({}, '', window.location.pathname)
+    connectGoogleCalendar(state, code, googleRedirectUri())
+      .then(() => { setWsId(state); setView('config') })
+      .catch(e => setErr('Falha ao conectar Google Agenda: ' + e.message))
+  }, [])
+
   const ws = workspaces.find(w => w.id === wsId)
-  const nav: { id: View; label: string; icon: string; agency?: boolean }[] = [
+  const nav: { id: View; label: string; icon: string; agency?: boolean; requiresActivities?: boolean }[] = [
     { id: 'pipeline', label: 'Pipeline', icon: '▦' },
+    { id: 'atividades', label: 'Atividades', icon: '☑', requiresActivities: true },
     { id: 'relatorios', label: 'Relatórios', icon: '▤' },
     { id: 'clientes', label: 'Clientes', icon: '◍', agency: true },
     { id: 'config', label: 'Configurações', icon: '⚙' },
@@ -262,7 +294,7 @@ function App({ session }: { session: Session }) {
 
         {/* nav */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {nav.filter(n => !n.agency || isAgency).map(n => (
+          {nav.filter(n => (!n.agency || isAgency) && (!n.requiresActivities || ws?.activities_enabled)).map(n => (
             <button key={n.id} onClick={() => setView(n.id)} className="cc-nav" style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
               fontSize: 14, fontFamily: 'inherit', textAlign: 'left',
@@ -285,6 +317,7 @@ function App({ session }: { session: Session }) {
         {err && <div style={{ background: '#fef2f2', color: '#dc2626', fontSize: 13, padding: '8px 20px', borderBottom: `1px solid ${C.border}` }}>{err}</div>}
         <div key={view} className="cc-fade-up" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {view === 'pipeline' && <PipelineView wsId={wsId} leads={leads} setLeads={setLeads} stages={stages} leadsLoading={leadsLoading} canManage={canManage} onStagesChanged={() => loadStages(wsId)} onErr={setErr} />}
+          {view === 'atividades' && ws?.activities_enabled && <ActivitiesView wsId={wsId} leads={leads} onErr={setErr} />}
           {view === 'relatorios' && <ReportsView ws={ws} leads={leads} stages={stages} />}
           {view === 'clientes' && isAgency && <ClientsView workspaces={workspaces} onChanged={loadWorkspaces} />}
           {view === 'config' && <SettingsView session={session} ws={ws} leads={leads} />}
@@ -380,6 +413,249 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
         onSaved={u => { setLeads(ls => ls.map(l => l.id === u.id ? u : l)); setSelected(u) }}
         onDeleted={id => { setLeads(ls => ls.filter(l => l.id !== id)); setSelected(null) }} />}
     </>
+  )
+}
+
+// ================================================================ ATIVIDADES (quadro estilo Trello)
+function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr: (m: string) => void }) {
+  const [items, setItems] = useState<Activity[]>([])
+  const [stages, setStages] = useState<ActivityStage[]>([])
+  const [loading, setLoading] = useState(true)
+  const [canManage, setCanManage] = useState(false)
+  const [showAdd, setShowAdd] = useState(false)
+  const [showFunnel, setShowFunnel] = useState(false)
+  const [selected, setSelected] = useState<Activity | null>(null)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [cal, setCal] = useState<{ connected: boolean; email?: string | null }>({ connected: false })
+
+  const loadStages = useCallback(() => {
+    if (!wsId) return
+    getActivityStages(wsId).then(setStages).catch(e => onErr(e.message))
+    canManageFunnel(wsId).then(setCanManage).catch(() => setCanManage(false))
+  }, [wsId, onErr])
+
+  const load = useCallback(() => {
+    if (!wsId) return
+    setLoading(true)
+    getActivities(wsId).then(setItems).catch(e => onErr(e.message)).finally(() => setLoading(false))
+  }, [wsId, onErr])
+  useEffect(() => { load(); loadStages() }, [load, loadStages])
+  useEffect(() => { if (wsId) hasGoogleCalendar(wsId).then(setCal).catch(() => setCal({ connected: false })) }, [wsId])
+
+  const onDrop = async (status: string) => {
+    const a = items.find(x => x.id === dragId); setDragId(null)
+    if (!a || a.status === status) return
+    setItems(ls => ls.map(x => x.id === a.id ? { ...x, status } : x))
+    try { await updateActivity(a.id, { status }) } catch (e: any) { onErr(e.message) }
+  }
+
+  const leadName = (id?: string | null) => leads.find(l => l.id === id)?.name
+
+  return (
+    <>
+      <Topbar title="Atividades" subtitle={cal.connected ? `Google Agenda conectada${cal.email ? ' · ' + cal.email : ''}` : 'Quadro de tarefas do espaço'} right={
+        <>
+          {canManage && <button onClick={() => setShowFunnel(true)} className="cc-btn" style={{ ...btnGhost, width: 'auto', padding: '9px 14px' }}>Editar quadro</button>}
+          <button onClick={() => setShowAdd(true)} className="cc-btn" style={{ ...btn, width: 'auto', padding: '9px 16px' }}>+ Atividade</button>
+        </>
+      } />
+      <div style={{ flex: 1, overflow: 'hidden', padding: 16 }}>
+        <div style={{ display: 'flex', gap: 12, height: '100%', overflowX: 'auto', paddingBottom: 4 }}>
+          {stages.map(stage => {
+            const col = items.filter(a => a.status === stage.key)
+            return (
+              <div key={stage.id} onDragOver={e => e.preventDefault()} onDrop={() => onDrop(stage.key)}
+                style={{ width: 280, flexShrink: 0, background: C.col, borderRadius: 12, display: 'flex', flexDirection: 'column', maxHeight: '100%' }}>
+                <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: `2px solid ${stage.color}` }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 4, background: stage.color }} />
+                  <span style={{ fontSize: 13, fontWeight: 700 }}>{stage.label}</span>
+                  <span style={{ fontSize: 12, color: C.muted, marginLeft: 'auto' }}>{col.length}</span>
+                </div>
+                <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
+                  {loading && [0, 1].map(i => <div key={i} className="cc-skel" style={{ height: 64, background: '#e3e6ea' }} />)}
+                  {!loading && col.map(a => (
+                    <div key={a.id} draggable onDragStart={() => setDragId(a.id)} onClick={() => setSelected(a)} className="cc-card cc-fade-up" title="Abrir para editar"
+                      style={{ background: C.panel, borderRadius: 8, padding: 12, cursor: 'pointer', border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+                      <b style={{ fontSize: 14 }}>{a.title}</b>
+                      {leadName(a.lead_id) && <p style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{leadName(a.lead_id)}</p>}
+                      <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                        {a.due_date && (
+                          <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: 'rgba(196,122,74,0.12)', color: C.brandDark }}>
+                            {new Date(a.due_date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                        {a.google_event_id && <span style={{ fontSize: 10, color: '#16a34a' }}>✓ Agenda</span>}
+                      </div>
+                      {a.assigned_to && <p style={{ fontSize: 11, color: '#9aa1ab', marginTop: 6 }}>{a.assigned_to}</p>}
+                    </div>
+                  ))}
+                  {!loading && col.length === 0 && <p style={{ fontSize: 12, color: '#b6bcc4', textAlign: 'center', padding: 10 }}>vazio</p>}
+                </div>
+              </div>
+            )
+          })}
+          {stages.length === 0 && <p style={{ fontSize: 13, color: C.muted, padding: 20 }}>Sem colunas. Rode o SQL schema-activity-stages.sql.</p>}
+        </div>
+      </div>
+
+      {showAdd && (
+        <ActivityModal wsId={wsId} leads={leads} calConnected={cal.connected} firstStage={stages[0]?.key}
+          onClose={() => setShowAdd(false)}
+          onSaved={a => { setItems(ls => [a, ...ls]); setShowAdd(false) }} />
+      )}
+      {selected && (
+        <ActivityModal wsId={wsId} leads={leads} calConnected={cal.connected} activity={selected}
+          onClose={() => setSelected(null)}
+          onSaved={a => { setItems(ls => ls.map(x => x.id === a.id ? a : x)); setSelected(null) }}
+          onDeleted={id => { setItems(ls => ls.filter(x => x.id !== id)); setSelected(null) }} />
+      )}
+
+      {showFunnel && <ActivityFunnelEditor wsId={wsId} stages={stages} onClose={() => setShowFunnel(false)} onChanged={loadStages} />}
+    </>
+  )
+}
+
+// ---- Editor das colunas do quadro de Atividades (mesmo padrão do funil de leads) ----
+function ActivityFunnelEditor({ wsId, stages, onClose, onChanged }: { wsId: string; stages: ActivityStage[]; onClose: () => void; onChanged: () => void }) {
+  const [list, setList] = useState<ActivityStage[]>(stages)
+  const [newLabel, setNewLabel] = useState('')
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const reload = () => getActivityStages(wsId).then(l => { setList(l); onChanged() }).catch(e => setErr(e.message))
+
+  const add = async () => {
+    if (!newLabel.trim()) return
+    setBusy(true); setErr('')
+    try { await createActivityStage(wsId, { label: newLabel.trim(), position: list.length + 1 }); setNewLabel(''); await reload() }
+    catch (e: any) { setErr(e.message) }
+    setBusy(false)
+  }
+  const patch = async (id: string, p: Partial<ActivityStage>) => {
+    setList(ls => ls.map(s => s.id === id ? { ...s, ...p } : s))
+    try { await updateActivityStage(id, p as any); onChanged() } catch (e: any) { setErr(e.message) }
+  }
+  const remove = async (id: string) => {
+    if (!confirm('Apagar esta coluna? As atividades nela ficam sem coluna.')) return
+    try { await deleteActivityStage(id); await reload() } catch (e: any) { setErr(e.message) }
+  }
+  const move = async (i: number, dir: -1 | 1) => {
+    const j = i + dir
+    if (j < 0 || j >= list.length) return
+    const next = [...list]; [next[i], next[j]] = [next[j], next[i]]
+    setList(next)
+    try { await reorderActivityStages(next); onChanged() } catch (e: any) { setErr(e.message) }
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 14 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Editar quadro</h2>
+        <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 20 }}>×</button>
+      </div>
+      {err && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14, maxHeight: '50vh', overflowY: 'auto' }}>
+        {list.map((s, i) => (
+          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 6, border: `1px solid ${C.border}`, borderRadius: 8, padding: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <button onClick={() => move(i, -1)} disabled={i === 0} style={arrowBtn}>▲</button>
+              <button onClick={() => move(i, 1)} disabled={i === list.length - 1} style={arrowBtn}>▼</button>
+            </div>
+            <input type="color" value={s.color} onChange={e => patch(s.id, { color: e.target.value })} style={{ width: 30, height: 30, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }} />
+            <input value={s.label} onChange={e => setList(ls => ls.map(x => x.id === s.id ? { ...x, label: e.target.value } : x))} onBlur={e => patch(s.id, { label: e.target.value })} style={{ ...input, flex: 1 }} />
+            <select value={s.kind} onChange={e => patch(s.id, { kind: e.target.value as ActivityStageKind })} style={{ ...input, width: 'auto' }}>
+              {Object.entries(ACTIVITY_KIND_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <button onClick={() => remove(s.id)} style={{ background: 'none', border: 'none', color: '#cbd0d6', cursor: 'pointer', fontSize: 18 }}>×</button>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Nova coluna" style={{ ...input, flex: 1 }} onKeyDown={e => e.key === 'Enter' && add()} />
+        <button onClick={add} disabled={busy} style={{ ...btn, width: 'auto', padding: '10px 18px' }}>+ Coluna</button>
+      </div>
+      <p style={{ fontSize: 11, color: C.muted, marginTop: 10 }}>Dica: marque uma coluna como <b>Concluído</b> pra sinalizar tarefa terminada.</p>
+    </Modal>
+  )
+}
+
+function toLocalInput(iso: string): string {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClose, onSaved, onDeleted }: {
+  wsId: string; leads: Lead[]; calConnected: boolean; activity?: Activity; firstStage?: string
+  onClose: () => void; onSaved: (a: Activity) => void; onDeleted?: (id: string) => void
+}) {
+  const [f, setF] = useState({
+    title: activity?.title ?? '', description: activity?.description ?? '',
+    due_date: activity?.due_date ? toLocalInput(activity.due_date) : '',
+    lead_id: activity?.lead_id ?? '', assigned_to: activity?.assigned_to ?? '',
+  })
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault(); setBusy(true); setErr('')
+    try {
+      const due_date = f.due_date ? new Date(f.due_date).toISOString() : null
+      const patch = {
+        title: f.title, description: f.description || null, due_date,
+        lead_id: f.lead_id || null, assigned_to: f.assigned_to || null,
+      }
+      let saved = activity ? await updateActivity(activity.id, patch) : await createActivity(wsId, { ...patch, ...(firstStage ? { status: firstStage } : {}) })
+
+      if (calConnected) {
+        try {
+          const r = await syncActivityToGoogle(wsId, saved)
+          if (r.google_event_id !== saved.google_event_id) {
+            saved = await updateActivity(saved.id, { google_event_id: r.google_event_id })
+          }
+        } catch (e: any) {
+          setErr('Atividade salva, mas falhou ao sincronizar com o Google Agenda: ' + e.message)
+        }
+      }
+      onSaved(saved)
+    } catch (e: any) { setErr(e.message) }
+    setBusy(false)
+  }
+
+  const remove = async () => {
+    if (!activity || !confirm(`Apagar a atividade "${activity.title}"?`)) return
+    try {
+      if (activity.google_event_id && calConnected) {
+        await syncActivityToGoogle(wsId, { ...activity, due_date: null }).catch(() => {})
+      }
+      await deleteActivity(activity.id)
+      onDeleted?.(activity.id)
+    } catch (e: any) { setErr(e.message) }
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{activity ? 'Editar atividade' : 'Nova atividade'}</h2>
+        <input placeholder="Título *" required value={f.title} onChange={e => setF({ ...f, title: e.target.value })} style={input} />
+        <textarea placeholder="Descrição" value={f.description} onChange={e => setF({ ...f, description: e.target.value })} rows={2} style={{ ...input, resize: 'vertical' }} />
+        <input type="datetime-local" value={f.due_date} onChange={e => setF({ ...f, due_date: e.target.value })} style={input} />
+        <select value={f.lead_id} onChange={e => setF({ ...f, lead_id: e.target.value })} style={input}>
+          <option value="">Sem lead vinculado</option>
+          {leads.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+        </select>
+        <input placeholder="Responsável (nome)" value={f.assigned_to} onChange={e => setF({ ...f, assigned_to: e.target.value })} style={input} />
+        {f.due_date && !calConnected && <p style={{ fontSize: 12, color: C.muted }}>Conecte o Google Agenda em Configurações para sincronizar esta data automaticamente.</p>}
+        {err && <p style={{ color: '#dc2626', fontSize: 13 }}>{err}</p>}
+        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+          {activity && <button type="button" onClick={remove} style={{ ...btnGhost, width: 'auto', padding: '10px 14px', color: '#dc2626' }}>Apagar</button>}
+          <button type="button" onClick={onClose} style={btnGhost}>Cancelar</button>
+          <button type="submit" disabled={busy} className="cc-btn" style={btn}>{busy ? <Spinner /> : 'Salvar'}</button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 
@@ -658,8 +934,52 @@ function SettingsView({ session, ws, leads }: { session: Session; ws?: Workspace
             <button onClick={exportJson} style={{ ...btnGhost, width: 'auto', padding: '10px 16px' }}>Backup JSON</button>
           </div>
         </Section>
+
+        <GoogleCalendarSection ws={ws} />
       </div>
     </>
+  )
+}
+
+// ---- Google Agenda: conectar/desconectar o espaço atual ----
+function GoogleCalendarSection({ ws }: { ws?: Workspace }) {
+  const [status, setStatus] = useState<{ connected: boolean; email?: string | null } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+
+  const load = useCallback(() => {
+    if (!ws) return
+    hasGoogleCalendar(ws.id).then(setStatus).catch(() => setStatus({ connected: false }))
+  }, [ws])
+  useEffect(() => { load() }, [load])
+
+  const connect = () => {
+    if (!ws) return
+    if (!GOOGLE_CLIENT_ID) { setErr('Integração não configurada: falta a variável NEXT_PUBLIC_GOOGLE_CLIENT_ID.'); return }
+    window.location.href = googleAuthUrl(ws.id)
+  }
+  const disconnect = async () => {
+    if (!ws || !confirm('Desconectar o Google Agenda deste espaço? As atividades deixam de ser sincronizadas.')) return
+    setBusy(true); setErr('')
+    try { await disconnectGoogleCalendar(ws.id); await load() } catch (e: any) { setErr(e.message) }
+    setBusy(false)
+  }
+
+  return (
+    <Section title="Google Agenda">
+      <p style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>
+        Conecte o Google Agenda deste espaço para que as atividades com data virem eventos automaticamente (aba Atividades).
+      </p>
+      {err && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
+      {status?.connected ? (
+        <>
+          <p style={{ fontSize: 13, color: '#16a34a', marginBottom: 10 }}>✓ Conectado{status.email ? ` como ${status.email}` : ''}</p>
+          <button onClick={disconnect} disabled={busy} className="cc-btn" style={{ ...btnGhost, width: 'auto', padding: '10px 16px', color: '#dc2626' }}>{busy ? <Spinner dark /> : 'Desconectar'}</button>
+        </>
+      ) : (
+        <button onClick={connect} className="cc-btn" style={{ ...btn, width: 'auto', padding: '10px 16px' }}>Conectar Google Agenda</button>
+      )}
+    </Section>
   )
 }
 
@@ -704,14 +1024,14 @@ function ClientsView({ workspaces, onChanged }: { workspaces: Workspace[]; onCha
           ))}
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-          {selected ? <MembersPanel workspace={selected} /> : <p style={{ fontSize: 13, color: C.muted }}>Selecione um cliente.</p>}
+          {selected ? <MembersPanel workspace={selected} onChanged={onChanged} /> : <p style={{ fontSize: 13, color: C.muted }}>Selecione um cliente.</p>}
         </div>
       </div>
     </>
   )
 }
 
-function MembersPanel({ workspace }: { workspace: Workspace }) {
+function MembersPanel({ workspace, onChanged }: { workspace: Workspace; onChanged: () => void }) {
   const [members, setMembers] = useState<Member[]>([])
   const [invites, setInvites] = useState<Invitation[]>([])
   const [email, setEmail] = useState('')
@@ -720,6 +1040,18 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
   const [creds, setCreds] = useState<{ email: string; password: string; existed: boolean } | null>(null)
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [activitiesEnabled, setActivitiesEnabled] = useState(workspace.activities_enabled)
+  const [togglingActivities, setTogglingActivities] = useState(false)
+
+  useEffect(() => { setActivitiesEnabled(workspace.activities_enabled) }, [workspace.id, workspace.activities_enabled])
+
+  const toggleActivities = async () => {
+    const next = !activitiesEnabled
+    setTogglingActivities(true); setErr('')
+    try { await updateWorkspaceActivitiesEnabled(workspace.id, next); setActivitiesEnabled(next); onChanged() }
+    catch (e: any) { setErr(e.message) }
+    setTogglingActivities(false)
+  }
 
   const load = useCallback(() => {
     setErr('')
@@ -744,7 +1076,11 @@ function MembersPanel({ workspace }: { workspace: Workspace }) {
 
   return (
     <div>
-      <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>{workspace.name}</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{workspace.name}</h3>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: C.text, marginBottom: 14, cursor: 'pointer' }}>
+        <input type="checkbox" checked={activitiesEnabled} disabled={togglingActivities} onChange={toggleActivities} />
+        Ativar quadro de Atividades (Trello) pra este cliente
+      </label>
       <form onSubmit={invite} style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
         <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="e-mail da pessoa" style={{ ...input, flex: '1 1 180px' }} />
         <select value={role} onChange={e => setRole(e.target.value as MemberRole)} style={{ ...input, width: 'auto' }}>

@@ -54,6 +54,7 @@ export interface Workspace {
   name: string
   is_agency: boolean
   ingest_token?: string | null
+  activities_enabled: boolean
   created_at: string
 }
 
@@ -124,4 +125,37 @@ export const SOURCE_LABELS: Record<LeadSource, string> = {
   google_ads: 'Google Ads',
   manual: 'Manual',
   import: 'Importação',
+}
+
+// ---- Atividades (quadro estilo Trello, colunas customizáveis por cliente) ----
+export type ActivityStageKind = 'open' | 'done'
+
+export interface ActivityStage {
+  id: string
+  workspace_id: string
+  key: string
+  label: string
+  position: number
+  color: string
+  kind: ActivityStageKind
+}
+
+export const ACTIVITY_KIND_LABELS: Record<ActivityStageKind, string> = {
+  open: 'Em aberto',
+  done: 'Concluído',
+}
+
+export interface Activity {
+  id: string
+  workspace_id: string
+  lead_id?: string | null
+  title: string
+  description?: string | null
+  status: string
+  due_date?: string | null
+  assigned_to?: string | null
+  position: number
+  google_event_id?: string | null
+  created_at: string
+  updated_at: string
 }
