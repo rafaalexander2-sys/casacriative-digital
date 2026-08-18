@@ -1,5 +1,15 @@
 import { supabase } from './supabase'
-import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent } from './crm-types'
+import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity } from './crm-types'
+
+// Extrai uma mensagem legível do erro de uma Edge Function (supabase.functions.invoke)
+async function fnErrorMessage(error: any): Promise<string> {
+  let msg = error?.message ?? 'Falha na requisição.'
+  try {
+    const j = await error?.context?.json?.()
+    if (j?.error) msg = j.error
+  } catch {}
+  return msg
+}
 
 // ---- Workspaces do utilizador logado ----
 export async function getMyWorkspaces(): Promise<Workspace[]> {
@@ -79,14 +89,7 @@ export async function addPerson(
   const { data, error } = await supabase.functions.invoke('invite-user', {
     body: { workspace_id: workspaceId, email, role },
   })
-  if (error) {
-    let msg = error.message
-    try {
-      const j = await (error as any).context?.json?.()
-      if (j?.error) msg = j.error
-    } catch {}
-    throw new Error(msg)
-  }
+  if (error) throw new Error(await fnErrorMessage(error))
   if (data?.error) throw new Error(data.error)
   return data
 }
@@ -241,6 +244,82 @@ export async function addNote(lead: Lead, message: string): Promise<void> {
 export async function deleteLead(id: string): Promise<void> {
   const { error } = await supabase.from('leads').delete().eq('id', id)
   if (error) throw error
+}
+
+// ---- Atividades (quadro estilo Trello) ----
+export async function getActivities(workspaceId: string): Promise<Activity[]> {
+  const { data, error } = await supabase
+    .from('activities')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('position')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function createActivity(
+  workspaceId: string,
+  input: Partial<Activity> & { title: string },
+): Promise<Activity> {
+  const { data, error } = await supabase
+    .from('activities')
+    .insert({ ...input, workspace_id: workspaceId })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateActivity(id: string, patch: Partial<Activity>): Promise<Activity> {
+  const { data, error } = await supabase.from('activities').update(patch).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteActivity(id: string): Promise<void> {
+  const { error } = await supabase.from('activities').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ---- Google Agenda ----
+export async function hasGoogleCalendar(workspaceId: string): Promise<{ connected: boolean; email?: string | null }> {
+  const { data, error } = await supabase.rpc('google_calendar_status', { ws: workspaceId })
+  if (error) throw error
+  const row = data?.[0]
+  return { connected: !!row?.connected, email: row?.email ?? null }
+}
+
+export async function connectGoogleCalendar(workspaceId: string, code: string, redirectUri: string): Promise<{ ok: true; email: string | null }> {
+  const { data, error } = await supabase.functions.invoke('google-calendar', {
+    body: { action: 'connect', workspace_id: workspaceId, code, redirect_uri: redirectUri },
+  })
+  if (error) throw new Error(await fnErrorMessage(error))
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
+export async function disconnectGoogleCalendar(workspaceId: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke('google-calendar', {
+    body: { action: 'disconnect', workspace_id: workspaceId },
+  })
+  if (error) throw new Error(await fnErrorMessage(error))
+  if (data?.error) throw new Error(data.error)
+}
+
+export async function syncActivityToGoogle(workspaceId: string, activity: Activity): Promise<{ ok: true; google_event_id: string | null }> {
+  const { data, error } = await supabase.functions.invoke('google-calendar', {
+    body: {
+      action: 'sync',
+      workspace_id: workspaceId,
+      activity: {
+        id: activity.id, title: activity.title, description: activity.description,
+        due_date: activity.due_date, google_event_id: activity.google_event_id,
+      },
+    },
+  })
+  if (error) throw new Error(await fnErrorMessage(error))
+  if (data?.error) throw new Error(data.error)
+  return data
 }
 
 // ---- Histórico de eventos ----

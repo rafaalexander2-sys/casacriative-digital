@@ -125,3 +125,35 @@ export const SOURCE_LABELS: Record<LeadSource, string> = {
   manual: 'Manual',
   import: 'Importação',
 }
+
+// ---- Atividades (quadro estilo Trello) ----
+export type ActivityStatus = 'todo' | 'doing' | 'done'
+
+export const ACTIVITY_STATUS_ORDER: ActivityStatus[] = ['todo', 'doing', 'done']
+
+export const ACTIVITY_STATUS_LABELS: Record<ActivityStatus, string> = {
+  todo: 'A Fazer',
+  doing: 'Em andamento',
+  done: 'Concluído',
+}
+
+export const ACTIVITY_STATUS_COLORS: Record<ActivityStatus, string> = {
+  todo: '#64748b',
+  doing: '#3b82f6',
+  done: '#22c55e',
+}
+
+export interface Activity {
+  id: string
+  workspace_id: string
+  lead_id?: string | null
+  title: string
+  description?: string | null
+  status: ActivityStatus
+  due_date?: string | null
+  assigned_to?: string | null
+  position: number
+  google_event_id?: string | null
+  created_at: string
+  updated_at: string
+}
