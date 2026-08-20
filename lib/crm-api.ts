@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity, ActivityStage, ActivityStageKind, ActivityItem, ActivityAttachment } from './crm-types'
+import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity, ActivityStage, ActivityStageKind, ActivityItem, ActivityAttachment, ActivityNotification } from './crm-types'
 
 // Extrai uma mensagem legível do erro de uma Edge Function (supabase.functions.invoke)
 async function fnErrorMessage(error: any): Promise<string> {
@@ -33,6 +33,18 @@ export async function isAgencyMember(): Promise<boolean> {
   const { data, error } = await supabase.rpc('is_agency_member')
   if (error) throw error
   return !!data
+}
+
+// ---- Renomear um cliente/espaço ----
+export async function renameWorkspace(workspaceId: string, name: string): Promise<Workspace> {
+  const { data, error } = await supabase
+    .from('workspaces')
+    .update({ name: name.trim() })
+    .eq('id', workspaceId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
 }
 
 // ---- Ativar/desativar o quadro de Atividades de um cliente ----
@@ -330,6 +342,57 @@ export async function updateActivityItem(id: string, patch: Partial<Pick<Activit
 
 export async function deleteActivityItem(id: string): Promise<void> {
   const { error } = await supabase.from('activity_items').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ---- Notificações (o sininho) ----
+export async function getMyNotifications(limit = 30): Promise<ActivityNotification[]> {
+  const { data, error } = await supabase
+    .from('activity_notifications')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('activity_notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  const { data: userData } = await supabase.auth.getUser()
+  if (!userData.user) return
+  const { error } = await supabase
+    .from('activity_notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('user_id', userData.user.id)
+    .is('read_at', null)
+  if (error) throw error
+}
+
+// Avisa quem foi marcado numa atividade (não avisa a própria pessoa)
+export async function notifyAssignment(activity: Activity, userId: string, actorEmail?: string | null): Promise<void> {
+  const { data: userData } = await supabase.auth.getUser()
+  const actorId = userData.user?.id ?? null
+  if (userId === actorId) return
+
+  const quando = activity.due_date
+    ? ` · entrega ${new Date(activity.due_date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
+    : ''
+  const { error } = await supabase.from('activity_notifications').insert({
+    workspace_id: activity.workspace_id,
+    activity_id: activity.id,
+    user_id: userId,
+    actor_id: actorId,
+    type: 'assigned',
+    title: activity.title,
+    message: `${actorEmail ? actorEmail + ' marcou' : 'Marcaram'} você nesta tarefa${quando}`,
+  })
   if (error) throw error
 }
 

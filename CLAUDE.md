@@ -94,6 +94,13 @@ Para ver logs de build com erro: aba **Implantações** → deploy → **Detalhe
   cria a próxima ocorrência com datas avançadas e checklist zerado.
 - **Anexos**: bucket privado `activity-files` no Storage, caminho
   `<workspace_id>/<activity_id>/<ficheiro>`; dá pra colar imagem (Ctrl+V) no modal.
+- **Responsável + notificações** (`schema-activity-notify.sql`): `activities.assigned_user_id`
+  aponta pra um utilizador real; ao marcar alguém, cai uma linha em
+  `activity_notifications` que a pessoa vê no sininho da sidebar ao entrar.
+  Esse SQL também libera `list_members` pros membros do próprio espaço
+  (antes só a agência conseguia listar, o que impedia escolher responsável).
+- **Renomear cliente**: campo no topo de Clientes → (selecionar) — vale também
+  pro espaço da própria agência, que aparece na mesma lista.
 - **Link público** (`/t?t=<share_token>`): página estática que lê o token e chama a
   Edge Function pública `public-task` (deploy com "Verify JWT" DESLIGADO, igual
   `ingest-lead`). Só responde se o cartão estiver com `share_enabled = true`;

@@ -164,6 +164,20 @@ export const ACTIVITY_PRIORITY_COLORS: Record<ActivityPriority, string> = {
   low: '#94a3b8',
 }
 
+// Aviso que aparece no sininho do CRM
+export interface ActivityNotification {
+  id: string
+  workspace_id: string
+  activity_id?: string | null
+  user_id: string
+  actor_id?: string | null
+  type: string
+  title: string
+  message?: string | null
+  read_at?: string | null
+  created_at: string
+}
+
 // Anexo do briefing (imagem, PDF…) — o ficheiro fica no Storage
 export interface ActivityAttachment {
   id: string
@@ -210,7 +224,8 @@ export interface Activity {
   due_date?: string | null        // data de entrega (é a que sincroniza com o Google Agenda)
   tags: string[]
   estimate_hours?: number | null
-  assigned_to?: string | null
+  assigned_to?: string | null           // nome livre (quem não tem login)
+  assigned_user_id?: string | null      // pessoa marcada, com login no CRM
   recurrence: ActivityRecurrence
   recurrence_parent?: string | null
   share_token?: string | null

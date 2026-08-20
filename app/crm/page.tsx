@@ -43,6 +43,11 @@ import {
   deleteAttachment,
   setActivityShare,
   spawnNextOccurrence,
+  renameWorkspace,
+  getMyNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  notifyAssignment,
   getActivityStages,
   createActivityStage,
   updateActivityStage,
@@ -78,6 +83,7 @@ import {
   type LeadEvent,
   type Activity,
   type ActivityAttachment,
+  type ActivityNotification,
   type ActivityItem,
   type ActivityPriority,
   type ActivityRecurrence,
@@ -250,7 +256,23 @@ function App({ session }: { session: Session }) {
   const [leadsLoading, setLeadsLoading] = useState(true)
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [canManage, setCanManage] = useState(false)
+  const [notifs, setNotifs] = useState<ActivityNotification[]>([])
+  const [showNotifs, setShowNotifs] = useState(false)
   const [err, setErr] = useState('')
+
+  const unread = notifs.filter(n => !n.read_at).length
+
+  const loadNotifs = useCallback(() => {
+    getMyNotifications().then(setNotifs).catch(() => setNotifs([]))
+  }, [])
+
+  // Carrega ao entrar e reconfere de tempos em tempos, pra pegar o que
+  // foi atribuído enquanto a aba ficou aberta
+  useEffect(() => {
+    loadNotifs()
+    const t = setInterval(loadNotifs, 120000)
+    return () => clearInterval(t)
+  }, [loadNotifs])
 
   const loadWorkspaces = useCallback(() => {
     return getMyWorkspaces().then(ws => {
@@ -329,6 +351,17 @@ function App({ session }: { session: Session }) {
         </nav>
 
         <div style={{ marginTop: 'auto', borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+          <button onClick={() => setShowNotifs(true)} className="cc-nav" style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, border: 'none',
+            cursor: 'pointer', fontSize: 14, fontFamily: 'inherit', textAlign: 'left', background: 'transparent',
+            color: C.text, width: '100%', marginBottom: 8,
+          }}>
+            <span style={{ width: 18, textAlign: 'center', opacity: .8 }}>🔔</span>
+            Notificações
+            {unread > 0 && (
+              <span style={{ marginLeft: 'auto', background: '#dc2626', color: '#fff', fontSize: 11, fontWeight: 700, borderRadius: 10, padding: '1px 7px', minWidth: 20, textAlign: 'center' }}>{unread}</span>
+            )}
+          </button>
           <p style={{ fontSize: 12, color: C.muted, padding: '0 8px 8px', wordBreak: 'break-all' }}>{session.user.email}</p>
           <button onClick={() => supabase.auth.signOut()} style={{ ...linkBtn, textAlign: 'left', padding: '0 8px' }}>Sair</button>
         </div>
@@ -346,7 +379,75 @@ function App({ session }: { session: Session }) {
           {view === 'config' && <SettingsView session={session} ws={ws} leads={leads} />}
         </div>
       </section>
+
+      {showNotifs && (
+        <NotificationsPanel
+          notifs={notifs}
+          workspaces={workspaces}
+          onClose={() => setShowNotifs(false)}
+          onChanged={loadNotifs}
+          onOpenActivity={n => {
+            if (n.workspace_id) setWsId(n.workspace_id)
+            setView('atividades')
+            setShowNotifs(false)
+          }}
+        />
+      )}
     </main>
+  )
+}
+
+// ---- Sininho: o que marcaram pra mim ----
+function NotificationsPanel({ notifs, workspaces, onClose, onChanged, onOpenActivity }: {
+  notifs: ActivityNotification[]; workspaces: Workspace[]
+  onClose: () => void; onChanged: () => void; onOpenActivity: (n: ActivityNotification) => void
+}) {
+  const unread = notifs.filter(n => !n.read_at).length
+  const wsName = (id: string) => workspaces.find(w => w.id === id)?.name
+  const when = (iso: string) => {
+    const diff = Date.now() - new Date(iso).getTime()
+    const min = Math.round(diff / 60000)
+    if (min < 1) return 'agora'
+    if (min < 60) return `há ${min} min`
+    const h = Math.round(min / 60)
+    if (h < 24) return `há ${h}h`
+    return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  }
+
+  return (
+    <Modal onClose={onClose} maxWidth={480}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 14 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Notificações</h2>
+        {unread > 0 && (
+          <button onClick={async () => { await markAllNotificationsRead().catch(() => {}); onChanged() }}
+            style={{ ...linkBtn, marginLeft: 'auto', color: C.brand }}>Marcar todas como lidas</button>
+        )}
+        <button onClick={onClose} style={{ marginLeft: unread > 0 ? 12 : 'auto', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 20 }}>×</button>
+      </div>
+
+      {notifs.length === 0 && <p style={{ fontSize: 13, color: C.muted, padding: '12px 0' }}>Nada por aqui ainda. Quando alguém te marcar numa tarefa, aparece aqui.</p>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '60vh', overflowY: 'auto' }}>
+        {notifs.map(n => (
+          <button key={n.id}
+            onClick={async () => { if (!n.read_at) { await markNotificationRead(n.id).catch(() => {}); onChanged() } onOpenActivity(n) }}
+            style={{
+              display: 'flex', gap: 10, textAlign: 'left', width: '100%', border: 'none', cursor: 'pointer',
+              background: n.read_at ? 'transparent' : 'rgba(196,122,74,0.07)',
+              borderBottom: `1px solid ${C.border}`, padding: '11px 10px', fontFamily: 'inherit', borderRadius: 8,
+            }}>
+            <span style={{ width: 7, height: 7, borderRadius: 4, background: n.read_at ? 'transparent' : C.brand, marginTop: 6, flexShrink: 0 }} />
+            <span style={{ flex: 1 }}>
+              <span style={{ display: 'block', fontSize: 14, fontWeight: n.read_at ? 500 : 700, color: C.text }}>{n.title}</span>
+              {n.message && <span style={{ display: 'block', fontSize: 12, color: C.muted, marginTop: 2 }}>{n.message}</span>}
+              <span style={{ display: 'block', fontSize: 11, color: '#9aa1ab', marginTop: 3 }}>
+                {wsName(n.workspace_id) ? wsName(n.workspace_id) + ' · ' : ''}{when(n.created_at)}
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </Modal>
   )
 }
 
@@ -910,7 +1011,12 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
     due_date: activity?.due_date ? toLocalInput(activity.due_date) : '',
     estimate_hours: activity?.estimate_hours != null ? String(activity.estimate_hours) : '',
     lead_id: activity?.lead_id ?? '', assigned_to: activity?.assigned_to ?? '',
+    assigned_user_id: activity?.assigned_user_id ?? '',
   })
+  const [members, setMembers] = useState<Member[]>([])
+  const [assignMode, setAssignMode] = useState<'none' | 'member' | 'free'>(
+    activity?.assigned_user_id ? 'member' : activity?.assigned_to ? 'free' : 'none',
+  )
   const [tags, setTags] = useState<string[]>(activity?.tags ?? [])
   const [tagInput, setTagInput] = useState('')
   const [items, setItems] = useState<ActivityItem[]>([])
@@ -923,6 +1029,11 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
   const [shareCopied, setShareCopied] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+
+  // Quem pode ser marcado como responsável neste espaço
+  const [myEmail, setMyEmail] = useState<string | null>(null)
+  useEffect(() => { if (wsId) listMembers(wsId).then(setMembers).catch(() => setMembers([])) }, [wsId])
+  useEffect(() => { supabase.auth.getUser().then(({ data }) => setMyEmail(data.user?.email ?? null)) }, [])
 
   // Checklist e anexos só existem no banco depois que a atividade existe
   useEffect(() => {
@@ -1018,9 +1129,17 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
         due_date: f.due_date ? new Date(f.due_date).toISOString() : null,
         estimate_hours: f.estimate_hours ? Number(f.estimate_hours) : null,
         tags,
-        lead_id: f.lead_id || null, assigned_to: f.assigned_to || null,
+        lead_id: f.lead_id || null,
+        assigned_to: f.assigned_to || null,
+        assigned_user_id: assignMode === 'member' ? (f.assigned_user_id || null) : null,
       }
       let saved = activity ? await updateActivity(activity.id, patch) : await createActivity(wsId, { ...patch, ...(firstStage ? { status: firstStage } : {}) })
+
+      // Marcou alguém novo? Deixa o aviso pra pessoa ver quando entrar
+      const antes = activity?.assigned_user_id ?? null
+      if (saved.assigned_user_id && saved.assigned_user_id !== antes) {
+        await notifyAssignment(saved, saved.assigned_user_id, myEmail).catch(() => {})
+      }
 
       // Atividade nova: agora que ela existe, grava o checklist rascunhado
       if (!activity && drafts.length > 0) {
@@ -1108,7 +1227,22 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
           </div>
           <div>
             <p style={fieldLabel}>Responsável</p>
-            <input placeholder="Nome" value={f.assigned_to} onChange={e => setF({ ...f, assigned_to: e.target.value })} style={input} />
+            <select
+              value={assignMode === 'member' ? f.assigned_user_id : assignMode === 'free' ? '__free__' : ''}
+              onChange={e => {
+                const v = e.target.value
+                if (v === '') { setAssignMode('none'); setF({ ...f, assigned_user_id: '', assigned_to: '' }) }
+                else if (v === '__free__') { setAssignMode('free'); setF({ ...f, assigned_user_id: '' }) }
+                else {
+                  setAssignMode('member')
+                  setF({ ...f, assigned_user_id: v, assigned_to: members.find(m => m.user_id === v)?.email ?? '' })
+                }
+              }}
+              style={input}>
+              <option value="">— Ninguém —</option>
+              {members.map(m => <option key={m.user_id} value={m.user_id}>{m.email}</option>)}
+              <option value="__free__">Outro (digitar nome)</option>
+            </select>
           </div>
         </div>
 
@@ -1127,6 +1261,12 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
             </select>
           </div>
         </div>
+        {assignMode === 'free' && (
+          <input placeholder="Nome do responsável" value={f.assigned_to} onChange={e => setF({ ...f, assigned_to: e.target.value })} style={{ ...input, marginTop: -6 }} />
+        )}
+        {assignMode === 'member' && (
+          <p style={{ fontSize: 12, color: C.muted, marginTop: -6 }}>Essa pessoa recebe um aviso no CRM assim que entrar.</p>
+        )}
         {f.recurrence !== 'none' && (
           <p style={{ fontSize: 12, color: C.muted, marginTop: -6 }}>
             Ao mover pra uma coluna de <b>Concluído</b>, o CRM já cria a próxima com as datas avançadas e o checklist zerado.
@@ -1652,8 +1792,21 @@ function MembersPanel({ workspace, onChanged }: { workspace: Workspace; onChange
   const [busy, setBusy] = useState(false)
   const [activitiesEnabled, setActivitiesEnabled] = useState(workspace.activities_enabled)
   const [togglingActivities, setTogglingActivities] = useState(false)
+  const [name, setName] = useState(workspace.name)
+  const [savingName, setSavingName] = useState(false)
+  const [nameSaved, setNameSaved] = useState(false)
 
   useEffect(() => { setActivitiesEnabled(workspace.activities_enabled) }, [workspace.id, workspace.activities_enabled])
+  useEffect(() => { setName(workspace.name); setNameSaved(false) }, [workspace.id, workspace.name])
+
+  const saveName = async () => {
+    const clean = name.trim()
+    if (!clean || clean === workspace.name) { setName(workspace.name); return }
+    setSavingName(true); setErr('')
+    try { await renameWorkspace(workspace.id, clean); setNameSaved(true); setTimeout(() => setNameSaved(false), 2000); onChanged() }
+    catch (e: any) { setErr(e.message); setName(workspace.name) }
+    setSavingName(false)
+  }
 
   const toggleActivities = async () => {
     const next = !activitiesEnabled
@@ -1686,7 +1839,15 @@ function MembersPanel({ workspace, onChanged }: { workspace: Workspace; onChange
 
   return (
     <div>
-      <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{workspace.name}</h3>
+      <p style={fieldLabel}>Nome do cliente</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <input value={name} onChange={e => setName(e.target.value)}
+          onBlur={saveName}
+          onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+          style={{ ...input, flex: 1, fontSize: 16, fontWeight: 700 }} />
+        {savingName && <Spinner dark />}
+        {nameSaved && <span style={{ fontSize: 12, color: '#16a34a', whiteSpace: 'nowrap' }}>✓ salvo</span>}
+      </div>
       <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: C.text, marginBottom: 14, cursor: 'pointer' }}>
         <input type="checkbox" checked={activitiesEnabled} disabled={togglingActivities} onChange={toggleActivities} />
         Ativar quadro de Atividades (Trello) pra este cliente
