@@ -80,9 +80,14 @@ Para ver logs de build com erro: aba **Implantações** → deploy → **Detalhe
 
 ## CRM — Atividades (Trello) + Google Agenda
 
-- `app/crm/page.tsx` → `ActivitiesView` / `ActivityModal`: quadro de tarefas por espaço
-  (colunas fixas A Fazer/Em andamento/Concluído), com data, lead vinculado e responsável.
-- Tabela `activities` (`supabase/schema-activities.sql`), RLS igual aos `leads`.
+- `app/crm/page.tsx` → `ActivitiesView` / `ActivityModal`: quadro de tarefas por espaço,
+  com colunas customizáveis (`ActivityFunnelEditor`), prioridade, data de início,
+  data de entrega, etiquetas, estimativa de horas, checklist/subtarefas,
+  lead vinculado e responsável.
+- Só aparece nos clientes com `workspaces.activities_enabled = true` (liga em Clientes).
+- Tabelas: `activities` (`supabase/schema-activities.sql`), `activity_stages`
+  (`schema-activity-stages.sql`), `activity_items` = checklist (`schema-activity-fields.sql`).
+  RLS igual aos `leads` em todas.
 - Google Agenda: tokens ficam em `google_calendar_connections`
   (`supabase/schema-google-calendar.sql`) — RLS sem policies, só a Edge Function
   `google-calendar` (service role) acede. O front só sabe conectado sim/não via

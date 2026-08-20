@@ -145,6 +145,36 @@ export const ACTIVITY_KIND_LABELS: Record<ActivityStageKind, string> = {
   done: 'Concluído',
 }
 
+// Prioridade do cartão (bandeirinha colorida, estilo ClickUp)
+export type ActivityPriority = 'urgent' | 'high' | 'normal' | 'low'
+
+export const ACTIVITY_PRIORITY_ORDER: ActivityPriority[] = ['urgent', 'high', 'normal', 'low']
+
+export const ACTIVITY_PRIORITY_LABELS: Record<ActivityPriority, string> = {
+  urgent: 'Urgente',
+  high: 'Alta',
+  normal: 'Normal',
+  low: 'Baixa',
+}
+
+export const ACTIVITY_PRIORITY_COLORS: Record<ActivityPriority, string> = {
+  urgent: '#dc2626',
+  high: '#f59e0b',
+  normal: '#3b82f6',
+  low: '#94a3b8',
+}
+
+// Item de checklist / subtarefa dentro de um cartão
+export interface ActivityItem {
+  id: string
+  activity_id: string
+  workspace_id: string
+  title: string
+  done: boolean
+  position: number
+  created_at: string
+}
+
 export interface Activity {
   id: string
   workspace_id: string
@@ -152,7 +182,11 @@ export interface Activity {
   title: string
   description?: string | null
   status: string
-  due_date?: string | null
+  priority: ActivityPriority
+  start_date?: string | null
+  due_date?: string | null        // data de entrega (é a que sincroniza com o Google Agenda)
+  tags: string[]
+  estimate_hours?: number | null
   assigned_to?: string | null
   position: number
   google_event_id?: string | null
