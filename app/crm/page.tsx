@@ -32,6 +32,11 @@ import {
   createActivity,
   updateActivity,
   deleteActivity,
+  getActivityItems,
+  getActivityItemsForWorkspace,
+  createActivityItem,
+  updateActivityItem,
+  deleteActivityItem,
   getActivityStages,
   createActivityStage,
   updateActivityStage,
@@ -48,6 +53,9 @@ import {
   ROLE_LABELS,
   KIND_LABELS,
   ACTIVITY_KIND_LABELS,
+  ACTIVITY_PRIORITY_ORDER,
+  ACTIVITY_PRIORITY_LABELS,
+  ACTIVITY_PRIORITY_COLORS,
   DEAL_TYPE_LABELS,
   type Lead,
   type LeadSource,
@@ -60,6 +68,8 @@ import {
   type DealType,
   type LeadEvent,
   type Activity,
+  type ActivityItem,
+  type ActivityPriority,
   type ActivityStage,
   type ActivityStageKind,
 } from '@/lib/crm-types'
@@ -417,9 +427,33 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
 }
 
 // ================================================================ ATIVIDADES (quadro estilo Trello)
+// Prazo: rótulo curto + cor conforme atraso (vermelho), hoje (âmbar) ou futuro
+function dueMeta(iso?: string | null, done?: boolean): { label: string; color: string; bg: string } | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return null
+  const now = new Date()
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+  const days = Math.round((startOfDay(d) - startOfDay(now)) / 86400000)
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  const data = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+
+  let label: string
+  if (days === 0) label = `Hoje ${hora}`
+  else if (days === 1) label = `Amanhã ${hora}`
+  else if (days === -1) label = `Ontem ${hora}`
+  else label = `${data} ${hora}`
+
+  if (done) return { label, color: '#64748b', bg: '#f1f5f9' }
+  if (d.getTime() < now.getTime()) return { label: label + ' · atrasado', color: '#b91c1c', bg: '#fee2e2' }
+  if (days === 0) return { label, color: '#b45309', bg: '#fef3c7' }
+  return { label, color: C.brandDark, bg: 'rgba(196,122,74,0.12)' }
+}
+
 function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr: (m: string) => void }) {
   const [items, setItems] = useState<Activity[]>([])
   const [stages, setStages] = useState<ActivityStage[]>([])
+  const [checks, setChecks] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [canManage, setCanManage] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
@@ -434,12 +468,17 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
     canManageFunnel(wsId).then(setCanManage).catch(() => setCanManage(false))
   }, [wsId, onErr])
 
+  const loadChecks = useCallback(() => {
+    if (!wsId) return
+    getActivityItemsForWorkspace(wsId).then(setChecks).catch(() => setChecks([]))
+  }, [wsId])
+
   const load = useCallback(() => {
     if (!wsId) return
     setLoading(true)
     getActivities(wsId).then(setItems).catch(e => onErr(e.message)).finally(() => setLoading(false))
   }, [wsId, onErr])
-  useEffect(() => { load(); loadStages() }, [load, loadStages])
+  useEffect(() => { load(); loadStages(); loadChecks() }, [load, loadStages, loadChecks])
   useEffect(() => { if (wsId) hasGoogleCalendar(wsId).then(setCal).catch(() => setCal({ connected: false })) }, [wsId])
 
   const onDrop = async (status: string) => {
@@ -450,11 +489,27 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
   }
 
   const leadName = (id?: string | null) => leads.find(l => l.id === id)?.name
+  const progressOf = (id: string) => {
+    const mine = checks.filter(c => c.activity_id === id)
+    return mine.length ? { done: mine.filter(c => c.done).length, total: mine.length } : null
+  }
+
+  // Contadores do topo: o que está atrasado e o que vence hoje (colunas "em aberto")
+  const openKeys = stages.filter(s => s.kind !== 'done').map(s => s.key)
+  const abertas = items.filter(a => openKeys.includes(a.status))
+  const atrasadas = abertas.filter(a => a.due_date && new Date(a.due_date).getTime() < Date.now()).length
+  const hoje = abertas.filter(a => {
+    if (!a.due_date) return false
+    const d = new Date(a.due_date), n = new Date()
+    return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate()
+  }).length
 
   return (
     <>
       <Topbar title="Atividades" subtitle={cal.connected ? `Google Agenda conectada${cal.email ? ' · ' + cal.email : ''}` : 'Quadro de tarefas do espaço'} right={
         <>
+          {atrasadas > 0 && <Stat label="Atrasadas" value={String(atrasadas)} color="#dc2626" />}
+          {hoje > 0 && <Stat label="Vencem hoje" value={String(hoje)} color="#b45309" />}
           {canManage && <button onClick={() => setShowFunnel(true)} className="cc-btn" style={{ ...btnGhost, width: 'auto', padding: '9px 14px' }}>Editar quadro</button>}
           <button onClick={() => setShowAdd(true)} className="cc-btn" style={{ ...btn, width: 'auto', padding: '9px 16px' }}>+ Atividade</button>
         </>
@@ -463,9 +518,10 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
         <div style={{ display: 'flex', gap: 12, height: '100%', overflowX: 'auto', paddingBottom: 4 }}>
           {stages.map(stage => {
             const col = items.filter(a => a.status === stage.key)
+            const isDone = stage.kind === 'done'
             return (
               <div key={stage.id} onDragOver={e => e.preventDefault()} onDrop={() => onDrop(stage.key)}
-                style={{ width: 280, flexShrink: 0, background: C.col, borderRadius: 12, display: 'flex', flexDirection: 'column', maxHeight: '100%' }}>
+                style={{ width: 288, flexShrink: 0, background: C.col, borderRadius: 12, display: 'flex', flexDirection: 'column', maxHeight: '100%' }}>
                 <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: `2px solid ${stage.color}` }}>
                   <span style={{ width: 8, height: 8, borderRadius: 4, background: stage.color }} />
                   <span style={{ fontSize: 13, fontWeight: 700 }}>{stage.label}</span>
@@ -473,22 +529,40 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
                 </div>
                 <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
                   {loading && [0, 1].map(i => <div key={i} className="cc-skel" style={{ height: 64, background: '#e3e6ea' }} />)}
-                  {!loading && col.map(a => (
-                    <div key={a.id} draggable onDragStart={() => setDragId(a.id)} onClick={() => setSelected(a)} className="cc-card cc-fade-up" title="Abrir para editar"
-                      style={{ background: C.panel, borderRadius: 8, padding: 12, cursor: 'pointer', border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
-                      <b style={{ fontSize: 14 }}>{a.title}</b>
-                      {leadName(a.lead_id) && <p style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{leadName(a.lead_id)}</p>}
-                      <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                        {a.due_date && (
-                          <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: 'rgba(196,122,74,0.12)', color: C.brandDark }}>
-                            {new Date(a.due_date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                          </span>
+                  {!loading && col.map(a => {
+                    const due = dueMeta(a.due_date, isDone)
+                    const prog = progressOf(a.id)
+                    return (
+                      <div key={a.id} draggable onDragStart={() => setDragId(a.id)} onClick={() => setSelected(a)} className="cc-card cc-fade-up" title="Abrir para editar"
+                        style={{ background: C.panel, borderRadius: 8, padding: 12, paddingLeft: 14, cursor: 'pointer', border: `1px solid ${C.border}`, borderLeft: `3px solid ${ACTIVITY_PRIORITY_COLORS[a.priority] ?? '#3b82f6'}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+                        {a.tags?.length > 0 && (
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+                            {a.tags.map(t => (
+                              <span key={t} style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.02em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: '#eef2f7', color: '#5b6472' }}>{t}</span>
+                            ))}
+                          </div>
                         )}
-                        {a.google_event_id && <span style={{ fontSize: 10, color: '#16a34a' }}>✓ Agenda</span>}
+                        <b style={{ fontSize: 14, display: 'block', textDecoration: isDone ? 'line-through' : 'none', color: isDone ? C.muted : C.text }}>{a.title}</b>
+                        {leadName(a.lead_id) && <p style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{leadName(a.lead_id)}</p>}
+
+                        {prog && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                            <div style={{ flex: 1, height: 4, borderRadius: 2, background: '#e6e8eb', overflow: 'hidden' }}>
+                              <div style={{ width: `${(prog.done / prog.total) * 100}%`, height: '100%', background: prog.done === prog.total ? '#22c55e' : C.brand, transition: 'width .3s' }} />
+                            </div>
+                            <span style={{ fontSize: 10, color: C.muted, fontVariantNumeric: 'tabular-nums' }}>{prog.done}/{prog.total}</span>
+                          </div>
+                        )}
+
+                        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                          {due && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 5, background: due.bg, color: due.color }}>{due.label}</span>}
+                          {a.estimate_hours != null && <span style={{ fontSize: 10, color: C.muted }}>⏱ {a.estimate_hours}h</span>}
+                          {a.google_event_id && <span style={{ fontSize: 10, color: '#16a34a' }}>✓ Agenda</span>}
+                        </div>
+                        {a.assigned_to && <p style={{ fontSize: 11, color: '#9aa1ab', marginTop: 6 }}>{a.assigned_to}</p>}
                       </div>
-                      {a.assigned_to && <p style={{ fontSize: 11, color: '#9aa1ab', marginTop: 6 }}>{a.assigned_to}</p>}
-                    </div>
-                  ))}
+                    )
+                  })}
                   {!loading && col.length === 0 && <p style={{ fontSize: 12, color: '#b6bcc4', textAlign: 'center', padding: 10 }}>vazio</p>}
                 </div>
               </div>
@@ -501,13 +575,13 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
       {showAdd && (
         <ActivityModal wsId={wsId} leads={leads} calConnected={cal.connected} firstStage={stages[0]?.key}
           onClose={() => setShowAdd(false)}
-          onSaved={a => { setItems(ls => [a, ...ls]); setShowAdd(false) }} />
+          onSaved={a => { setItems(ls => [a, ...ls]); setShowAdd(false); loadChecks() }} />
       )}
       {selected && (
         <ActivityModal wsId={wsId} leads={leads} calConnected={cal.connected} activity={selected}
           onClose={() => setSelected(null)}
-          onSaved={a => { setItems(ls => ls.map(x => x.id === a.id ? a : x)); setSelected(null) }}
-          onDeleted={id => { setItems(ls => ls.filter(x => x.id !== id)); setSelected(null) }} />
+          onSaved={a => { setItems(ls => ls.map(x => x.id === a.id ? a : x)); setSelected(null); loadChecks() }}
+          onDeleted={id => { setItems(ls => ls.filter(x => x.id !== id)); setSelected(null); loadChecks() }} />
       )}
 
       {showFunnel && <ActivityFunnelEditor wsId={wsId} stages={stages} onClose={() => setShowFunnel(false)} onChanged={loadStages} />}
@@ -587,27 +661,88 @@ function toLocalInput(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+// Item de checklist ainda não salvo (atividade nova) — só existe no estado local
+type DraftItem = { key: string; title: string; done: boolean }
+
 function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClose, onSaved, onDeleted }: {
   wsId: string; leads: Lead[]; calConnected: boolean; activity?: Activity; firstStage?: string
   onClose: () => void; onSaved: (a: Activity) => void; onDeleted?: (id: string) => void
 }) {
   const [f, setF] = useState({
     title: activity?.title ?? '', description: activity?.description ?? '',
+    priority: (activity?.priority ?? 'normal') as ActivityPriority,
+    start_date: activity?.start_date ? toLocalInput(activity.start_date) : '',
     due_date: activity?.due_date ? toLocalInput(activity.due_date) : '',
+    estimate_hours: activity?.estimate_hours != null ? String(activity.estimate_hours) : '',
     lead_id: activity?.lead_id ?? '', assigned_to: activity?.assigned_to ?? '',
   })
+  const [tags, setTags] = useState<string[]>(activity?.tags ?? [])
+  const [tagInput, setTagInput] = useState('')
+  const [items, setItems] = useState<ActivityItem[]>([])
+  const [drafts, setDrafts] = useState<DraftItem[]>([])
+  const [newItem, setNewItem] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+
+  // Checklist só existe no banco depois que a atividade existe
+  useEffect(() => {
+    if (activity) getActivityItems(activity.id).then(setItems).catch(() => setItems([]))
+  }, [activity])
+
+  const checklist = activity
+    ? items.map(i => ({ key: i.id, title: i.title, done: i.done }))
+    : drafts
+  const doneCount = checklist.filter(i => i.done).length
+
+  const addTag = () => {
+    const t = tagInput.trim().toLowerCase()
+    if (!t || tags.includes(t)) { setTagInput(''); return }
+    setTags(ts => [...ts, t]); setTagInput('')
+  }
+
+  const addItem = async () => {
+    const title = newItem.trim()
+    if (!title) return
+    setNewItem('')
+    if (!activity) { setDrafts(ds => [...ds, { key: 'draft-' + Date.now(), title, done: false }]); return }
+    try {
+      const created = await createActivityItem(wsId, activity.id, { title, position: items.length + 1 })
+      setItems(is => [...is, created])
+    } catch (e: any) { setErr(e.message) }
+  }
+
+  const toggleItem = async (key: string, done: boolean) => {
+    if (!activity) { setDrafts(ds => ds.map(d => d.key === key ? { ...d, done } : d)); return }
+    setItems(is => is.map(i => i.id === key ? { ...i, done } : i))
+    try { await updateActivityItem(key, { done }) } catch (e: any) { setErr(e.message) }
+  }
+
+  const removeItem = async (key: string) => {
+    if (!activity) { setDrafts(ds => ds.filter(d => d.key !== key)); return }
+    setItems(is => is.filter(i => i.id !== key))
+    try { await deleteActivityItem(key) } catch (e: any) { setErr(e.message) }
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true); setErr('')
     try {
-      const due_date = f.due_date ? new Date(f.due_date).toISOString() : null
       const patch = {
-        title: f.title, description: f.description || null, due_date,
+        title: f.title, description: f.description || null,
+        priority: f.priority,
+        start_date: f.start_date ? new Date(f.start_date).toISOString() : null,
+        due_date: f.due_date ? new Date(f.due_date).toISOString() : null,
+        estimate_hours: f.estimate_hours ? Number(f.estimate_hours) : null,
+        tags,
         lead_id: f.lead_id || null, assigned_to: f.assigned_to || null,
       }
       let saved = activity ? await updateActivity(activity.id, patch) : await createActivity(wsId, { ...patch, ...(firstStage ? { status: firstStage } : {}) })
+
+      // Atividade nova: agora que ela existe, grava o checklist rascunhado
+      if (!activity && drafts.length > 0) {
+        for (const [i, d] of drafts.entries()) {
+          await createActivityItem(wsId, saved.id, { title: d.title, position: i + 1, done: d.done }).catch(() => {})
+        }
+      }
 
       if (calConnected) {
         try {
@@ -636,20 +771,126 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
   }
 
   return (
-    <Modal onClose={onClose}>
-      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{activity ? 'Editar atividade' : 'Nova atividade'}</h2>
-        <input placeholder="Título *" required value={f.title} onChange={e => setF({ ...f, title: e.target.value })} style={input} />
-        <textarea placeholder="Descrição" value={f.description} onChange={e => setF({ ...f, description: e.target.value })} rows={2} style={{ ...input, resize: 'vertical' }} />
-        <input type="datetime-local" value={f.due_date} onChange={e => setF({ ...f, due_date: e.target.value })} style={input} />
-        <select value={f.lead_id} onChange={e => setF({ ...f, lead_id: e.target.value })} style={input}>
-          <option value="">Sem lead vinculado</option>
-          {leads.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-        </select>
-        <input placeholder="Responsável (nome)" value={f.assigned_to} onChange={e => setF({ ...f, assigned_to: e.target.value })} style={input} />
-        {f.due_date && !calConnected && <p style={{ fontSize: 12, color: C.muted }}>Conecte o Google Agenda em Configurações para sincronizar esta data automaticamente.</p>}
+    <Modal onClose={onClose} maxWidth={560}>
+      <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700 }}>{activity ? 'Editar atividade' : 'Nova atividade'}</h2>
+          <button type="button" onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 20 }}>×</button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <input placeholder="Título *" required value={f.title} onChange={e => setF({ ...f, title: e.target.value })} style={{ ...input, fontSize: 15, fontWeight: 600 }} />
+          <textarea placeholder="Descrição" value={f.description} onChange={e => setF({ ...f, description: e.target.value })} rows={2} style={{ ...input, resize: 'vertical' }} />
+        </div>
+
+        {/* Prioridade */}
+        <div>
+          <p style={fieldLabel}>Prioridade</p>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {ACTIVITY_PRIORITY_ORDER.map(p => {
+              const on = f.priority === p
+              return (
+                <button key={p} type="button" onClick={() => setF({ ...f, priority: p })}
+                  style={{
+                    flex: 1, padding: '8px 6px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12,
+                    fontWeight: on ? 700 : 500,
+                    border: `1px solid ${on ? ACTIVITY_PRIORITY_COLORS[p] : C.border}`,
+                    background: on ? ACTIVITY_PRIORITY_COLORS[p] + '18' : '#fff',
+                    color: on ? ACTIVITY_PRIORITY_COLORS[p] : C.muted,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  }}>
+                  <span style={{ width: 7, height: 7, borderRadius: 4, background: ACTIVITY_PRIORITY_COLORS[p], flexShrink: 0 }} />
+                  {ACTIVITY_PRIORITY_LABELS[p]}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Datas + estimativa */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div>
+            <p style={fieldLabel}>Início</p>
+            <input type="datetime-local" value={f.start_date} onChange={e => setF({ ...f, start_date: e.target.value })} style={input} />
+          </div>
+          <div>
+            <p style={fieldLabel}>Data de entrega</p>
+            <input type="datetime-local" value={f.due_date} onChange={e => setF({ ...f, due_date: e.target.value })} style={input} />
+          </div>
+          <div>
+            <p style={fieldLabel}>Estimativa (horas)</p>
+            <input type="number" min="0" step="0.5" placeholder="ex.: 2" value={f.estimate_hours} onChange={e => setF({ ...f, estimate_hours: e.target.value })} style={input} />
+          </div>
+          <div>
+            <p style={fieldLabel}>Responsável</p>
+            <input placeholder="Nome" value={f.assigned_to} onChange={e => setF({ ...f, assigned_to: e.target.value })} style={input} />
+          </div>
+        </div>
+
+        <div>
+          <p style={fieldLabel}>Lead vinculado</p>
+          <select value={f.lead_id} onChange={e => setF({ ...f, lead_id: e.target.value })} style={input}>
+            <option value="">Sem lead vinculado</option>
+            {leads.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+          </select>
+        </div>
+
+        {/* Etiquetas */}
+        <div>
+          <p style={fieldLabel}>Etiquetas</p>
+          {tags.length > 0 && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+              {tags.map(t => (
+                <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, padding: '4px 8px', borderRadius: 6, background: '#eef2f7', color: '#5b6472' }}>
+                  {t}
+                  <button type="button" onClick={() => setTags(ts => ts.filter(x => x !== t))} style={{ background: 'none', border: 'none', color: '#98a2b3', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
+          <input value={tagInput} onChange={e => setTagInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag() } }}
+            onBlur={addTag}
+            placeholder="Digite e tecle Enter (ex.: social, cliente, urgente)" style={input} />
+        </div>
+
+        {/* Checklist / subtarefas */}
+        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <p style={{ ...fieldLabel, margin: 0 }}>Checklist / subtarefas</p>
+            {checklist.length > 0 && (
+              <span style={{ fontSize: 11, color: C.muted, marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{doneCount}/{checklist.length}</span>
+            )}
+          </div>
+
+          {checklist.length > 0 && (
+            <div style={{ height: 4, borderRadius: 2, background: '#e6e8eb', overflow: 'hidden', marginBottom: 10 }}>
+              <div style={{ width: `${(doneCount / checklist.length) * 100}%`, height: '100%', background: doneCount === checklist.length ? '#22c55e' : C.brand, transition: 'width .3s' }} />
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 8 }}>
+            {checklist.map(i => (
+              <div key={i.key} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 4px', borderRadius: 6 }}>
+                <input type="checkbox" checked={i.done} onChange={e => toggleItem(i.key, e.target.checked)} style={{ cursor: 'pointer', width: 15, height: 15, accentColor: C.brand, flexShrink: 0 }} />
+                <span style={{ flex: 1, fontSize: 13, color: i.done ? C.muted : C.text, textDecoration: i.done ? 'line-through' : 'none' }}>{i.title}</span>
+                <button type="button" onClick={() => removeItem(i.key)} title="Remover item" style={{ background: 'none', border: 'none', color: '#cbd0d6', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
+              </div>
+            ))}
+            {checklist.length === 0 && <p style={{ fontSize: 12, color: '#b6bcc4', padding: '2px 4px' }}>Nenhum item ainda.</p>}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input value={newItem} onChange={e => setNewItem(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addItem() } }}
+              placeholder="Adicionar item…" style={{ ...input, flex: 1 }} />
+            <button type="button" onClick={addItem} style={{ ...btnGhost, width: 'auto', padding: '10px 16px' }}>+ Item</button>
+          </div>
+        </div>
+
+        {f.due_date && !calConnected && <p style={{ fontSize: 12, color: C.muted }}>Conecte o Google Agenda em Configurações para sincronizar a data de entrega automaticamente.</p>}
         {err && <p style={{ color: '#dc2626', fontSize: 13 }}>{err}</p>}
-        <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           {activity && <button type="button" onClick={remove} style={{ ...btnGhost, width: 'auto', padding: '10px 14px', color: '#dc2626' }}>Apagar</button>}
           <button type="button" onClick={onClose} style={btnGhost}>Cancelar</button>
           <button type="submit" disabled={busy} className="cc-btn" style={btn}>{busy ? <Spinner /> : 'Salvar'}</button>
@@ -1254,10 +1495,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Row({ k, v }: { k: string; v: string }) {
   return <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 14 }}><span style={{ color: C.muted }}>{k}</span><span>{v}</span></div>
 }
-function Modal({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+function Modal({ onClose, children, maxWidth = 420 }: { onClose: () => void; children: React.ReactNode; maxWidth?: number }) {
   return (
     <div onClick={onClose} className="cc-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(15,20,30,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 50 }}>
-      <div onClick={e => e.stopPropagation()} className="cc-modal" style={{ width: '100%', maxWidth: 420, background: C.panel, borderRadius: 16, padding: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>{children}</div>
+      <div onClick={e => e.stopPropagation()} className="cc-modal" style={{ width: '100%', maxWidth, maxHeight: '90vh', overflowY: 'auto', background: C.panel, borderRadius: 16, padding: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>{children}</div>
     </div>
   )
 }
@@ -1272,6 +1513,7 @@ const btn: React.CSSProperties = { flex: 1, background: `linear-gradient(135deg,
 const btnGhost: React.CSSProperties = { flex: 1, background: '#eef0f3', color: C.text, border: 'none', borderRadius: 8, padding: '11px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }
 const linkBtn: React.CSSProperties = { background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }
 const label: React.CSSProperties = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em', color: C.muted, margin: '16px 0 6px' }
+const fieldLabel: React.CSSProperties = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em', color: C.muted, fontWeight: 600, margin: '0 0 5px' }
 const rowLine: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, padding: '9px 0', borderBottom: `1px solid ${C.border}` }
 const smallLink: React.CSSProperties = { marginLeft: 'auto', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }
 const arrowBtn: React.CSSProperties = { background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 9, lineHeight: 1, padding: 1 }

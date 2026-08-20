@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity, ActivityStage, ActivityStageKind } from './crm-types'
+import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity, ActivityStage, ActivityStageKind, ActivityItem } from './crm-types'
 
 // Extrai uma mensagem legível do erro de uma Edge Function (supabase.functions.invoke)
 async function fnErrorMessage(error: any): Promise<string> {
@@ -284,6 +284,52 @@ export async function updateActivity(id: string, patch: Partial<Activity>): Prom
 
 export async function deleteActivity(id: string): Promise<void> {
   const { error } = await supabase.from('activities').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ---- Checklist / subtarefas de uma atividade ----
+export async function getActivityItems(activityId: string): Promise<ActivityItem[]> {
+  const { data, error } = await supabase
+    .from('activity_items')
+    .select('*')
+    .eq('activity_id', activityId)
+    .order('position')
+  if (error) throw error
+  return data ?? []
+}
+
+// Checklist de várias atividades de uma vez (pra mostrar o progresso nos cartões)
+export async function getActivityItemsForWorkspace(workspaceId: string): Promise<ActivityItem[]> {
+  const { data, error } = await supabase
+    .from('activity_items')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('position')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function createActivityItem(
+  workspaceId: string,
+  activityId: string,
+  input: { title: string; position: number; done?: boolean },
+): Promise<ActivityItem> {
+  const { data, error } = await supabase
+    .from('activity_items')
+    .insert({ workspace_id: workspaceId, activity_id: activityId, title: input.title, position: input.position, done: input.done ?? false })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateActivityItem(id: string, patch: Partial<Pick<ActivityItem, 'title' | 'done' | 'position'>>): Promise<void> {
+  const { error } = await supabase.from('activity_items').update(patch).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteActivityItem(id: string): Promise<void> {
+  const { error } = await supabase.from('activity_items').delete().eq('id', id)
   if (error) throw error
 }
 
