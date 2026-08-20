@@ -90,6 +90,12 @@ Para ver logs de build com erro: aba **Implantações** → deploy → **Detalhe
   `activity_attachments` = anexos (`schema-activity-share.sql`). RLS igual aos `leads` em todas.
 - **Agenda** (`AgendaView`): grade semanal a partir de início/entrega/estimativa;
   marca em vermelho tarefas sobrepostas (não dá pra fazer duas ao mesmo tempo).
+  A integração com o Google é **nos dois sentidos**: tarefa com data vira evento
+  (`action: 'sync'`) e os compromissos do Google aparecem na grade
+  (`action: 'list'`), entrando na conta do choque de horário. Evento marcado
+  como "Disponível" no Google (`transparency: transparent`) não bloqueia horário.
+  Prazo maior que 10h não vira bloco gigante: reserva só a estimativa terminando
+  na hora da entrega (ver `activityWindow`).
 - **Recorrência**: ao arrastar pra coluna `kind = 'done'`, `spawnNextOccurrence()`
   cria a próxima ocorrência com datas avançadas e checklist zerado.
 - **Anexos**: bucket privado `activity-files` no Storage, caminho

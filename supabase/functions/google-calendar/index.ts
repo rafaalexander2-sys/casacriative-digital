@@ -1,8 +1,10 @@
 // Edge Function: google-calendar
-// Conecta/desconecta o Google Agenda de um espaço (workspace) e sincroniza
-// atividades (activities) como eventos. Guarda os tokens OAuth (a tabela
-// google_calendar_connections não é acessível via PostgREST — só aqui,
-// com a service role).
+// Liga/desliga o Google Agenda de um espaço (workspace), sincroniza atividades
+// como eventos (CRM → Google) e LÊ os eventos da agenda (Google → CRM), pra
+// mostrar os compromissos reais na tela de Agenda e detectar choque de horário.
+//
+// Guarda os tokens OAuth (a tabela google_calendar_connections não é acessível
+// via PostgREST — só aqui, com a service role).
 //
 // Deploy: Supabase → Edge Functions → deploy "google-calendar".
 // Secrets necessários (Supabase → Edge Functions → Secrets):
@@ -53,6 +55,33 @@ Deno.serve(async (req) => {
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID')
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET')
 
+    // Pega a conexão e devolve um access token válido (renova se estiver a expirar)
+    async function connection() {
+      const { data: conn } = await admin
+        .from('google_calendar_connections').select('*').eq('workspace_id', workspaceId).single()
+      if (!conn) return { conn: null, token: null as string | null, error: 'Google Agenda não conectada para este espaço.' }
+
+      let accessToken = conn.access_token as string
+      if (new Date(conn.expiry_date).getTime() < Date.now() + 60_000) {
+        const r = await fetch(TOKEN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: clientId!, client_secret: clientSecret!,
+            refresh_token: conn.refresh_token, grant_type: 'refresh_token',
+          }),
+        })
+        const rt = await r.json()
+        if (!r.ok) return { conn, token: null, error: 'Falha ao renovar o acesso ao Google. Reconecte a Agenda em Configurações.' }
+        accessToken = rt.access_token
+        await admin.from('google_calendar_connections').update({
+          access_token: accessToken,
+          expiry_date: new Date(Date.now() + rt.expires_in * 1000).toISOString(),
+        }).eq('workspace_id', workspaceId)
+      }
+      return { conn, token: accessToken, error: null as string | null }
+    }
+
     // ---------------------------------------------------------
     if (action === 'connect') {
       if (!clientId || !clientSecret) return json({ error: 'Integração não configurada no servidor (GOOGLE_CLIENT_ID/SECRET).' }, 500)
@@ -101,39 +130,58 @@ Deno.serve(async (req) => {
     }
 
     // ---------------------------------------------------------
+    // LER a agenda: devolve os compromissos do período pedido, pra
+    // aparecerem na tela de Agenda junto com as tarefas do CRM.
+    if (action === 'list') {
+      if (!clientId || !clientSecret) return json({ error: 'Integração não configurada no servidor (GOOGLE_CLIENT_ID/SECRET).' }, 500)
+      const { time_min: timeMin, time_max: timeMax } = body
+      if (!timeMin || !timeMax) return json({ error: 'time_min e time_max são obrigatórios.' }, 400)
+
+      const { conn, token, error } = await connection()
+      if (error || !conn || !token) return json({ error: error ?? 'Sem conexão.' }, 400)
+
+      const params = new URLSearchParams({
+        timeMin, timeMax,
+        singleEvents: 'true',       // expande eventos recorrentes em ocorrências
+        orderBy: 'startTime',
+        maxResults: '250',
+      })
+      const res = await fetch(`${CAL_API}/calendars/${encodeURIComponent(conn.calendar_id)}/events?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (!res.ok) return json({ error: data.error?.message ?? 'Falha ao ler o Google Agenda.' }, 400)
+
+      const events = (data.items ?? [])
+        .filter((e: any) => e.status !== 'cancelled')
+        .map((e: any) => ({
+          id: e.id,
+          title: e.summary ?? '(sem título)',
+          start: e.start?.dateTime ?? null,          // nulo em evento de dia inteiro
+          end: e.end?.dateTime ?? null,
+          all_day_date: e.start?.date ?? null,       // preenchido só em dia inteiro
+          html_link: e.htmlLink ?? null,
+          // "transparent" = marcado como Disponível no Google: não bloqueia horário
+          busy: e.transparency !== 'transparent',
+        }))
+
+      return json({ ok: true, events })
+    }
+
+    // ---------------------------------------------------------
     if (action === 'sync') {
       if (!clientId || !clientSecret) return json({ error: 'Integração não configurada no servidor (GOOGLE_CLIENT_ID/SECRET).' }, 500)
       const { activity } = body
       if (!activity?.id || !activity?.title) return json({ error: 'activity inválida.' }, 400)
 
-      const { data: conn } = await admin
-        .from('google_calendar_connections').select('*').eq('workspace_id', workspaceId).single()
-      if (!conn) return json({ error: 'Google Agenda não conectada para este espaço.' }, 400)
-
-      let accessToken = conn.access_token as string
-      if (new Date(conn.expiry_date).getTime() < Date.now() + 60_000) {
-        const r = await fetch(TOKEN_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            client_id: clientId, client_secret: clientSecret,
-            refresh_token: conn.refresh_token, grant_type: 'refresh_token',
-          }),
-        })
-        const rt = await r.json()
-        if (!r.ok) return json({ error: 'Falha ao renovar o acesso ao Google. Reconecte a Agenda em Configurações.' }, 400)
-        accessToken = rt.access_token
-        await admin.from('google_calendar_connections').update({
-          access_token: accessToken,
-          expiry_date: new Date(Date.now() + rt.expires_in * 1000).toISOString(),
-        }).eq('workspace_id', workspaceId)
-      }
+      const { conn, token, error } = await connection()
+      if (error || !conn || !token) return json({ error: error ?? 'Sem conexão.' }, 400)
 
       // Sem data → se já tinha evento, apaga; sem mais nada a fazer.
       if (!activity.due_date) {
         if (activity.google_event_id) {
           await fetch(`${CAL_API}/calendars/${encodeURIComponent(conn.calendar_id)}/events/${activity.google_event_id}`, {
-            method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` },
+            method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
           }).catch(() => {})
         }
         return json({ ok: true, google_event_id: null })
@@ -155,7 +203,7 @@ Deno.serve(async (req) => {
 
       const evRes = await fetch(`${CAL_API}${path}`, {
         method,
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(eventBody),
       })
       const ev = await evRes.json()
