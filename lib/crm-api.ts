@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity, ActivityStage, ActivityStageKind, ActivityItem } from './crm-types'
+import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity, ActivityStage, ActivityStageKind, ActivityItem, ActivityAttachment, ActivityNotification } from './crm-types'
 
 // Extrai uma mensagem legível do erro de uma Edge Function (supabase.functions.invoke)
 async function fnErrorMessage(error: any): Promise<string> {
@@ -33,6 +33,18 @@ export async function isAgencyMember(): Promise<boolean> {
   const { data, error } = await supabase.rpc('is_agency_member')
   if (error) throw error
   return !!data
+}
+
+// ---- Renomear um cliente/espaço ----
+export async function renameWorkspace(workspaceId: string, name: string): Promise<Workspace> {
+  const { data, error } = await supabase
+    .from('workspaces')
+    .update({ name: name.trim() })
+    .eq('id', workspaceId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
 }
 
 // ---- Ativar/desativar o quadro de Atividades de um cliente ----
@@ -331,6 +343,178 @@ export async function updateActivityItem(id: string, patch: Partial<Pick<Activit
 export async function deleteActivityItem(id: string): Promise<void> {
   const { error } = await supabase.from('activity_items').delete().eq('id', id)
   if (error) throw error
+}
+
+// ---- Notificações (o sininho) ----
+export async function getMyNotifications(limit = 30): Promise<ActivityNotification[]> {
+  const { data, error } = await supabase
+    .from('activity_notifications')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('activity_notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  const { data: userData } = await supabase.auth.getUser()
+  if (!userData.user) return
+  const { error } = await supabase
+    .from('activity_notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('user_id', userData.user.id)
+    .is('read_at', null)
+  if (error) throw error
+}
+
+// Avisa quem foi marcado numa atividade (não avisa a própria pessoa)
+export async function notifyAssignment(activity: Activity, userId: string, actorEmail?: string | null): Promise<void> {
+  const { data: userData } = await supabase.auth.getUser()
+  const actorId = userData.user?.id ?? null
+  if (userId === actorId) return
+
+  const quando = activity.due_date
+    ? ` · entrega ${new Date(activity.due_date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
+    : ''
+  const { error } = await supabase.from('activity_notifications').insert({
+    workspace_id: activity.workspace_id,
+    activity_id: activity.id,
+    user_id: userId,
+    actor_id: actorId,
+    type: 'assigned',
+    title: activity.title,
+    message: `${actorEmail ? actorEmail + ' marcou' : 'Marcaram'} você nesta tarefa${quando}`,
+  })
+  if (error) throw error
+}
+
+// ---- Anexos do briefing (ficheiro vai pro Storage, registo vai pra tabela) ----
+const BUCKET = 'activity-files'
+
+export async function getAttachments(activityId: string): Promise<ActivityAttachment[]> {
+  const { data, error } = await supabase
+    .from('activity_attachments')
+    .select('*')
+    .eq('activity_id', activityId)
+    .order('created_at')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function uploadAttachment(workspaceId: string, activityId: string, file: File): Promise<ActivityAttachment> {
+  // nome seguro + sufixo aleatório evita colisão entre ficheiros com o mesmo nome
+  const safe = file.name.replace(/[^\w.\-]+/g, '_').slice(-80) || 'arquivo'
+  const path = `${workspaceId}/${activityId}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${safe}`
+
+  const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, {
+    contentType: file.type || 'application/octet-stream',
+    upsert: false,
+  })
+  if (upErr) throw upErr
+
+  const { data: userData } = await supabase.auth.getUser()
+  const { data, error } = await supabase
+    .from('activity_attachments')
+    .insert({
+      activity_id: activityId,
+      workspace_id: workspaceId,
+      name: file.name || safe,
+      path,
+      mime_type: file.type || null,
+      size_bytes: file.size ?? null,
+      created_by: userData.user?.id ?? null,
+    })
+    .select()
+    .single()
+  if (error) {
+    // não deixa ficheiro órfão no Storage se o registo falhar
+    await supabase.storage.from(BUCKET).remove([path]).catch(() => {})
+    throw error
+  }
+  return data
+}
+
+// URL temporária pra mostrar o anexo dentro do CRM (o bucket é privado)
+export async function getAttachmentUrl(path: string, seconds = 3600): Promise<string | null> {
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, seconds)
+  if (error) return null
+  return data?.signedUrl ?? null
+}
+
+export async function deleteAttachment(att: ActivityAttachment): Promise<void> {
+  await supabase.storage.from(BUCKET).remove([att.path]).catch(() => {})
+  const { error } = await supabase.from('activity_attachments').delete().eq('id', att.id)
+  if (error) throw error
+}
+
+// ---- Link público do briefing (pra mandar no WhatsApp) ----
+export async function setActivityShare(id: string, enabled: boolean): Promise<Activity> {
+  const { data, error } = await supabase
+    .from('activities')
+    .update({ share_enabled: enabled })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ---- Recorrência: cria a próxima ocorrência ao concluir ----
+function advance(iso: string | null | undefined, recurrence: Activity['recurrence']): string | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return null
+  if (recurrence === 'daily') d.setDate(d.getDate() + 1)
+  else if (recurrence === 'weekly') d.setDate(d.getDate() + 7)
+  else if (recurrence === 'biweekly') d.setDate(d.getDate() + 14)
+  else if (recurrence === 'monthly') d.setMonth(d.getMonth() + 1)
+  else return null
+  return d.toISOString()
+}
+
+// Duplica a tarefa recorrente com as datas avançadas e o checklist desmarcado.
+// Devolve null quando não há o que repetir (sem recorrência ou sem datas).
+export async function spawnNextOccurrence(activity: Activity, firstStage?: string): Promise<Activity | null> {
+  if (!activity.recurrence || activity.recurrence === 'none') return null
+  const start_date = advance(activity.start_date, activity.recurrence)
+  const due_date = advance(activity.due_date, activity.recurrence)
+  if (!start_date && !due_date) return null
+
+  const { data: next, error } = await supabase
+    .from('activities')
+    .insert({
+      workspace_id: activity.workspace_id,
+      lead_id: activity.lead_id ?? null,
+      title: activity.title,
+      description: activity.description ?? null,
+      status: firstStage ?? activity.status,
+      priority: activity.priority,
+      start_date,
+      due_date,
+      tags: activity.tags ?? [],
+      estimate_hours: activity.estimate_hours ?? null,
+      assigned_to: activity.assigned_to ?? null,
+      recurrence: activity.recurrence,
+      recurrence_parent: activity.recurrence_parent ?? activity.id,
+    })
+    .select()
+    .single()
+  if (error) throw error
+
+  // Checklist volta a aparecer, todo desmarcado
+  const items = await getActivityItems(activity.id).catch(() => [])
+  for (const [i, it] of items.entries()) {
+    await createActivityItem(activity.workspace_id, next.id, { title: it.title, position: i + 1, done: false }).catch(() => {})
+  }
+  return next
 }
 
 // ---- Colunas do quadro de Atividades (customizáveis por espaço) ----
