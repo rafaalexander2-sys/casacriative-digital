@@ -32,6 +32,9 @@ export function getAdParams(): Record<string, string> {
 export const INGEST_URL = 'https://mnmcxuumgbjyylsxsadv.supabase.co/functions/v1/ingest-lead'
 export const SUPABASE_ANON = 'sb_publishable_UOo29BJEZW7Ds_PgEjGUbw_pzKmRIy6'
 
+// Endpoint público do briefing de uma tarefa (página /t)
+export const PUBLIC_TASK_URL = 'https://mnmcxuumgbjyylsxsadv.supabase.co/functions/v1/public-task'
+
 // Envia um lead ao CRM. `token` opcional → sem token cai no espaço da agência.
 export async function sendLead(payload: Record<string, unknown>, token?: string) {
   const res = await fetch(INGEST_URL, {

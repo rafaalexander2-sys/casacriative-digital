@@ -86,8 +86,18 @@ Para ver logs de build com erro: aba **Implantações** → deploy → **Detalhe
   lead vinculado e responsável.
 - Só aparece nos clientes com `workspaces.activities_enabled = true` (liga em Clientes).
 - Tabelas: `activities` (`supabase/schema-activities.sql`), `activity_stages`
-  (`schema-activity-stages.sql`), `activity_items` = checklist (`schema-activity-fields.sql`).
-  RLS igual aos `leads` em todas.
+  (`schema-activity-stages.sql`), `activity_items` = checklist (`schema-activity-fields.sql`),
+  `activity_attachments` = anexos (`schema-activity-share.sql`). RLS igual aos `leads` em todas.
+- **Agenda** (`AgendaView`): grade semanal a partir de início/entrega/estimativa;
+  marca em vermelho tarefas sobrepostas (não dá pra fazer duas ao mesmo tempo).
+- **Recorrência**: ao arrastar pra coluna `kind = 'done'`, `spawnNextOccurrence()`
+  cria a próxima ocorrência com datas avançadas e checklist zerado.
+- **Anexos**: bucket privado `activity-files` no Storage, caminho
+  `<workspace_id>/<activity_id>/<ficheiro>`; dá pra colar imagem (Ctrl+V) no modal.
+- **Link público** (`/t?t=<share_token>`): página estática que lê o token e chama a
+  Edge Function pública `public-task` (deploy com "Verify JWT" DESLIGADO, igual
+  `ingest-lead`). Só responde se o cartão estiver com `share_enabled = true`;
+  os anexos vão como URLs assinadas de 7 dias.
 - Google Agenda: tokens ficam em `google_calendar_connections`
   (`supabase/schema-google-calendar.sql`) — RLS sem policies, só a Edge Function
   `google-calendar` (service role) acede. O front só sabe conectado sim/não via

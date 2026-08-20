@@ -37,6 +37,12 @@ import {
   createActivityItem,
   updateActivityItem,
   deleteActivityItem,
+  getAttachments,
+  uploadAttachment,
+  getAttachmentUrl,
+  deleteAttachment,
+  setActivityShare,
+  spawnNextOccurrence,
   getActivityStages,
   createActivityStage,
   updateActivityStage,
@@ -56,6 +62,9 @@ import {
   ACTIVITY_PRIORITY_ORDER,
   ACTIVITY_PRIORITY_LABELS,
   ACTIVITY_PRIORITY_COLORS,
+  ACTIVITY_RECURRENCE_LABELS,
+  sortActivities,
+  activityWindow,
   DEAL_TYPE_LABELS,
   type Lead,
   type LeadSource,
@@ -68,8 +77,10 @@ import {
   type DealType,
   type LeadEvent,
   type Activity,
+  type ActivityAttachment,
   type ActivityItem,
   type ActivityPriority,
+  type ActivityRecurrence,
   type ActivityStage,
   type ActivityStageKind,
 } from '@/lib/crm-types'
@@ -88,7 +99,7 @@ const C = {
 const BRL = (n?: number | null) =>
   n == null ? '—' : n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-type View = 'pipeline' | 'atividades' | 'relatorios' | 'clientes' | 'config'
+type View = 'pipeline' | 'atividades' | 'agenda' | 'relatorios' | 'clientes' | 'config'
 
 export default function CrmPage() {
   const [session, setSession] = useState<Session | null>(null)
@@ -283,6 +294,7 @@ function App({ session }: { session: Session }) {
   const nav: { id: View; label: string; icon: string; agency?: boolean; requiresActivities?: boolean }[] = [
     { id: 'pipeline', label: 'Pipeline', icon: '▦' },
     { id: 'atividades', label: 'Atividades', icon: '☑', requiresActivities: true },
+    { id: 'agenda', label: 'Agenda', icon: '▥', requiresActivities: true },
     { id: 'relatorios', label: 'Relatórios', icon: '▤' },
     { id: 'clientes', label: 'Clientes', icon: '◍', agency: true },
     { id: 'config', label: 'Configurações', icon: '⚙' },
@@ -328,6 +340,7 @@ function App({ session }: { session: Session }) {
         <div key={view} className="cc-fade-up" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {view === 'pipeline' && <PipelineView wsId={wsId} leads={leads} setLeads={setLeads} stages={stages} leadsLoading={leadsLoading} canManage={canManage} onStagesChanged={() => loadStages(wsId)} onErr={setErr} />}
           {view === 'atividades' && ws?.activities_enabled && <ActivitiesView wsId={wsId} leads={leads} onErr={setErr} />}
+          {view === 'agenda' && ws?.activities_enabled && <AgendaView wsId={wsId} leads={leads} onErr={setErr} />}
           {view === 'relatorios' && <ReportsView ws={ws} leads={leads} stages={stages} />}
           {view === 'clientes' && isAgency && <ClientsView workspaces={workspaces} onChanged={loadWorkspaces} />}
           {view === 'config' && <SettingsView session={session} ws={ws} leads={leads} />}
@@ -485,7 +498,15 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
     const a = items.find(x => x.id === dragId); setDragId(null)
     if (!a || a.status === status) return
     setItems(ls => ls.map(x => x.id === a.id ? { ...x, status } : x))
-    try { await updateActivity(a.id, { status }) } catch (e: any) { onErr(e.message) }
+    try {
+      await updateActivity(a.id, { status })
+      // Tarefa recorrente concluída → já deixa a próxima ocorrência no quadro
+      const target = stages.find(s => s.key === status)
+      if (target?.kind === 'done' && a.recurrence && a.recurrence !== 'none') {
+        const next = await spawnNextOccurrence(a, stages[0]?.key)
+        if (next) { setItems(ls => [next, ...ls]); loadChecks() }
+      }
+    } catch (e: any) { onErr(e.message) }
   }
 
   const leadName = (id?: string | null) => leads.find(l => l.id === id)?.name
@@ -517,7 +538,7 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
       <div style={{ flex: 1, overflow: 'hidden', padding: 16 }}>
         <div style={{ display: 'flex', gap: 12, height: '100%', overflowX: 'auto', paddingBottom: 4 }}>
           {stages.map(stage => {
-            const col = items.filter(a => a.status === stage.key)
+            const col = sortActivities(items.filter(a => a.status === stage.key))
             const isDone = stage.kind === 'done'
             return (
               <div key={stage.id} onDragOver={e => e.preventDefault()} onDrop={() => onDrop(stage.key)}
@@ -557,6 +578,8 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
                         <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                           {due && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 5, background: due.bg, color: due.color }}>{due.label}</span>}
                           {a.estimate_hours != null && <span style={{ fontSize: 10, color: C.muted }}>⏱ {a.estimate_hours}h</span>}
+                          {a.recurrence && a.recurrence !== 'none' && <span style={{ fontSize: 10, color: C.muted }} title={ACTIVITY_RECURRENCE_LABELS[a.recurrence]}>↻</span>}
+                          {a.share_enabled && <span style={{ fontSize: 10, color: '#3b82f6' }} title="Link público ativo">🔗</span>}
                           {a.google_event_id && <span style={{ fontSize: 10, color: '#16a34a' }}>✓ Agenda</span>}
                         </div>
                         {a.assigned_to && <p style={{ fontSize: 11, color: '#9aa1ab', marginTop: 6 }}>{a.assigned_to}</p>}
@@ -585,6 +608,217 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
       )}
 
       {showFunnel && <ActivityFunnelEditor wsId={wsId} stages={stages} onClose={() => setShowFunnel(false)} onChanged={loadStages} />}
+    </>
+  )
+}
+
+// ================================================================ AGENDA (semana + choque de horário)
+const HOUR_PX = 52
+
+function startOfWeek(d: Date): Date {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  x.setDate(x.getDate() - x.getDay()) // domingo
+  return x
+}
+
+// Fatia a janela da tarefa no dia pedido (tarefa que atravessa dias aparece nos dois)
+function sliceForDay(win: { start: Date; end: Date }, day: Date): { start: Date; end: Date } | null {
+  const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate())
+  const dayEnd = new Date(dayStart.getTime() + 86400000)
+  if (win.end <= dayStart || win.start >= dayEnd) return null
+  return {
+    start: win.start < dayStart ? dayStart : win.start,
+    end: win.end > dayEnd ? dayEnd : win.end,
+  }
+}
+
+type Block = { a: Activity; start: Date; end: Date; lane: number; lanes: number; clash: boolean }
+
+// Distribui blocos que se sobrepõem em faixas lado a lado e marca os que colidem
+function layoutDay(raw: { a: Activity; start: Date; end: Date }[]): Block[] {
+  const sorted = [...raw].sort((x, y) => x.start.getTime() - y.start.getTime())
+  const blocks: Block[] = sorted.map(b => ({ ...b, lane: 0, lanes: 1, clash: false }))
+
+  // colisão real: qualquer par que se sobrepõe no tempo
+  for (let i = 0; i < blocks.length; i++) {
+    for (let j = i + 1; j < blocks.length; j++) {
+      if (blocks[i].start < blocks[j].end && blocks[j].start < blocks[i].end) {
+        blocks[i].clash = true; blocks[j].clash = true
+      }
+    }
+  }
+
+  // agrupa em clusters de sobreposição encadeada e dá uma faixa a cada bloco
+  let i = 0
+  while (i < blocks.length) {
+    let end = blocks[i].end.getTime()
+    let j = i + 1
+    while (j < blocks.length && blocks[j].start.getTime() < end) {
+      end = Math.max(end, blocks[j].end.getTime()); j++
+    }
+    const cluster = blocks.slice(i, j)
+    const laneEnds: number[] = []
+    for (const b of cluster) {
+      let lane = laneEnds.findIndex(t => t <= b.start.getTime())
+      if (lane === -1) { lane = laneEnds.length; laneEnds.push(0) }
+      laneEnds[lane] = b.end.getTime()
+      b.lane = lane
+    }
+    for (const b of cluster) b.lanes = laneEnds.length
+    i = j
+  }
+  return blocks
+}
+
+function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr: (m: string) => void }) {
+  const [items, setItems] = useState<Activity[]>([])
+  const [stages, setStages] = useState<ActivityStage[]>([])
+  const [loading, setLoading] = useState(true)
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
+  const [selected, setSelected] = useState<Activity | null>(null)
+  const [cal, setCal] = useState<{ connected: boolean; email?: string | null }>({ connected: false })
+
+  const load = useCallback(() => {
+    if (!wsId) return
+    setLoading(true)
+    getActivities(wsId).then(setItems).catch(e => onErr(e.message)).finally(() => setLoading(false))
+    getActivityStages(wsId).then(setStages).catch(() => setStages([]))
+  }, [wsId, onErr])
+  useEffect(() => { load() }, [load])
+  useEffect(() => { if (wsId) hasGoogleCalendar(wsId).then(setCal).catch(() => setCal({ connected: false })) }, [wsId])
+
+  const doneKeys = stages.filter(s => s.kind === 'done').map(s => s.key)
+  const days = Array.from({ length: 7 }, (_, i) => new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i))
+
+  // Tarefa concluída não ocupa agenda — só o que ainda está por fazer disputa horário
+  const pending = items.filter(a => !doneKeys.includes(a.status))
+  const perDay = days.map(day => {
+    const raw: { a: Activity; start: Date; end: Date }[] = []
+    for (const a of pending) {
+      const win = activityWindow(a)
+      if (!win) continue
+      const slice = sliceForDay(win, day)
+      if (slice) raw.push({ a, start: slice.start, end: slice.end })
+    }
+    return layoutDay(raw)
+  })
+
+  // Faixa de horas mostrada: cobre as tarefas da semana, com 8h–19h de base
+  const allBlocks = perDay.flat()
+  const startHour = Math.min(8, ...allBlocks.map(b => b.start.getHours()))
+  const endHour = Math.max(19, ...allBlocks.map(b => b.end.getHours() + (b.end.getMinutes() > 0 ? 1 : 0)))
+  const hours = Array.from({ length: Math.max(1, endHour - startHour) }, (_, i) => startHour + i)
+
+  const clashes = allBlocks.filter(b => b.clash)
+  const semTempo = pending.filter(a => !activityWindow(a)).length
+  const isToday = (d: Date) => { const n = new Date(); return d.getDate() === n.getDate() && d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear() }
+  const fmtRange = `${days[0].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${days[6].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
+
+  return (
+    <>
+      <Topbar title="Agenda" subtitle={fmtRange} right={
+        <>
+          {clashes.length > 0 && <Stat label="Choques" value={String(clashes.length / 2 >= 1 ? clashes.length : clashes.length)} color="#dc2626" />}
+          <button onClick={() => setWeekStart(w => new Date(w.getFullYear(), w.getMonth(), w.getDate() - 7))} style={{ ...btnGhost, width: 'auto', padding: '9px 12px' }}>‹</button>
+          <button onClick={() => setWeekStart(startOfWeek(new Date()))} style={{ ...btnGhost, width: 'auto', padding: '9px 14px' }}>Hoje</button>
+          <button onClick={() => setWeekStart(w => new Date(w.getFullYear(), w.getMonth(), w.getDate() + 7))} style={{ ...btnGhost, width: 'auto', padding: '9px 12px' }}>›</button>
+        </>
+      } />
+
+      {clashes.length > 0 && (
+        <div style={{ background: '#fef2f2', borderBottom: `1px solid #fecaca`, padding: '10px 20px' }}>
+          <p style={{ fontSize: 13, color: '#b91c1c', fontWeight: 600, marginBottom: 4 }}>
+            {clashes.length} {clashes.length === 1 ? 'tarefa está' : 'tarefas estão'} no mesmo horário que outra
+          </p>
+          <p style={{ fontSize: 12, color: '#b91c1c' }}>
+            {Array.from(new Set(clashes.map(b => b.a.title))).slice(0, 6).join(' · ')}
+            {new Set(clashes.map(b => b.a.title)).size > 6 ? '…' : ''}
+          </p>
+        </div>
+      )}
+      {semTempo > 0 && (
+        <div style={{ background: '#fffbeb', borderBottom: '1px solid #fde68a', padding: '8px 20px', fontSize: 12, color: '#92400e' }}>
+          {semTempo} {semTempo === 1 ? 'tarefa sem data' : 'tarefas sem data'} — não aparecem na agenda. Defina início ou entrega no cartão.
+        </div>
+      )}
+
+      <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
+        {loading ? (
+          <div className="cc-skel" style={{ height: 320 }} />
+        ) : (
+          <div style={{ minWidth: 760 }}>
+            {/* cabeçalho dos dias */}
+            <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, 1fr)', gap: 6, marginBottom: 6 }}>
+              <div />
+              {days.map(d => (
+                <div key={d.toISOString()} style={{ textAlign: 'center', padding: '6px 0', borderRadius: 8, background: isToday(d) ? 'rgba(196,122,74,0.12)' : 'transparent' }}>
+                  <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.06em', color: C.muted }}>{d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}</p>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: isToday(d) ? C.brandDark : C.text }}>{d.getDate()}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* grade */}
+            <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, 1fr)', gap: 6 }}>
+              {/* coluna das horas */}
+              <div style={{ position: 'relative', height: hours.length * HOUR_PX }}>
+                {hours.map((h, i) => (
+                  <div key={h} style={{ position: 'absolute', top: i * HOUR_PX - 6, right: 6, fontSize: 10, color: C.muted, fontVariantNumeric: 'tabular-nums' }}>
+                    {String(h).padStart(2, '0')}:00
+                  </div>
+                ))}
+              </div>
+
+              {days.map((d, di) => (
+                <div key={d.toISOString()} style={{ position: 'relative', height: hours.length * HOUR_PX, background: isToday(d) ? '#fbfaf9' : C.col, borderRadius: 8, overflow: 'hidden' }}>
+                  {hours.map((_, i) => (
+                    <div key={i} style={{ position: 'absolute', top: i * HOUR_PX, left: 0, right: 0, height: 1, background: '#dfe3e8' }} />
+                  ))}
+
+                  {perDay[di].map(b => {
+                    const top = ((b.start.getHours() + b.start.getMinutes() / 60) - startHour) * HOUR_PX
+                    const height = Math.max(22, ((b.end.getTime() - b.start.getTime()) / 3600000) * HOUR_PX - 2)
+                    const w = 100 / b.lanes
+                    const color = b.clash ? '#dc2626' : ACTIVITY_PRIORITY_COLORS[b.a.priority] ?? '#3b82f6'
+                    return (
+                      <div key={b.a.id + b.start.toISOString()} onClick={() => setSelected(b.a)}
+                        title={b.clash ? 'Choque de horário com outra tarefa' : b.a.title}
+                        style={{
+                          position: 'absolute', top: Math.max(0, top), height,
+                          left: `calc(${b.lane * w}% + 2px)`, width: `calc(${w}% - 4px)`,
+                          background: b.clash ? '#fee2e2' : '#fff',
+                          border: `1px solid ${b.clash ? '#fca5a5' : C.border}`,
+                          borderLeft: `3px solid ${color}`,
+                          borderRadius: 6, padding: '4px 6px', cursor: 'pointer', overflow: 'hidden',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: b.clash ? '#b91c1c' : C.text, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {b.clash ? '⚠ ' : ''}{b.a.title}
+                        </p>
+                        {height > 38 && (
+                          <p style={{ fontSize: 10, color: b.clash ? '#b91c1c' : C.muted, marginTop: 1 }}>
+                            {b.start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}–{b.end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        )}
+                        {height > 58 && b.a.assigned_to && (
+                          <p style={{ fontSize: 10, color: '#9aa1ab', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.a.assigned_to}</p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {selected && (
+        <ActivityModal wsId={wsId} leads={leads} calConnected={cal.connected} activity={selected}
+          onClose={() => setSelected(null)}
+          onSaved={a => { setItems(ls => ls.map(x => x.id === a.id ? a : x)); setSelected(null) }}
+          onDeleted={id => { setItems(ls => ls.filter(x => x.id !== id)); setSelected(null) }} />
+      )}
     </>
   )
 }
@@ -671,6 +905,7 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
   const [f, setF] = useState({
     title: activity?.title ?? '', description: activity?.description ?? '',
     priority: (activity?.priority ?? 'normal') as ActivityPriority,
+    recurrence: (activity?.recurrence ?? 'none') as ActivityRecurrence,
     start_date: activity?.start_date ? toLocalInput(activity.start_date) : '',
     due_date: activity?.due_date ? toLocalInput(activity.due_date) : '',
     estimate_hours: activity?.estimate_hours != null ? String(activity.estimate_hours) : '',
@@ -681,13 +916,63 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
   const [items, setItems] = useState<ActivityItem[]>([])
   const [drafts, setDrafts] = useState<DraftItem[]>([])
   const [newItem, setNewItem] = useState('')
+  const [files, setFiles] = useState<ActivityAttachment[]>([])
+  const [thumbs, setThumbs] = useState<Record<string, string>>({})
+  const [uploading, setUploading] = useState(false)
+  const [share, setShare] = useState({ enabled: activity?.share_enabled ?? false, token: activity?.share_token ?? null })
+  const [shareCopied, setShareCopied] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
-  // Checklist só existe no banco depois que a atividade existe
+  // Checklist e anexos só existem no banco depois que a atividade existe
   useEffect(() => {
-    if (activity) getActivityItems(activity.id).then(setItems).catch(() => setItems([]))
+    if (!activity) return
+    getActivityItems(activity.id).then(setItems).catch(() => setItems([]))
+    getAttachments(activity.id).then(setFiles).catch(() => setFiles([]))
   }, [activity])
+
+  // URLs temporárias pra pré-visualizar as imagens anexadas
+  useEffect(() => {
+    files.filter(x => x.mime_type?.startsWith('image/') && !thumbs[x.id]).forEach(x => {
+      getAttachmentUrl(x.path).then(u => { if (u) setThumbs(t => ({ ...t, [x.id]: u })) })
+    })
+  }, [files, thumbs])
+
+  const shareUrl = share.token
+    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://crm.casacriative.com.br'}/t?t=${share.token}`
+    : ''
+
+  const uploadFiles = async (list: FileList | File[]) => {
+    if (!activity) { setErr('Salve a atividade primeiro para poder anexar arquivos.'); return }
+    setUploading(true); setErr('')
+    for (const file of Array.from(list)) {
+      if (file.size > 15 * 1024 * 1024) { setErr(`"${file.name}" passa de 15 MB e não foi anexado.`); continue }
+      try {
+        const att = await uploadAttachment(wsId, activity.id, file)
+        setFiles(fs => [...fs, att])
+      } catch (e: any) { setErr('Falha ao anexar: ' + e.message) }
+    }
+    setUploading(false)
+  }
+
+  const onPaste = (e: React.ClipboardEvent) => {
+    const imgs = Array.from(e.clipboardData?.files ?? []).filter(x => x.type.startsWith('image/'))
+    if (imgs.length === 0) return
+    e.preventDefault()
+    uploadFiles(imgs)
+  }
+
+  const toggleShare = async () => {
+    if (!activity) { setErr('Salve a atividade primeiro para poder gerar o link.'); return }
+    try {
+      const up = await setActivityShare(activity.id, !share.enabled)
+      setShare({ enabled: up.share_enabled, token: up.share_token ?? null })
+    } catch (e: any) { setErr(e.message) }
+  }
+
+  const copyShare = async () => {
+    try { await navigator.clipboard.writeText(shareUrl); setShareCopied(true); setTimeout(() => setShareCopied(false), 1800) } catch {}
+  }
 
   const checklist = activity
     ? items.map(i => ({ key: i.id, title: i.title, done: i.done }))
@@ -728,7 +1013,7 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
     try {
       const patch = {
         title: f.title, description: f.description || null,
-        priority: f.priority,
+        priority: f.priority, recurrence: f.recurrence,
         start_date: f.start_date ? new Date(f.start_date).toISOString() : null,
         due_date: f.due_date ? new Date(f.due_date).toISOString() : null,
         estimate_hours: f.estimate_hours ? Number(f.estimate_hours) : null,
@@ -827,13 +1112,26 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
           </div>
         </div>
 
-        <div>
-          <p style={fieldLabel}>Lead vinculado</p>
-          <select value={f.lead_id} onChange={e => setF({ ...f, lead_id: e.target.value })} style={input}>
-            <option value="">Sem lead vinculado</option>
-            {leads.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div>
+            <p style={fieldLabel}>Lead vinculado</p>
+            <select value={f.lead_id} onChange={e => setF({ ...f, lead_id: e.target.value })} style={input}>
+              <option value="">Sem lead vinculado</option>
+              {leads.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <p style={fieldLabel}>Repetir</p>
+            <select value={f.recurrence} onChange={e => setF({ ...f, recurrence: e.target.value as ActivityRecurrence })} style={input}>
+              {Object.entries(ACTIVITY_RECURRENCE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </div>
         </div>
+        {f.recurrence !== 'none' && (
+          <p style={{ fontSize: 12, color: C.muted, marginTop: -6 }}>
+            Ao mover pra uma coluna de <b>Concluído</b>, o CRM já cria a próxima com as datas avançadas e o checklist zerado.
+          </p>
+        )}
 
         {/* Etiquetas */}
         <div>
@@ -886,6 +1184,77 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
               placeholder="Adicionar item…" style={{ ...input, flex: 1 }} />
             <button type="button" onClick={addItem} style={{ ...btnGhost, width: 'auto', padding: '10px 16px' }}>+ Item</button>
           </div>
+        </div>
+
+        {/* Anexos do briefing */}
+        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <p style={{ ...fieldLabel, margin: 0 }}>Briefing / anexos</p>
+            {uploading && <Spinner dark />}
+          </div>
+
+          {!activity && <p style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>Salve a atividade para poder anexar arquivos.</p>}
+
+          {files.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+              {files.map(x => {
+                const isImg = x.mime_type?.startsWith('image/')
+                return (
+                  <div key={x.id} style={{ position: 'relative', border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden', background: '#fafbfc' }}>
+                    {isImg && thumbs[x.id] ? (
+                      <a href={thumbs[x.id]} target="_blank" rel="noreferrer" title={x.name}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={thumbs[x.id]} alt={x.name} style={{ width: 92, height: 92, objectFit: 'cover', display: 'block' }} />
+                      </a>
+                    ) : (
+                      <div style={{ width: 92, height: 92, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, padding: 6 }}>
+                        <span style={{ fontSize: 20 }}>📎</span>
+                        <span style={{ fontSize: 9, color: C.muted, textAlign: 'center', wordBreak: 'break-word', lineHeight: 1.2 }}>{x.name.slice(0, 28)}</span>
+                      </div>
+                    )}
+                    <button type="button" title="Remover anexo"
+                      onClick={async () => { setFiles(fs => fs.filter(y => y.id !== x.id)); await deleteAttachment(x).catch(() => {}) }}
+                      style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: 9, border: 'none', background: 'rgba(15,20,30,.6)', color: '#fff', cursor: 'pointer', fontSize: 12, lineHeight: 1, padding: 0 }}>×</button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <div onPaste={onPaste}
+            onDragOver={e => { e.preventDefault() }}
+            onDrop={e => { e.preventDefault(); if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files) }}
+            style={{ border: `1px dashed ${C.border}`, borderRadius: 8, padding: 12, textAlign: 'center', background: '#fafbfc' }}>
+            <p style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>Arraste arquivos aqui, ou <b>cole uma imagem</b> (Ctrl+V) com esta área selecionada.</p>
+            <label style={{ ...btnGhost, display: 'inline-block', width: 'auto', padding: '8px 16px', cursor: activity ? 'pointer' : 'not-allowed', opacity: activity ? 1 : .5 }}>
+              Escolher arquivos
+              <input type="file" multiple disabled={!activity} onChange={e => { if (e.target.files) uploadFiles(e.target.files); e.target.value = '' }} style={{ display: 'none' }} />
+            </label>
+          </div>
+        </div>
+
+        {/* Link público pra mandar no WhatsApp */}
+        <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+          <p style={fieldLabel}>Compartilhar tarefa</p>
+          <p style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>
+            Gera um link que mostra o briefing completo (descrição, checklist e anexos) sem precisar de login no CRM.
+          </p>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: activity ? 'pointer' : 'not-allowed', marginBottom: share.enabled ? 10 : 0 }}>
+            <input type="checkbox" checked={share.enabled} disabled={!activity} onChange={toggleShare} style={{ accentColor: C.brand }} />
+            Ativar link público
+          </label>
+          {share.enabled && shareUrl && (
+            <>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <input readOnly value={shareUrl} onClick={e => (e.target as HTMLInputElement).select()} style={{ ...input, flex: 1, fontSize: 12 }} />
+                <button type="button" onClick={copyShare} style={{ ...btnGhost, width: 'auto', padding: '10px 14px' }}>{shareCopied ? '✓' : 'Copiar'}</button>
+              </div>
+              <a href={`https://wa.me/?text=${encodeURIComponent(`*${f.title}*\n\nBriefing da tarefa: ${shareUrl}`)}`} target="_blank" rel="noreferrer"
+                style={{ ...btn, display: 'inline-block', width: 'auto', padding: '10px 16px', textDecoration: 'none', background: '#25D366' }}>
+                Enviar no WhatsApp
+              </a>
+            </>
+          )}
         </div>
 
         {f.due_date && !calConnected && <p style={{ fontSize: 12, color: C.muted }}>Conecte o Google Agenda em Configurações para sincronizar a data de entrega automaticamente.</p>}
