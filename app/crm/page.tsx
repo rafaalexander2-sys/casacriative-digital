@@ -58,6 +58,7 @@ import {
   connectGoogleCalendar,
   disconnectGoogleCalendar,
   syncActivityToGoogle,
+  listGoogleEvents,
 } from '@/lib/crm-api'
 import {
   SOURCE_LABELS,
@@ -89,6 +90,7 @@ import {
   type ActivityRecurrence,
   type ActivityStage,
   type ActivityStageKind,
+  type GoogleEvent,
 } from '@/lib/crm-types'
 
 // ---- design tokens (estilo Pipedrive, claro) ----
@@ -148,6 +150,19 @@ function MotionStyles() {
       .cc-card { transition: transform .16s cubic-bezier(.2,0,0,1), box-shadow .16s ease }
       .cc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20,30,50,.12) }
       .cc-card:active { transform: scale(.99) }
+      /* cartão de tarefa: sem tarja lateral, borda fina que puxa o bronze no hover */
+      .cc-task {
+        background: ${C.panel}; border: 1px solid ${C.border}; border-radius: 10px;
+        padding: 12px 13px; cursor: pointer;
+        box-shadow: 0 1px 2px rgba(20,30,50,.04);
+        transition: transform .16s cubic-bezier(.2,0,0,1), box-shadow .16s ease, border-color .16s ease;
+      }
+      .cc-task:hover {
+        transform: translateY(-1px);
+        border-color: rgba(196,122,74,.45);
+        box-shadow: 0 6px 18px rgba(20,30,50,.09);
+      }
+      .cc-task:active { transform: scale(.995) }
       .cc-btn { transition: transform .12s ease, filter .16s ease, opacity .16s ease }
       .cc-btn:hover:not(:disabled) { filter: brightness(1.06) }
       .cc-btn:active:not(:disabled) { transform: translateY(1px) scale(.99) }
@@ -541,6 +556,17 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
 }
 
 // ================================================================ ATIVIDADES (quadro estilo Trello)
+// Iniciais pro avatar do responsável — e-mail vira as letras antes do @,
+// pra não jogar "santosaline2802@gmail.com" inteiro dentro do cartão.
+function initials(name?: string | null): string {
+  if (!name) return '?'
+  const base = name.includes('@') ? name.split('@')[0] : name
+  const parts = base.replace(/[._\-0-9]+/g, ' ').trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return base.slice(0, 2).toUpperCase()
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
 // Prazo: rótulo curto + cor conforme atraso (vermelho), hoje (âmbar) ou futuro
 function dueMeta(iso?: string | null, done?: boolean): { label: string; color: string; bg: string } | null {
   if (!iso) return null
@@ -655,35 +681,57 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
                     const due = dueMeta(a.due_date, isDone)
                     const prog = progressOf(a.id)
                     return (
-                      <div key={a.id} draggable onDragStart={() => setDragId(a.id)} onClick={() => setSelected(a)} className="cc-card cc-fade-up" title="Abrir para editar"
-                        style={{ background: C.panel, borderRadius: 8, padding: 12, paddingLeft: 14, cursor: 'pointer', border: `1px solid ${C.border}`, borderLeft: `3px solid ${ACTIVITY_PRIORITY_COLORS[a.priority] ?? '#3b82f6'}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+                      <div key={a.id} draggable onDragStart={() => setDragId(a.id)} onClick={() => setSelected(a)} className="cc-task cc-fade-up" title="Abrir para editar">
+                        {/* etiquetas: o "olho" do cartão, no mesmo tom dos rótulos do site */}
                         {a.tags?.length > 0 && (
-                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+                          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 7 }}>
                             {a.tags.map(t => (
-                              <span key={t} style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.02em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: '#eef2f7', color: '#5b6472' }}>{t}</span>
+                              <span key={t} style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#8a93a0' }}>{t}</span>
                             ))}
                           </div>
                         )}
-                        <b style={{ fontSize: 14, display: 'block', textDecoration: isDone ? 'line-through' : 'none', color: isDone ? C.muted : C.text }}>{a.title}</b>
-                        {leadName(a.lead_id) && <p style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{leadName(a.lead_id)}</p>}
+
+                        <div style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
+                          {/* prioridade vira um ponto discreto, não uma tarja */}
+                          <span title={ACTIVITY_PRIORITY_LABELS[a.priority]} style={{
+                            width: 6, height: 6, borderRadius: 3, marginTop: 6, flexShrink: 0,
+                            background: isDone ? '#cbd5e1' : ACTIVITY_PRIORITY_COLORS[a.priority] ?? '#3b82f6',
+                          }} />
+                          <b style={{
+                            fontSize: 14, fontWeight: 700, lineHeight: 1.35, letterSpacing: '-0.2px',
+                            textDecoration: isDone ? 'line-through' : 'none', color: isDone ? C.muted : C.text,
+                          }}>{a.title}</b>
+                        </div>
+
+                        {leadName(a.lead_id) && (
+                          <p style={{ fontSize: 11.5, color: C.muted, marginTop: 3, paddingLeft: 13 }}>{leadName(a.lead_id)}</p>
+                        )}
 
                         {prog && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                            <div style={{ flex: 1, height: 4, borderRadius: 2, background: '#e6e8eb', overflow: 'hidden' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 10, paddingLeft: 13 }}>
+                            <div style={{ flex: 1, height: 3, borderRadius: 2, background: '#eceef1', overflow: 'hidden' }}>
                               <div style={{ width: `${(prog.done / prog.total) * 100}%`, height: '100%', background: prog.done === prog.total ? '#22c55e' : C.brand, transition: 'width .3s' }} />
                             </div>
                             <span style={{ fontSize: 10, color: C.muted, fontVariantNumeric: 'tabular-nums' }}>{prog.done}/{prog.total}</span>
                           </div>
                         )}
 
-                        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                          {due && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 5, background: due.bg, color: due.color }}>{due.label}</span>}
-                          {a.estimate_hours != null && <span style={{ fontSize: 10, color: C.muted }}>⏱ {a.estimate_hours}h</span>}
-                          {a.recurrence && a.recurrence !== 'none' && <span style={{ fontSize: 10, color: C.muted }} title={ACTIVITY_RECURRENCE_LABELS[a.recurrence]}>↻</span>}
-                          {a.share_enabled && <span style={{ fontSize: 10, color: '#3b82f6' }} title="Link público ativo">🔗</span>}
-                          {a.google_event_id && <span style={{ fontSize: 10, color: '#16a34a' }}>✓ Agenda</span>}
+                        {/* rodapé: prazo à esquerda, quem faz à direita */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 11, paddingTop: 9, borderTop: '1px solid #f2f4f6' }}>
+                          {due && <span style={{ fontSize: 10.5, fontWeight: 600, padding: '3px 8px', borderRadius: 20, background: due.bg, color: due.color, whiteSpace: 'nowrap' }}>{due.label}</span>}
+                          {a.estimate_hours != null && <span style={{ fontSize: 10.5, color: C.muted, whiteSpace: 'nowrap' }}>{a.estimate_hours}h</span>}
+                          {a.recurrence && a.recurrence !== 'none' && <span style={{ fontSize: 11, color: '#a8b0ba' }} title={ACTIVITY_RECURRENCE_LABELS[a.recurrence]}>↻</span>}
+                          {a.share_enabled && <span style={{ fontSize: 10, color: '#a8b0ba' }} title="Link público ativo">⁃⁃</span>}
+                          {a.google_event_id && <span style={{ fontSize: 10, color: '#a8b0ba' }} title="No Google Agenda">▦</span>}
+                          {a.assigned_to && (
+                            <span title={a.assigned_to} style={{
+                              marginLeft: 'auto', flexShrink: 0, width: 22, height: 22, borderRadius: 11,
+                              background: 'rgba(196,122,74,0.14)', color: C.brandDark,
+                              fontSize: 9, fontWeight: 700, letterSpacing: '.02em',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>{initials(a.assigned_to)}</span>
+                          )}
                         </div>
-                        {a.assigned_to && <p style={{ fontSize: 11, color: '#9aa1ab', marginTop: 6 }}>{a.assigned_to}</p>}
                       </div>
                     )
                   })}
@@ -733,16 +781,28 @@ function sliceForDay(win: { start: Date; end: Date }, day: Date): { start: Date;
   }
 }
 
-type Block = { a: Activity; start: Date; end: Date; lane: number; lanes: number; clash: boolean }
+// Um bloco na agenda pode ser uma tarefa do CRM ou um compromisso do Google
+type RawBlock = {
+  kind: 'task' | 'google'
+  id: string
+  title: string
+  start: Date
+  end: Date
+  busy: boolean          // false = não disputa horário (evento "Disponível" no Google)
+  a?: Activity
+  g?: GoogleEvent
+}
+type Block = RawBlock & { lane: number; lanes: number; clash: boolean }
 
 // Distribui blocos que se sobrepõem em faixas lado a lado e marca os que colidem
-function layoutDay(raw: { a: Activity; start: Date; end: Date }[]): Block[] {
+function layoutDay(raw: RawBlock[]): Block[] {
   const sorted = [...raw].sort((x, y) => x.start.getTime() - y.start.getTime())
   const blocks: Block[] = sorted.map(b => ({ ...b, lane: 0, lanes: 1, clash: false }))
 
-  // colisão real: qualquer par que se sobrepõe no tempo
+  // colisão real: qualquer par que se sobrepõe no tempo (ignora os "livres")
   for (let i = 0; i < blocks.length; i++) {
     for (let j = i + 1; j < blocks.length; j++) {
+      if (!blocks[i].busy || !blocks[j].busy) continue
       if (blocks[i].start < blocks[j].end && blocks[j].start < blocks[i].end) {
         blocks[i].clash = true; blocks[j].clash = true
       }
@@ -774,6 +834,9 @@ function layoutDay(raw: { a: Activity; start: Date; end: Date }[]): Block[] {
 function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr: (m: string) => void }) {
   const [items, setItems] = useState<Activity[]>([])
   const [stages, setStages] = useState<ActivityStage[]>([])
+  const [gEvents, setGEvents] = useState<GoogleEvent[]>([])
+  const [gErr, setGErr] = useState('')
+  const [gLoading, setGLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
   const [selected, setSelected] = useState<Activity | null>(null)
@@ -788,20 +851,46 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
   useEffect(() => { load() }, [load])
   useEffect(() => { if (wsId) hasGoogleCalendar(wsId).then(setCal).catch(() => setCal({ connected: false })) }, [wsId])
 
-  const doneKeys = stages.filter(s => s.kind === 'done').map(s => s.key)
   const days = Array.from({ length: 7 }, (_, i) => new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i))
+
+  // Puxa os compromissos reais do Google pra semana visível
+  useEffect(() => {
+    if (!wsId || !cal.connected) { setGEvents([]); return }
+    const from = new Date(weekStart)
+    const to = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7)
+    setGLoading(true); setGErr('')
+    listGoogleEvents(wsId, from, to)
+      .then(setGEvents)
+      .catch(e => { setGEvents([]); setGErr(e.message) })
+      .finally(() => setGLoading(false))
+  }, [wsId, cal.connected, weekStart])
+
+  const doneKeys = stages.filter(s => s.kind === 'done').map(s => s.key)
 
   // Tarefa concluída não ocupa agenda — só o que ainda está por fazer disputa horário
   const pending = items.filter(a => !doneKeys.includes(a.status))
   const perDay = days.map(day => {
-    const raw: { a: Activity; start: Date; end: Date }[] = []
+    const raw: RawBlock[] = []
     for (const a of pending) {
       const win = activityWindow(a)
       if (!win) continue
       const slice = sliceForDay(win, day)
-      if (slice) raw.push({ a, start: slice.start, end: slice.end })
+      if (slice) raw.push({ kind: 'task', id: a.id, title: a.title, start: slice.start, end: slice.end, busy: true, a })
+    }
+    for (const g of gEvents) {
+      if (!g.start || !g.end) continue   // dia inteiro entra na faixa de cima, não na grade
+      const win = { start: new Date(g.start), end: new Date(g.end) }
+      if (isNaN(win.start.getTime()) || isNaN(win.end.getTime())) continue
+      const slice = sliceForDay(win, day)
+      if (slice) raw.push({ kind: 'google', id: g.id, title: g.title, start: slice.start, end: slice.end, busy: g.busy, g })
     }
     return layoutDay(raw)
+  })
+
+  // Eventos de dia inteiro do Google (aniversário, feriado, viagem…)
+  const allDayPerDay = days.map(day => {
+    const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
+    return gEvents.filter(g => g.all_day_date === key)
   })
 
   // Faixa de horas mostrada: cobre as tarefas da semana, com 8h–19h de base
@@ -812,14 +901,16 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
 
   const clashes = allBlocks.filter(b => b.clash)
   const semTempo = pending.filter(a => !activityWindow(a)).length
+  const gCount = allBlocks.filter(b => b.kind === 'google').length
   const isToday = (d: Date) => { const n = new Date(); return d.getDate() === n.getDate() && d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear() }
   const fmtRange = `${days[0].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${days[6].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
 
   return (
     <>
-      <Topbar title="Agenda" subtitle={fmtRange} right={
+      <Topbar title="Agenda" subtitle={cal.connected ? `${fmtRange} · com o seu Google Agenda` : fmtRange} right={
         <>
-          {clashes.length > 0 && <Stat label="Choques" value={String(clashes.length / 2 >= 1 ? clashes.length : clashes.length)} color="#dc2626" />}
+          {gLoading && <Spinner dark />}
+          {clashes.length > 0 && <Stat label="Choques" value={String(clashes.length)} color="#dc2626" />}
           <button onClick={() => setWeekStart(w => new Date(w.getFullYear(), w.getMonth(), w.getDate() - 7))} style={{ ...btnGhost, width: 'auto', padding: '9px 12px' }}>‹</button>
           <button onClick={() => setWeekStart(startOfWeek(new Date()))} style={{ ...btnGhost, width: 'auto', padding: '9px 14px' }}>Hoje</button>
           <button onClick={() => setWeekStart(w => new Date(w.getFullYear(), w.getMonth(), w.getDate() + 7))} style={{ ...btnGhost, width: 'auto', padding: '9px 12px' }}>›</button>
@@ -832,14 +923,24 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
             {clashes.length} {clashes.length === 1 ? 'tarefa está' : 'tarefas estão'} no mesmo horário que outra
           </p>
           <p style={{ fontSize: 12, color: '#b91c1c' }}>
-            {Array.from(new Set(clashes.map(b => b.a.title))).slice(0, 6).join(' · ')}
-            {new Set(clashes.map(b => b.a.title)).size > 6 ? '…' : ''}
+            {Array.from(new Set(clashes.map(b => b.title))).slice(0, 6).join(' · ')}
+            {new Set(clashes.map(b => b.title)).size > 6 ? '…' : ''}
           </p>
         </div>
       )}
       {semTempo > 0 && (
         <div style={{ background: '#fffbeb', borderBottom: '1px solid #fde68a', padding: '8px 20px', fontSize: 12, color: '#92400e' }}>
           {semTempo} {semTempo === 1 ? 'tarefa sem data' : 'tarefas sem data'} — não aparecem na agenda. Defina início ou entrega no cartão.
+        </div>
+      )}
+      {gErr && (
+        <div style={{ background: '#fffbeb', borderBottom: '1px solid #fde68a', padding: '8px 20px', fontSize: 12, color: '#92400e' }}>
+          Não consegui ler o Google Agenda: {gErr}
+        </div>
+      )}
+      {!cal.connected && (
+        <div style={{ background: '#f1f5f9', borderBottom: `1px solid ${C.border}`, padding: '8px 20px', fontSize: 12, color: C.muted }}>
+          Conecte o Google Agenda em Configurações para ver aqui também os seus compromissos e evitar marcar tarefa em cima de reunião.
         </div>
       )}
 
@@ -858,6 +959,23 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
                 </div>
               ))}
             </div>
+
+            {/* eventos de dia inteiro do Google */}
+            {allDayPerDay.some(l => l.length > 0) && (
+              <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, 1fr)', gap: 6, marginBottom: 6 }}>
+                <div style={{ fontSize: 9, color: C.muted, textAlign: 'right', paddingRight: 6, paddingTop: 4 }}>dia todo</div>
+                {allDayPerDay.map((list, i) => (
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {list.map(g => (
+                      <div key={g.id} title={g.title}
+                        style={{ fontSize: 10, fontWeight: 600, color: '#4a5462', background: '#eef2f7', border: '1px dashed #c7ced8', borderRadius: 5, padding: '3px 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        📅 {g.title}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* grade */}
             <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, 1fr)', gap: 6 }}>
@@ -880,28 +998,31 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
                     const top = ((b.start.getHours() + b.start.getMinutes() / 60) - startHour) * HOUR_PX
                     const height = Math.max(22, ((b.end.getTime() - b.start.getTime()) / 3600000) * HOUR_PX - 2)
                     const w = 100 / b.lanes
-                    const color = b.clash ? '#dc2626' : ACTIVITY_PRIORITY_COLORS[b.a.priority] ?? '#3b82f6'
+                    const isG = b.kind === 'google'
+                    const color = b.clash ? '#dc2626' : isG ? '#64748b' : ACTIVITY_PRIORITY_COLORS[b.a!.priority] ?? '#3b82f6'
                     return (
-                      <div key={b.a.id + b.start.toISOString()} onClick={() => setSelected(b.a)}
-                        title={b.clash ? 'Choque de horário com outra tarefa' : b.a.title}
+                      <div key={b.kind + b.id + b.start.toISOString()}
+                        onClick={() => { if (b.a) setSelected(b.a); else if (b.g?.html_link) window.open(b.g.html_link, '_blank') }}
+                        title={b.clash ? 'Choque de horário' : isG ? `${b.title} (Google Agenda)` : b.title}
                         style={{
                           position: 'absolute', top: Math.max(0, top), height,
                           left: `calc(${b.lane * w}% + 2px)`, width: `calc(${w}% - 4px)`,
-                          background: b.clash ? '#fee2e2' : '#fff',
-                          border: `1px solid ${b.clash ? '#fca5a5' : C.border}`,
+                          background: b.clash ? '#fee2e2' : isG ? '#eef2f7' : '#fff',
+                          border: `1px ${isG ? 'dashed' : 'solid'} ${b.clash ? '#fca5a5' : isG ? '#c7ced8' : C.border}`,
                           borderLeft: `3px solid ${color}`,
                           borderRadius: 6, padding: '4px 6px', cursor: 'pointer', overflow: 'hidden',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                          boxShadow: isG ? 'none' : '0 1px 2px rgba(0,0,0,0.05)',
+                          opacity: !b.busy ? .6 : 1,
                         }}>
-                        <p style={{ fontSize: 11, fontWeight: 700, color: b.clash ? '#b91c1c' : C.text, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {b.clash ? '⚠ ' : ''}{b.a.title}
+                        <p style={{ fontSize: 11, fontWeight: 700, color: b.clash ? '#b91c1c' : isG ? '#4a5462' : C.text, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {b.clash ? '⚠ ' : isG ? '📅 ' : ''}{b.title}
                         </p>
                         {height > 38 && (
                           <p style={{ fontSize: 10, color: b.clash ? '#b91c1c' : C.muted, marginTop: 1 }}>
                             {b.start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}–{b.end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         )}
-                        {height > 58 && b.a.assigned_to && (
+                        {height > 58 && !isG && b.a?.assigned_to && (
                           <p style={{ fontSize: 10, color: '#9aa1ab', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.a.assigned_to}</p>
                         )}
                       </div>

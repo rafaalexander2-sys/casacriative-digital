@@ -164,6 +164,17 @@ export const ACTIVITY_PRIORITY_COLORS: Record<ActivityPriority, string> = {
   low: '#94a3b8',
 }
 
+// Compromisso vindo do Google Agenda (só leitura, pra mostrar na Agenda)
+export interface GoogleEvent {
+  id: string
+  title: string
+  start: string | null
+  end: string | null
+  all_day_date: string | null
+  html_link: string | null
+  busy: boolean
+}
+
 // Aviso que aparece no sininho do CRM
 export interface ActivityNotification {
   id: string
@@ -251,6 +262,10 @@ export function sortActivities(list: Activity[]): Activity[] {
   })
 }
 
+// Quanto tempo um bloco pode ocupar antes de ser tratado como "prazo longo"
+// em vez de tempo de trabalho contínuo.
+const MAX_BLOCO_HORAS = 10
+
 // Janela que a tarefa ocupa na agenda: início→entrega, ou a estimativa a
 // partir/antes de uma das pontas. Sem nenhuma data, não entra na agenda.
 export function activityWindow(a: Activity): { start: Date; end: Date } | null {
@@ -258,7 +273,15 @@ export function activityWindow(a: Activity): { start: Date; end: Date } | null {
   const dur = Math.max(0.25, a.estimate_hours ?? 1) * HORA
   const s = a.start_date ? new Date(a.start_date) : null
   const e = a.due_date ? new Date(a.due_date) : null
-  if (s && e && e.getTime() > s.getTime()) return { start: s, end: e }
+
+  if (s && e && e.getTime() > s.getTime()) {
+    // "Começa hoje, entrega sexta" é prazo, não 3 dias sentado na tarefa:
+    // reserva só a estimativa, terminando na hora da entrega.
+    if (e.getTime() - s.getTime() > MAX_BLOCO_HORAS * HORA) {
+      return { start: new Date(e.getTime() - dur), end: e }
+    }
+    return { start: s, end: e }
+  }
   if (s) return { start: s, end: new Date(s.getTime() + dur) }
   if (e) return { start: new Date(e.getTime() - dur), end: e }
   return null

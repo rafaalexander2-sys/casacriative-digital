@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity, ActivityStage, ActivityStageKind, ActivityItem, ActivityAttachment, ActivityNotification } from './crm-types'
+import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity, ActivityStage, ActivityStageKind, ActivityItem, ActivityAttachment, ActivityNotification, GoogleEvent } from './crm-types'
 
 // Extrai uma mensagem legível do erro de uma Edge Function (supabase.functions.invoke)
 async function fnErrorMessage(error: any): Promise<string> {
@@ -585,6 +585,16 @@ export async function disconnectGoogleCalendar(workspaceId: string): Promise<voi
   })
   if (error) throw new Error(await fnErrorMessage(error))
   if (data?.error) throw new Error(data.error)
+}
+
+// Lê os compromissos do Google Agenda no período pedido (só leitura)
+export async function listGoogleEvents(workspaceId: string, from: Date, to: Date): Promise<GoogleEvent[]> {
+  const { data, error } = await supabase.functions.invoke('google-calendar', {
+    body: { action: 'list', workspace_id: workspaceId, time_min: from.toISOString(), time_max: to.toISOString() },
+  })
+  if (error) throw new Error(await fnErrorMessage(error))
+  if (data?.error) throw new Error(data.error)
+  return data?.events ?? []
 }
 
 export async function syncActivityToGoogle(workspaceId: string, activity: Activity): Promise<{ ok: true; google_event_id: string | null }> {
