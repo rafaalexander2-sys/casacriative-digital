@@ -150,6 +150,19 @@ function MotionStyles() {
       .cc-card { transition: transform .16s cubic-bezier(.2,0,0,1), box-shadow .16s ease }
       .cc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20,30,50,.12) }
       .cc-card:active { transform: scale(.99) }
+      /* cartão de tarefa: sem tarja lateral, borda fina que puxa o bronze no hover */
+      .cc-task {
+        background: ${C.panel}; border: 1px solid ${C.border}; border-radius: 10px;
+        padding: 12px 13px; cursor: pointer;
+        box-shadow: 0 1px 2px rgba(20,30,50,.04);
+        transition: transform .16s cubic-bezier(.2,0,0,1), box-shadow .16s ease, border-color .16s ease;
+      }
+      .cc-task:hover {
+        transform: translateY(-1px);
+        border-color: rgba(196,122,74,.45);
+        box-shadow: 0 6px 18px rgba(20,30,50,.09);
+      }
+      .cc-task:active { transform: scale(.995) }
       .cc-btn { transition: transform .12s ease, filter .16s ease, opacity .16s ease }
       .cc-btn:hover:not(:disabled) { filter: brightness(1.06) }
       .cc-btn:active:not(:disabled) { transform: translateY(1px) scale(.99) }
@@ -543,6 +556,17 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
 }
 
 // ================================================================ ATIVIDADES (quadro estilo Trello)
+// Iniciais pro avatar do responsável — e-mail vira as letras antes do @,
+// pra não jogar "santosaline2802@gmail.com" inteiro dentro do cartão.
+function initials(name?: string | null): string {
+  if (!name) return '?'
+  const base = name.includes('@') ? name.split('@')[0] : name
+  const parts = base.replace(/[._\-0-9]+/g, ' ').trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return base.slice(0, 2).toUpperCase()
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
 // Prazo: rótulo curto + cor conforme atraso (vermelho), hoje (âmbar) ou futuro
 function dueMeta(iso?: string | null, done?: boolean): { label: string; color: string; bg: string } | null {
   if (!iso) return null
@@ -657,35 +681,57 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
                     const due = dueMeta(a.due_date, isDone)
                     const prog = progressOf(a.id)
                     return (
-                      <div key={a.id} draggable onDragStart={() => setDragId(a.id)} onClick={() => setSelected(a)} className="cc-card cc-fade-up" title="Abrir para editar"
-                        style={{ background: C.panel, borderRadius: 8, padding: 12, paddingLeft: 14, cursor: 'pointer', border: `1px solid ${C.border}`, borderLeft: `3px solid ${ACTIVITY_PRIORITY_COLORS[a.priority] ?? '#3b82f6'}`, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+                      <div key={a.id} draggable onDragStart={() => setDragId(a.id)} onClick={() => setSelected(a)} className="cc-task cc-fade-up" title="Abrir para editar">
+                        {/* etiquetas: o "olho" do cartão, no mesmo tom dos rótulos do site */}
                         {a.tags?.length > 0 && (
-                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+                          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 7 }}>
                             {a.tags.map(t => (
-                              <span key={t} style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.02em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, background: '#eef2f7', color: '#5b6472' }}>{t}</span>
+                              <span key={t} style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#8a93a0' }}>{t}</span>
                             ))}
                           </div>
                         )}
-                        <b style={{ fontSize: 14, display: 'block', textDecoration: isDone ? 'line-through' : 'none', color: isDone ? C.muted : C.text }}>{a.title}</b>
-                        {leadName(a.lead_id) && <p style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{leadName(a.lead_id)}</p>}
+
+                        <div style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
+                          {/* prioridade vira um ponto discreto, não uma tarja */}
+                          <span title={ACTIVITY_PRIORITY_LABELS[a.priority]} style={{
+                            width: 6, height: 6, borderRadius: 3, marginTop: 6, flexShrink: 0,
+                            background: isDone ? '#cbd5e1' : ACTIVITY_PRIORITY_COLORS[a.priority] ?? '#3b82f6',
+                          }} />
+                          <b style={{
+                            fontSize: 14, fontWeight: 700, lineHeight: 1.35, letterSpacing: '-0.2px',
+                            textDecoration: isDone ? 'line-through' : 'none', color: isDone ? C.muted : C.text,
+                          }}>{a.title}</b>
+                        </div>
+
+                        {leadName(a.lead_id) && (
+                          <p style={{ fontSize: 11.5, color: C.muted, marginTop: 3, paddingLeft: 13 }}>{leadName(a.lead_id)}</p>
+                        )}
 
                         {prog && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                            <div style={{ flex: 1, height: 4, borderRadius: 2, background: '#e6e8eb', overflow: 'hidden' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 10, paddingLeft: 13 }}>
+                            <div style={{ flex: 1, height: 3, borderRadius: 2, background: '#eceef1', overflow: 'hidden' }}>
                               <div style={{ width: `${(prog.done / prog.total) * 100}%`, height: '100%', background: prog.done === prog.total ? '#22c55e' : C.brand, transition: 'width .3s' }} />
                             </div>
                             <span style={{ fontSize: 10, color: C.muted, fontVariantNumeric: 'tabular-nums' }}>{prog.done}/{prog.total}</span>
                           </div>
                         )}
 
-                        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                          {due && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 5, background: due.bg, color: due.color }}>{due.label}</span>}
-                          {a.estimate_hours != null && <span style={{ fontSize: 10, color: C.muted }}>⏱ {a.estimate_hours}h</span>}
-                          {a.recurrence && a.recurrence !== 'none' && <span style={{ fontSize: 10, color: C.muted }} title={ACTIVITY_RECURRENCE_LABELS[a.recurrence]}>↻</span>}
-                          {a.share_enabled && <span style={{ fontSize: 10, color: '#3b82f6' }} title="Link público ativo">🔗</span>}
-                          {a.google_event_id && <span style={{ fontSize: 10, color: '#16a34a' }}>✓ Agenda</span>}
+                        {/* rodapé: prazo à esquerda, quem faz à direita */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 11, paddingTop: 9, borderTop: '1px solid #f2f4f6' }}>
+                          {due && <span style={{ fontSize: 10.5, fontWeight: 600, padding: '3px 8px', borderRadius: 20, background: due.bg, color: due.color, whiteSpace: 'nowrap' }}>{due.label}</span>}
+                          {a.estimate_hours != null && <span style={{ fontSize: 10.5, color: C.muted, whiteSpace: 'nowrap' }}>{a.estimate_hours}h</span>}
+                          {a.recurrence && a.recurrence !== 'none' && <span style={{ fontSize: 11, color: '#a8b0ba' }} title={ACTIVITY_RECURRENCE_LABELS[a.recurrence]}>↻</span>}
+                          {a.share_enabled && <span style={{ fontSize: 10, color: '#a8b0ba' }} title="Link público ativo">⁃⁃</span>}
+                          {a.google_event_id && <span style={{ fontSize: 10, color: '#a8b0ba' }} title="No Google Agenda">▦</span>}
+                          {a.assigned_to && (
+                            <span title={a.assigned_to} style={{
+                              marginLeft: 'auto', flexShrink: 0, width: 22, height: 22, borderRadius: 11,
+                              background: 'rgba(196,122,74,0.14)', color: C.brandDark,
+                              fontSize: 9, fontWeight: 700, letterSpacing: '.02em',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>{initials(a.assigned_to)}</span>
+                          )}
                         </div>
-                        {a.assigned_to && <p style={{ fontSize: 11, color: '#9aa1ab', marginTop: 6 }}>{a.assigned_to}</p>}
                       </div>
                     )
                   })}
