@@ -78,6 +78,37 @@ Para ver logs de build com erro: aba **Implantações** → deploy → **Detalhe
 - `cc_perplexity_key` — Perplexity API (geração de mensagens com IA)
 - `cc_apify_key` — Apify (scraping Instagram por hashtag)
 
+## CRM — Histórico de movimentação e relatórios
+
+- **Base:** `lead_stage_history` (`supabase/schema-lead-history.sql`) — uma linha por
+  movimento de card, escrita por **gatilho no banco** (`log_lead_stage_change`), não
+  pelo app. Assim importação, webhook e UPDATE manual também deixam rastro.
+  `origin` diz no que confiar: `live` (gatilho), `backfill` (recuperado de
+  `lead_events`), `seed` (ponto de partida das fichas importadas — data NÃO confiável).
+- **Vista `lead_stage_spans`** (`security_invoker = on`): transforma movimentos em
+  períodos — `entered_at`, `left_at`, `is_current`, `days_in_stage`. Quem ainda não
+  saiu conta até `now()`, por isso o número cresce sozinho.
+- **`leads.entry_date`** = marco zero do ciclo (quando a PESSOA chegou), separado de
+  `created_at` (quando a FICHA foi criada). Editável à mão no cartão.
+  `entry_date_estimated = true` marca data deduzida por nós — esses leads ficam de
+  fora do cálculo de ciclo. Corrigir a data à mão limpa a flag.
+- **Relatórios** (`ReportsView` em `app/crm/page.tsx`): filtro de período no topo
+  (7/30/90 dias, mês, tudo, ou datas à mão) que manda em tudo, inclusive na
+  exportação. Traz ciclo de vendas (mediana/média/min/máx), tempo mediano por etapa
+  com taxa de avanço, e a tabela de parados por faixa (0–3/4–7/8–14/15+ dias) —
+  clicar num número lista quem são.
+- **Exportação** (`lib/crm-export.ts`): três CSVs que se cruzam pelo ID do lead —
+  `leads` (larga, com UTMs, datas e os dias em CADA etapa), `movimentos` (base bruta)
+  e `resumo-etapas` (agregado). Separador `;`, BOM UTF-8, decimal com vírgula e datas
+  em dd/mm/aaaa no fuso de São Paulo (o banco guarda UTC). Fica em **Relatórios**;
+  Configurações só tem o backup JSON.
+- `ingest-lead` passa a aceitar `service`, `value`, `utm_term` e `utm_content`, e grava
+  `entry_date` com a data real da chegada.
+
+**Setup necessário (uma vez):** rodar `supabase/schema-lead-history.sql` no SQL Editor
+e fazer redeploy da Edge Function `ingest-lead`. Sem o SQL, a tela de Relatórios avisa
+e o resto do CRM continua a funcionar.
+
 ## CRM — Atividades (Trello) + Google Agenda
 
 - `app/crm/page.tsx` → `ActivitiesView` / `ActivityModal`: quadro de tarefas por espaço,

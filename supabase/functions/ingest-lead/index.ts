@@ -53,11 +53,19 @@ Deno.serve(async (req) => {
         : 'form',
       status: 'novo',
       notes: body.notes ?? body.message ?? null,
+      service: body.service ?? null,
+      value: body.value != null && !Number.isNaN(Number(body.value)) ? Number(body.value) : null,
       utm_source: body.utm_source ?? null,
       utm_medium: body.utm_medium ?? null,
       utm_campaign: body.utm_campaign ?? null,
+      utm_term: body.utm_term ?? null,
+      utm_content: body.utm_content ?? null,
       fbclid: body.fbclid ?? null,
       gclid: body.gclid ?? null,
+      // Lead que chega pelo webhook chega AGORA: a data é real, não deduzida.
+      // Em fuso de São Paulo — senão um lead das 21h cai no dia seguinte.
+      entry_date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
+      entry_date_estimated: false,
     }
     const { error } = await admin.from('leads').insert(lead)
     if (error) return json({ error: error.message }, 500)

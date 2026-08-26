@@ -38,6 +38,8 @@ export interface Lead {
   utm_source?: string | null
   utm_medium?: string | null
   utm_campaign?: string | null
+  utm_term?: string | null
+  utm_content?: string | null
   fbclid?: string | null
   gclid?: string | null
   synced_to_ads: boolean
@@ -47,6 +49,92 @@ export interface Lead {
   updated_at: string
   won_at?: string | null
   lost_at?: string | null
+
+  // Marco zero do ciclo: quando a PESSOA chegou (created_at é quando a
+  // ficha foi criada no sistema — numa importação as duas divergem).
+  entry_date?: string | null
+  entry_date_estimated?: boolean
+  lost_reason?: string | null
+  contracts_count?: number
+}
+
+// ---- Histórico de movimentação (schema-lead-history.sql) ----
+
+/** Um movimento: o card saiu de uma etapa e entrou noutra. */
+export interface LeadStageHistory {
+  id: string
+  lead_id: string
+  workspace_id: string
+  from_status?: string | null
+  to_status: string
+  to_label?: string | null
+  changed_at: string
+  changed_by?: string | null
+  origin: 'live' | 'backfill' | 'seed'
+}
+
+/** Uma passagem por uma etapa, já com a duração calculada (vista lead_stage_spans). */
+export interface LeadStageSpan {
+  id: string
+  lead_id: string
+  workspace_id: string
+  status: string
+  label?: string | null
+  from_status?: string | null
+  origin: 'live' | 'backfill' | 'seed'
+  entered_at: string
+  left_at?: string | null
+  is_current: boolean
+  days_in_stage: number
+}
+
+/** Faixas de envelhecimento do relatório de "parados". */
+export const AGING_BUCKETS: { key: string; label: string; min: number; max: number }[] = [
+  { key: 'b0', label: '0–3 d', min: 0, max: 3 },
+  { key: 'b1', label: '4–7 d', min: 3, max: 7 },
+  { key: 'b2', label: '8–14 d', min: 7, max: 14 },
+  { key: 'b3', label: '15+ d', min: 14, max: Infinity },
+]
+
+export function agingBucket(days: number): string {
+  return AGING_BUCKETS.find(b => days > b.min && days <= b.max)?.key
+    ?? (days <= 0 ? 'b0' : 'b3')
+}
+
+/** Mediana — usada no ciclo. Menos sensível a um caso extremo do que a média. */
+export function median(values: number[]): number {
+  if (values.length === 0) return 0
+  const v = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(v.length / 2)
+  return v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2
+}
+
+/** Período do filtro de datas dos relatórios. */
+export interface DateRange { from: string; to: string }
+
+export const RANGE_PRESETS: { key: string; label: string; days: number | 'all' | 'month' }[] = [
+  { key: '7', label: '7 dias', days: 7 },
+  { key: '30', label: '30 dias', days: 30 },
+  { key: '90', label: '90 dias', days: 90 },
+  { key: 'month', label: 'Este mês', days: 'month' },
+  { key: 'all', label: 'Tudo', days: 'all' },
+]
+
+/** Data local (São Paulo) no formato aaaa-mm-dd, sem escorregar de dia por causa do UTC. */
+export function isoDay(d: Date): string {
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+}
+
+export function presetRange(key: string): DateRange {
+  const to = isoDay(new Date())
+  if (key === 'all') return { from: '2000-01-01', to }
+  if (key === 'month') {
+    const n = new Date()
+    return { from: isoDay(new Date(n.getFullYear(), n.getMonth(), 1)), to }
+  }
+  const n = new Date()
+  n.setDate(n.getDate() - Number(key))
+  return { from: isoDay(n), to }
 }
 
 export interface Workspace {
