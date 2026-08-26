@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, Activity, ActivityStage, ActivityStageKind, ActivityItem, ActivityAttachment, ActivityNotification, GoogleEvent } from './crm-types'
+import type { Lead, Workspace, Member, Invitation, MemberRole, PipelineStage, StageKind, LeadEvent, LeadStageSpan, LeadStageHistory, DateRange, Activity, ActivityStage, ActivityStageKind, ActivityItem, ActivityAttachment, ActivityNotification, GoogleEvent } from './crm-types'
 
 // Extrai uma mensagem legível do erro de uma Edge Function (supabase.functions.invoke)
 async function fnErrorMessage(error: any): Promise<string> {
@@ -243,6 +243,78 @@ export async function updateLead(id: string, patch: Partial<Lead>): Promise<Lead
 }
 
 // ---- Histórico do lead ----
+// ============================================================
+// HISTÓRICO DE MOVIMENTAÇÃO DOS CARDS
+// A base de todos os relatórios de ciclo. Escrita por gatilho no banco
+// (schema-lead-history.sql), por isso não há função de "gravar" aqui:
+// mudar leads.status por qualquer caminho já gera a linha.
+// ============================================================
+
+/**
+ * Lê tudo de uma tabela/vista em páginas de 1000.
+ * O PostgREST corta em 1000 linhas por omissão — com um ano de operação o
+ * histórico passa disso e o relatório sairia truncado sem avisar.
+ */
+async function fetchAll<T>(
+  build: () => any,
+  page = 1000,
+): Promise<T[]> {
+  const out: T[] = []
+  for (let from = 0; ; from += page) {
+    const { data, error } = await build().range(from, from + page - 1)
+    if (error) throw error
+    out.push(...((data ?? []) as T[]))
+    if (!data || data.length < page) break
+  }
+  return out
+}
+
+/**
+ * Passagens por etapa, já com a duração calculada.
+ * `range` filtra pela data de ENTRADA na etapa: "o que se moveu no período".
+ */
+export async function getStageSpans(workspaceId: string, range?: DateRange): Promise<LeadStageSpan[]> {
+  return fetchAll<LeadStageSpan>(() => {
+    let q = supabase.from('lead_stage_spans').select('*').eq('workspace_id', workspaceId)
+    if (range) q = q.gte('entered_at', dayStart(range.from)).lte('entered_at', dayEnd(range.to))
+    return q.order('lead_id').order('entered_at')
+  })
+}
+
+/**
+ * Passagens ABERTAS agora (o lead ainda está nesta etapa), sem filtro de
+ * período — é a foto do "quem está parado onde neste momento". Filtrar por
+ * data aqui daria o número errado: quem entrou na etapa há 40 dias ficaria
+ * de fora justamente do relatório de parados.
+ */
+export async function getOpenSpans(workspaceId: string): Promise<LeadStageSpan[]> {
+  return fetchAll<LeadStageSpan>(() =>
+    supabase.from('lead_stage_spans').select('*')
+      .eq('workspace_id', workspaceId).eq('is_current', true).order('days_in_stage', { ascending: false }),
+  )
+}
+
+/** Linha do tempo de UM lead — usada no cartão. */
+export async function getLeadSpans(leadId: string): Promise<LeadStageSpan[]> {
+  const { data, error } = await supabase
+    .from('lead_stage_spans').select('*').eq('lead_id', leadId).order('entered_at')
+  if (error) throw error
+  return data ?? []
+}
+
+/** Movimentos crus do período — é o que vai no CSV de movimentos. */
+export async function getStageHistory(workspaceId: string, range?: DateRange): Promise<LeadStageHistory[]> {
+  return fetchAll<LeadStageHistory>(() => {
+    let q = supabase.from('lead_stage_history').select('*').eq('workspace_id', workspaceId)
+    if (range) q = q.gte('changed_at', dayStart(range.from)).lte('changed_at', dayEnd(range.to))
+    return q.order('changed_at')
+  })
+}
+
+// aaaa-mm-dd → instantes do dia inteiro no fuso local de quem consulta
+function dayStart(d: string) { return new Date(`${d}T00:00:00`).toISOString() }
+function dayEnd(d: string) { return new Date(`${d}T23:59:59.999`).toISOString() }
+
 export async function getLeadEvents(leadId: string): Promise<LeadEvent[]> {
   const { data, error } = await supabase
     .from('lead_events')

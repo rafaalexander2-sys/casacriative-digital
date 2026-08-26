@@ -59,7 +59,12 @@ import {
   disconnectGoogleCalendar,
   syncActivityToGoogle,
   listGoogleEvents,
+  getStageSpans,
+  getOpenSpans,
+  getStageHistory,
+  getLeadSpans,
 } from '@/lib/crm-api'
+import { exportAll, downloadFile, type ExportData } from '@/lib/crm-export'
 import {
   SOURCE_LABELS,
   ROLE_LABELS,
@@ -72,6 +77,15 @@ import {
   sortActivities,
   activityWindow,
   DEAL_TYPE_LABELS,
+  AGING_BUCKETS,
+  RANGE_PRESETS,
+  agingBucket,
+  median,
+  presetRange,
+  isoDay,
+  type DateRange,
+  type LeadStageSpan,
+  type LeadStageHistory,
   type Lead,
   type LeadSource,
   type Workspace,
@@ -1539,16 +1553,21 @@ function LeadDetail({ lead, stages, onClose, onSaved, onDeleted }: {
     name: lead.name, company: lead.company ?? '', email: lead.email ?? '', phone: lead.phone ?? '',
     value: lead.value != null ? String(lead.value) : '', service: lead.service ?? '',
     deal_type: (lead.deal_type ?? '') as '' | DealType, source: lead.source, notes: lead.notes ?? '',
+    entry_date: lead.entry_date ?? '', lost_reason: lead.lost_reason ?? '',
+    contracts_count: String(lead.contracts_count ?? 0),
   })
   const [events, setEvents] = useState<LeadEvent[]>([])
+  const [spans, setSpans] = useState<LeadStageSpan[]>([])
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
   const loadEvents = useCallback(() => { getLeadEvents(lead.id).then(setEvents).catch(() => {}) }, [lead.id])
   useEffect(() => { loadEvents() }, [loadEvents])
+  useEffect(() => { getLeadSpans(lead.id).then(setSpans).catch(() => setSpans([])) }, [lead.id])
 
   const stageLabel = stages.find(s => s.key === lead.status)?.label ?? lead.status
+  const isLost = stages.find(s => s.key === lead.status)?.kind === 'lost'
 
   const save = async () => {
     setBusy(true); setErr('')
@@ -1557,6 +1576,12 @@ function LeadDetail({ lead, stages, onClose, onSaved, onDeleted }: {
         name: f.name, company: f.company || null, email: f.email || null, phone: f.phone || null,
         value: f.value ? Number(f.value) : null, service: f.service || null,
         deal_type: (f.deal_type || null) as DealType | null, source: f.source, notes: f.notes || null,
+        // mexer na data à mão significa que a pessoa sabe a data certa:
+        // deixa de ser "estimada" e passa a contar no ciclo de vendas
+        entry_date: f.entry_date || null,
+        entry_date_estimated: f.entry_date !== (lead.entry_date ?? '') ? false : lead.entry_date_estimated,
+        lost_reason: f.lost_reason || null,
+        contracts_count: Number(f.contracts_count) || 0,
       })
       onSaved(u)
     } catch (e: any) { setErr(e.message) }
@@ -1602,6 +1627,23 @@ function LeadDetail({ lead, stages, onClose, onSaved, onDeleted }: {
           <select value={f.source} onChange={e => setF({ ...f, source: e.target.value as LeadSource })} style={{ ...input, gridColumn: '1 / -1' }}>
             {Object.entries(SOURCE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
+
+          <div>
+            <p style={fieldLabel}>Data de entrada</p>
+            <input type="date" value={f.entry_date} onChange={e => setF({ ...f, entry_date: e.target.value })} style={input} />
+          </div>
+          <div>
+            <p style={fieldLabel}>Contratos fechados</p>
+            <input type="number" min={0} value={f.contracts_count} onChange={e => setF({ ...f, contracts_count: e.target.value })} style={input} />
+          </div>
+          {lead.entry_date_estimated && (
+            <p style={{ gridColumn: '1 / -1', fontSize: 11.5, color: '#a35c07', background: '#fdf1dc', borderRadius: 8, padding: '7px 10px', margin: 0 }}>
+              Data de entrada deduzida da criação da ficha — corrija se souber o dia certo. Enquanto estiver assim, este lead fica de fora do ciclo de vendas.
+            </p>
+          )}
+          {isLost && (
+            <input value={f.lost_reason} onChange={e => setF({ ...f, lost_reason: e.target.value })} placeholder="Motivo da perda" style={{ ...input, gridColumn: '1 / -1' }} />
+          )}
         </div>
         <textarea value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} placeholder="Anotações (resumo)" rows={2} style={{ ...input, resize: 'vertical', marginBottom: 8 }} />
         {err && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
@@ -1609,6 +1651,30 @@ function LeadDetail({ lead, stages, onClose, onSaved, onDeleted }: {
           <button onClick={() => { if (confirm(`Apagar o lead "${lead.name}"?`)) { deleteLead(lead.id).then(() => onDeleted(lead.id)) } }} style={{ ...btnGhost, width: 'auto', padding: '10px 14px', color: '#dc2626' }}>Apagar</button>
           <button onClick={save} disabled={busy} className="cc-btn" style={{ ...btn, marginLeft: 'auto', width: 'auto', padding: '10px 22px' }}>{busy ? <Spinner /> : 'Salvar'}</button>
         </div>
+
+        {spans.length > 0 && (
+          <>
+            <p style={label}>Tempo em cada etapa</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginBottom: 6 }}>
+              {spans.map(sp => {
+                const st = stages.find(x => x.key === sp.status)
+                return (
+                  <div key={sp.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 0', borderBottom: `1px solid ${C.border}` }}>
+                    <span style={{ width: 7, height: 7, borderRadius: 4, background: st?.color ?? '#cbd5e1', flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{st?.label ?? sp.label ?? sp.status}</span>
+                    <span style={{ fontSize: 11.5, color: C.muted }}>
+                      desde {new Date(sp.entered_at).toLocaleDateString('pt-BR')}
+                      {sp.origin === 'seed' && ' · data não confiável'}
+                    </span>
+                    <span style={{ marginLeft: 'auto', fontSize: 12.5, fontWeight: 600, color: sp.is_current ? C.brandDark : C.muted, fontVariantNumeric: 'tabular-nums' }}>
+                      {(sp.days_in_stage ?? 0).toFixed(1)} d{sp.is_current ? ' (aqui)' : ''}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
 
         <p style={label}>Histórico</p>
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
@@ -1700,28 +1766,151 @@ function FunnelEditor({ wsId, stages, onClose, onChanged }: { wsId: string; stag
 
 // ================================================================ RELATÓRIOS
 function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; stages: PipelineStage[] }) {
+  // ---- filtro de período (manda em tudo nesta tela, inclusive na exportação) ----
+  const [preset, setPreset] = useState('90')
+  const [range, setRange] = useState<DateRange>(() => presetRange('90'))
+  const [spans, setSpans] = useState<LeadStageSpan[]>([])
+  const [openSpans, setOpenSpans] = useState<LeadStageSpan[]>([])
+  const [history, setHistory] = useState<LeadStageHistory[]>([])
+  const [people, setPeople] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
+  const [histErr, setHistErr] = useState('')
+
+  const applyPreset = (key: string) => {
+    setPreset(key)
+    if (key !== 'custom') setRange(presetRange(key))
+  }
+
+  useEffect(() => {
+    if (!ws) return
+    setLoading(true); setHistErr('')
+    Promise.all([
+      getStageSpans(ws.id, range),
+      getOpenSpans(ws.id),
+      getStageHistory(ws.id, range),
+      listMembers(ws.id).catch(() => []),
+    ])
+      .then(([sp, op, h, ms]) => {
+        setSpans(sp); setOpenSpans(op); setHistory(h)
+        setPeople(Object.fromEntries((ms as Member[]).map(m => [m.user_id, m.email])))
+      })
+      .catch(e => setHistErr(
+        String(e?.message ?? e).match(/lead_stage_/i)
+          ? 'O histórico de movimentação ainda não foi criado no banco. Rode supabase/schema-lead-history.sql no SQL Editor do Supabase.'
+          : String(e?.message ?? e)))
+      .finally(() => setLoading(false))
+  }, [ws, range])
+
   const wonKeys = stages.filter(s => s.kind === 'won').map(s => s.key)
   const lostKeys = stages.filter(s => s.kind === 'lost').map(s => s.key)
   const closedKeys = [...wonKeys, ...lostKeys]
-  const total = leads.length
-  const won = leads.filter(l => wonKeys.includes(l.status))
-  const lost = leads.filter(l => lostKeys.includes(l.status))
-  const open = leads.filter(l => !closedKeys.includes(l.status))
+  const posOf = new Map(stages.map((s, i) => [s.key, s.position ?? i]))
+
+  // Leads do período: pela DATA DE ENTRADA (quando a pessoa chegou), não
+  // pela data de criação da ficha — é a diferença que fazia o relatório mentir.
+  const dayOf = (l: Lead) => (l.entry_date ?? l.created_at).slice(0, 10)
+  const periodLeads = leads.filter(l => dayOf(l) >= range.from && dayOf(l) <= range.to)
+
+  const total = periodLeads.length
+  const won = periodLeads.filter(l => wonKeys.includes(l.status))
+  const lost = periodLeads.filter(l => lostKeys.includes(l.status))
+  const open = periodLeads.filter(l => !closedKeys.includes(l.status))
   const wonVal = won.reduce((s, l) => s + (l.value ?? 0), 0)
   const openVal = open.reduce((s, l) => s + (l.value ?? 0), 0)
   const conv = won.length + lost.length > 0 ? Math.round((won.length / (won.length + lost.length)) * 100) : 0
   const ticket = won.length ? wonVal / won.length : 0
 
+  // ---- ciclo de vendas: da chegada da pessoa até fechar ----
+  const cycleDays = (l: Lead): number | null => {
+    const close = l.won_at ?? l.lost_at
+    if (!close) return null
+    const zero = l.entry_date ? new Date(`${l.entry_date}T00:00:00`) : new Date(l.created_at)
+    // fichas cuja data de entrada foi deduzida por nós não entram na conta
+    if (l.entry_date_estimated) return null
+    return (new Date(close).getTime() - zero.getTime()) / 86400000
+  }
+  const wonCycles = won.map(cycleDays).filter((n): n is number => n != null && n >= 0)
+  const allCycles = [...won, ...lost].map(cycleDays).filter((n): n is number => n != null && n >= 0)
+  const estimated = periodLeads.filter(l => l.entry_date_estimated).length
+
+  // ---- tempo por etapa: só passagens já concluídas ----
+  const stageStats = stages.map(s => {
+    const mine = spans.filter(x => x.status === s.key)
+    const done = mine.filter(x => !x.is_current).map(x => x.days_in_stage ?? 0)
+    const nexts = spans.filter(x => x.from_status === s.key)
+    const fwd = nexts.filter(x => (posOf.get(x.status) ?? 0) > (posOf.get(s.key) ?? 0)).length
+    return {
+      s,
+      entered: mine.length,
+      med: done.length ? median(done) : null,
+      n: done.length,
+      rate: nexts.length ? Math.round((fwd / nexts.length) * 100) : null,
+    }
+  })
+  const slowest = stageStats.filter(x => x.med != null && x.s.kind === 'open')
+    .sort((a, b) => (b.med ?? 0) - (a.med ?? 0))[0]
+  const maxMed = Math.max(1, ...stageStats.map(x => x.med ?? 0))
+
+  // ---- parados agora: foto do momento, sem filtro de data ----
+  const aging = stages.filter(s => s.kind === 'open').map(s => {
+    const parked = openSpans.filter(x => x.status === s.key)
+    const buckets: Record<string, LeadStageSpan[]> = {}
+    for (const b of AGING_BUCKETS) buckets[b.key] = []
+    for (const p of parked) buckets[agingBucket(p.days_in_stage ?? 0)].push(p)
+    return { s, parked, buckets }
+  })
+  const nameOf = new Map(leads.map(l => [l.id, l.name]))
+  const [drill, setDrill] = useState<{ title: string; rows: LeadStageSpan[] } | null>(null)
+
   const bySource = (Object.keys(SOURCE_LABELS) as LeadSource[])
-    .map(s => ({ s, n: leads.filter(l => l.source === s).length })).filter(x => x.n > 0)
+    .map(s => ({ s, n: periodLeads.filter(l => l.source === s).length })).filter(x => x.n > 0)
   const maxSource = Math.max(1, ...bySource.map(x => x.n))
+
+  const exportData = (): ExportData => ({
+    leads: periodLeads, stages, spans, history, range, people,
+  })
+
+  const th: React.CSSProperties = { textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '.05em', padding: '8px 10px', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap' }
+  const td: React.CSSProperties = { fontSize: 13, padding: '9px 10px', borderBottom: `1px solid ${C.border}` }
 
   return (
     <>
       <Topbar title="Relatórios" subtitle={ws?.name} />
       <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
+
+        {/* ---------------- filtro de período ---------------- */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 18, padding: '12px 14px', background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12 }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginRight: 2 }}>Período</span>
+          {RANGE_PRESETS.map(p => (
+            <button key={p.key} onClick={() => applyPreset(p.key)}
+              style={{
+                border: `1px solid ${preset === p.key ? C.brand : C.border}`,
+                background: preset === p.key ? 'rgba(196,122,74,0.10)' : '#fff',
+                color: preset === p.key ? C.brandDark : C.text,
+                borderRadius: 20, padding: '5px 13px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              }}>{p.label}</button>
+          ))}
+          <span style={{ width: 1, height: 22, background: C.border, margin: '0 4px' }} />
+          <input type="date" value={range.from} max={range.to}
+            onChange={e => { setPreset('custom'); setRange(r => ({ ...r, from: e.target.value })) }}
+            style={{ ...input, width: 'auto', padding: '6px 9px', fontSize: 12.5 }} />
+          <span style={{ fontSize: 12, color: C.muted }}>até</span>
+          <input type="date" value={range.to} min={range.from}
+            onChange={e => { setPreset('custom'); setRange(r => ({ ...r, to: e.target.value })) }}
+            style={{ ...input, width: 'auto', padding: '6px 9px', fontSize: 12.5 }} />
+          <button onClick={() => exportAll(exportData(), ws?.name ?? 'crm')}
+            style={{ ...btn, flex: 'none', marginLeft: 'auto', padding: '8px 16px', fontSize: 13 }}>
+            Exportar (3 ficheiros)
+          </button>
+        </div>
+
+        {histErr && (
+          <p style={{ fontSize: 13, color: '#b91c1c', background: '#fdeaea', border: '1px solid #f6cccc', borderRadius: 10, padding: '11px 14px', marginBottom: 18 }}>{histErr}</p>
+        )}
+
+        {/* ---------------- visão geral ---------------- */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
-          <Card title="Total de leads" value={String(total)} />
+          <Card title="Leads no período" value={String(total)} />
           <Card title="Em aberto" value={String(open.length)} sub={BRL(openVal) + ' em pipeline'} />
           <Card title="Ganhos" value={String(won.length)} sub={BRL(wonVal)} color="#16a34a" />
           <Card title="Perdidos" value={String(lost.length)} color="#dc2626" />
@@ -1729,26 +1918,81 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
           <Card title="Ticket médio" value={BRL(ticket)} />
         </div>
 
-        <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 12px' }}>Por etapa</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24, maxWidth: 560 }}>
-          {stages.map(s => {
-            const n = leads.filter(l => l.status === s.key).length
-            const pct = total ? (n / total) * 100 : 0
-            return (
-              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ width: 100, fontSize: 13, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</span>
-                <div style={{ flex: 1, background: C.col, borderRadius: 6, height: 20, overflow: 'hidden' }}>
-                  <div style={{ width: `${pct}%`, height: '100%', background: s.color, transition: 'width .3s' }} />
-                </div>
-                <span style={{ width: 28, textAlign: 'right', fontSize: 13, fontWeight: 600 }}>{n}</span>
-              </div>
-            )
-          })}
+        {/* ---------------- ciclo de vendas ---------------- */}
+        <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 4px' }}>Ciclo de vendas</h3>
+        <p style={{ fontSize: 12.5, color: C.muted, marginBottom: 12 }}>
+          Da chegada da pessoa até o fecho. {estimated > 0 && `${estimated} ficha${estimated > 1 ? 's' : ''} com data de entrada deduzida ficam de fora da conta.`}
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 20 }}>
+          <Card title="Ciclo mediano (ganhos)" value={wonCycles.length ? `${median(wonCycles).toFixed(1)} d` : '—'} sub={`${wonCycles.length} caso${wonCycles.length === 1 ? '' : 's'}`} />
+          <Card title="Ciclo médio (ganhos)" value={wonCycles.length ? `${(wonCycles.reduce((a, b) => a + b, 0) / wonCycles.length).toFixed(1)} d` : '—'} />
+          <Card title="Mais rápido / mais lento" value={wonCycles.length ? `${Math.min(...wonCycles).toFixed(0)} / ${Math.max(...wonCycles).toFixed(0)} d` : '—'} />
+          <Card title="Até fechar (ganho ou perdido)" value={allCycles.length ? `${median(allCycles).toFixed(1)} d` : '—'} sub={`${allCycles.length} caso${allCycles.length === 1 ? '' : 's'}`} />
         </div>
+
+        <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 4px' }}>Tempo mediano em cada etapa</h3>
+        <p style={{ fontSize: 12.5, color: C.muted, marginBottom: 12 }}>
+          Conta só quem já saiu da etapa.{slowest?.med ? ` Hoje o funil trava em “${slowest.s.label}”: ${slowest.med.toFixed(1)} dias.` : ''}
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 26, maxWidth: 620 }}>
+          {stageStats.map(({ s, med, n, rate }) => (
+            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ width: 100, fontSize: 13, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</span>
+              <div style={{ flex: 1, background: C.col, borderRadius: 6, height: 20, overflow: 'hidden' }}>
+                <div style={{ width: `${((med ?? 0) / maxMed) * 100}%`, height: '100%', background: s.color, transition: 'width .3s' }} />
+              </div>
+              <span style={{ width: 58, textAlign: 'right', fontSize: 13, fontWeight: 600 }}>{med == null ? '—' : `${med.toFixed(1)} d`}</span>
+              <span style={{ width: 96, textAlign: 'right', fontSize: 11.5, color: C.muted }}>
+                {n} saída{n === 1 ? '' : 's'}{rate != null ? ` · ${rate}% avança` : ''}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* ---------------- parados agora ---------------- */}
+        <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 4px' }}>Parados agora, por tempo na etapa</h3>
+        <p style={{ fontSize: 12.5, color: C.muted, marginBottom: 12 }}>
+          Foto deste momento — não depende do período acima. Clique num número para ver quem são.
+        </p>
+        <div style={{ overflowX: 'auto', marginBottom: 26 }}>
+          <table style={{ borderCollapse: 'collapse', minWidth: 420, background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12 }}>
+            <thead>
+              <tr>
+                <th style={th}>Etapa</th>
+                {AGING_BUCKETS.map(b => <th key={b.key} style={{ ...th, textAlign: 'right' }}>{b.label}</th>)}
+                <th style={{ ...th, textAlign: 'right' }}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {aging.map(({ s, parked, buckets }) => (
+                <tr key={s.id}>
+                  <td style={{ ...td, fontWeight: 600 }}>{s.label}</td>
+                  {AGING_BUCKETS.map(b => {
+                    const rows = buckets[b.key]
+                    const alarm = b.key === 'b3' && rows.length > 0
+                    return (
+                      <td key={b.key} style={{ ...td, textAlign: 'right' }}>
+                        {rows.length === 0 ? <span style={{ color: C.muted }}>0</span> : (
+                          <button onClick={() => setDrill({ title: `${s.label} · parados ${b.label}`, rows })}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: alarm ? 700 : 600, color: alarm ? '#dc2626' : C.text, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                            {rows.length}
+                          </button>
+                        )}
+                      </td>
+                    )
+                  })}
+                  <td style={{ ...td, textAlign: 'right', fontWeight: 700 }}>{parked.length}</td>
+                </tr>
+              ))}
+              {aging.length === 0 && <tr><td style={td} colSpan={6}>Sem etapas em aberto.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        {loading && <p style={{ fontSize: 12.5, color: C.muted, marginTop: -18, marginBottom: 22 }}>A carregar o histórico…</p>}
 
         <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 12px' }}>Por origem</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 560 }}>
-          {bySource.length === 0 && <p style={{ fontSize: 13, color: C.muted }}>Sem dados ainda.</p>}
+          {bySource.length === 0 && <p style={{ fontSize: 13, color: C.muted }}>Sem dados no período.</p>}
           {bySource.map(({ s, n }) => (
             <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ width: 90, fontSize: 13, color: C.muted }}>{SOURCE_LABELS[s]}</span>
@@ -1760,34 +2004,34 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
           ))}
         </div>
       </div>
+
+      {/* lista de quem está parado, ao clicar num número */}
+      {drill && (
+        <div onClick={() => setDrill(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,18,24,.42)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 60 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: C.panel, borderRadius: 14, width: 'min(520px, 100%)', maxHeight: '80vh', overflow: 'auto', padding: 20 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>{drill.title}</h3>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead><tr><th style={th}>Lead</th><th style={{ ...th, textAlign: 'right' }}>Parado há</th></tr></thead>
+              <tbody>
+                {drill.rows.slice().sort((a, b) => (b.days_in_stage ?? 0) - (a.days_in_stage ?? 0)).map(r => (
+                  <tr key={r.id}>
+                    <td style={td}>{nameOf.get(r.lead_id) ?? '—'}</td>
+                    <td style={{ ...td, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{(r.days_in_stage ?? 0).toFixed(1)} d</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button onClick={() => setDrill(null)} style={{ ...btnGhost, marginTop: 16 }}>Fechar</button>
+          </div>
+        </div>
+      )}
     </>
   )
 }
 
 // ================================================================ CONFIGURAÇÕES + BACKUP
 function SettingsView({ session, ws, leads }: { session: Session; ws?: Workspace; leads: Lead[] }) {
-  const exportCsv = () => {
-    // Cabeçalhos amigáveis + ponto-e-vírgula (Excel pt-BR) + BOM UTF-8 (acentos)
-    const cols: [string, string][] = [
-      ['name', 'Nome'], ['company', 'Empresa'], ['email', 'E-mail'], ['phone', 'Telefone'],
-      ['service', 'Serviço'], ['deal_type', 'Cobrança'], ['status', 'Etapa'], ['value', 'Valor'],
-      ['source', 'Origem'], ['notes', 'Anotações'], ['created_at', 'Criado em'],
-    ]
-    const cell = (v: any) => {
-      const s = v == null ? '' : String(v)
-      return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
-    }
-    const BOM = String.fromCharCode(0xfeff)
-    const header = cols.map(c => c[1]).join(';')
-    const rows = leads.map(l => cols.map(([k]) => {
-      let v = (l as any)[k]
-      if (k === 'deal_type') v = v === 'mrr' ? 'Recorrente (MRR)' : v === 'one_time' ? 'Serviço único' : ''
-      if (k === 'created_at' && v) v = new Date(v).toLocaleDateString('pt-BR')
-      return cell(v)
-    }).join(';'))
-    download(`leads-${ws?.name ?? 'export'}.csv`, BOM + [header, ...rows].join('\r\n'), 'text/csv;charset=utf-8')
-  }
-  const exportJson = () => download(`backup-${ws?.name ?? 'export'}.json`, JSON.stringify(leads, null, 2), 'application/json')
+  const exportJson = () => downloadFile(`backup-${ws?.name ?? 'export'}.json`, JSON.stringify(leads, null, 2), 'application/json')
 
   return (
     <>
@@ -1799,9 +2043,12 @@ function SettingsView({ session, ws, leads }: { session: Session; ws?: Workspace
         </Section>
 
         <Section title="Backup / Exportar">
-          <p style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>Baixe os leads deste espaço. O JSON pode ser guardado como backup.</p>
+          <p style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>
+            A exportação para análise (leads, movimentos dos cards e resumo por etapa)
+            está em <strong>Relatórios</strong> — lá sai com o período escolhido no filtro.
+            Aqui fica só o backup cru, com tudo, para guardar.
+          </p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={exportCsv} style={{ ...btn, width: 'auto', padding: '10px 16px' }}>Exportar CSV</button>
             <button onClick={exportJson} style={{ ...btnGhost, width: 'auto', padding: '10px 16px' }}>Backup JSON</button>
           </div>
         </Section>
@@ -2070,14 +2317,25 @@ function IngestBox({ workspace }: { workspace: Workspace }) {
 
 // ================================================================ ADD LEAD
 function AddLead({ firstStage, onClose, onCreate }: { firstStage?: string; onClose: () => void; onCreate: (i: Partial<Lead> & { name: string }) => Promise<void> }) {
-  const [f, setF] = useState({ name: '', email: '', phone: '', company: '', source: 'manual' as LeadSource, value: '', service: '', deal_type: '' as '' | DealType, notes: '' })
+  const [f, setF] = useState({
+    name: '', email: '', phone: '', company: '', source: 'manual' as LeadSource,
+    value: '', service: '', deal_type: '' as '' | DealType, notes: '',
+    // já vem com hoje, mas dá para recuar: quem cadastra dias depois põe a data certa
+    entry_date: isoDay(new Date()),
+  })
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setBusy(true); setErr('')
     try {
-      await onCreate({ name: f.name, email: f.email || null, phone: f.phone || null, company: f.company || null, source: f.source, value: f.value ? Number(f.value) : null, service: f.service || null, deal_type: f.deal_type || null, notes: f.notes || null, ...(firstStage ? { status: firstStage } : {}) })
+      await onCreate({
+        name: f.name, email: f.email || null, phone: f.phone || null, company: f.company || null,
+        source: f.source, value: f.value ? Number(f.value) : null, service: f.service || null,
+        deal_type: f.deal_type || null, notes: f.notes || null,
+        entry_date: f.entry_date || null, entry_date_estimated: false,
+        ...(firstStage ? { status: firstStage } : {}),
+      })
     } catch (e: any) { setErr(e.message); setBusy(false) }
   }
 
@@ -2090,6 +2348,11 @@ function AddLead({ firstStage, onClose, onCreate }: { firstStage?: string; onClo
         <input placeholder="E-mail" type="email" value={f.email} onChange={e => setF({ ...f, email: e.target.value })} style={input} />
         <input placeholder="Telefone / WhatsApp" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} style={input} />
         <input placeholder="Serviço (ex.: Tráfego Pago)" value={f.service} onChange={e => setF({ ...f, service: e.target.value })} style={input} />
+        <div>
+          <p style={fieldLabel}>Data de entrada — quando a pessoa chegou</p>
+          <input type="date" value={f.entry_date} max={isoDay(new Date())}
+            onChange={e => setF({ ...f, entry_date: e.target.value })} style={input} />
+        </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <input placeholder="Valor (R$)" type="number" value={f.value} onChange={e => setF({ ...f, value: e.target.value })} style={{ ...input, flex: 1 }} />
           <select value={f.deal_type} onChange={e => setF({ ...f, deal_type: e.target.value as DealType | '' })} style={{ ...input, flex: 1 }}>
@@ -2152,10 +2415,6 @@ function Modal({ onClose, children, maxWidth = 420 }: { onClose: () => void; chi
       <div onClick={e => e.stopPropagation()} className="cc-modal" style={{ width: '100%', maxWidth, maxHeight: '90vh', overflowY: 'auto', background: C.panel, borderRadius: 16, padding: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>{children}</div>
     </div>
   )
-}
-function download(name: string, content: string, type: string) {
-  const url = URL.createObjectURL(new Blob([content], { type }))
-  const a = document.createElement('a'); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url)
 }
 
 // ---- estilos base ----
