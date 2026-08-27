@@ -1,0 +1,83 @@
+# Publica as Edge Functions do Supabase a partir do GitHub.
+#
+# Porquê: até aqui, mudar uma função obrigava a copiar o código à mão no painel
+# do Supabase. É um passo manual fácil de esquecer — e impossível de fazer pelo
+# telemóvel. Resultado: o código no repositório e o que está a correr em
+# produção ficavam diferentes sem ninguém dar por isso.
+#
+# Corre sozinho quando algo em supabase/functions/ muda na main, e também
+# à mão em Actions → "Deploy Edge Functions" → "Run workflow".
+#
+# ÚNICO segredo necessário (GitHub → Settings → Secrets and variables →
+# Actions → New repository secret):
+#   SUPABASE_ACCESS_TOKEN — gerado em supabase.com/dashboard/account/tokens
+#
+# ATENÇÃO ao --no-verify-jwt: ingest-lead e public-task são PÚBLICAS (o site e
+# a página /t chamam-nas sem login). Sem esse sinalizador, cada deploy voltaria
+# a ligar a verificação de JWT e os leads deixariam de entrar.
+
+name: Deploy Edge Functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/deploy-edge-functions.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: mnmcxuumgbjyylsxsadv
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar que o segredo existe
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error::Falta o segredo SUPABASE_ACCESS_TOKEN."
+            echo "Crie em: GitHub - Settings - Secrets and variables - Actions"
+            echo "O token gera-se em: https://supabase.com/dashboard/account/tokens"
+            exit 1
+          fi
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Públicas: chamadas sem login (formulário do site e página /t).
+      # O --no-verify-jwt tem de ir em TODO deploy, senão a proteção volta a ligar.
+      - name: Deploy ingest-lead (publica)
+        run: supabase functions deploy ingest-lead --project-ref "$PROJECT_REF" --no-verify-jwt
+
+      - name: Deploy public-task (publica)
+        run: supabase functions deploy public-task --project-ref "$PROJECT_REF" --no-verify-jwt
+
+      # Privadas: exigem utilizador autenticado no CRM.
+      - name: Deploy google-calendar
+        run: supabase functions deploy google-calendar --project-ref "$PROJECT_REF"
+
+      - name: Deploy invite-user
+        run: supabase functions deploy invite-user --project-ref "$PROJECT_REF"
+
+      - name: Confirmar que ingest-lead responde
+        run: |
+          sleep 5
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+            "https://$PROJECT_REF.supabase.co/functions/v1/ingest-lead" \
+            -H 'Content-Type: application/json' -d '{"name":""}')
+          echo "ingest-lead devolveu HTTP $code"
+          # 400 = a funcao correu e recusou o nome vazio: e o que queremos.
+          # 401 = o gateway barrou antes de chegar a funcao (JWT ligado).
+          if [ "$code" = "401" ]; then
+            echo "::error::ingest-lead esta a exigir JWT - os leads do site nao vao entrar."
+            exit 1
+          fi
+          if [ "$code" != "400" ]; then
+            echo "::error::Resposta inesperada ($code) de ingest-lead."
+            exit 1
+          fi
