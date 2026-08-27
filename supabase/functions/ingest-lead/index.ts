@@ -41,7 +41,23 @@ Deno.serve(async (req) => {
       if (!workspaceId) return json({ error: 'Nenhum espaço da agência configurado.' }, 500)
     }
 
-    // 2) Inserir o lead (captura origem de anúncio)
+    // 2) Etapa inicial: a PRIMEIRA coluna do funil DESTE espaço.
+    // Antes era 'novo' fixo. Se o cliente editou o funil e a primeira coluna
+    // ficou com outra chave, o lead entrava no banco mas não aparecia em
+    // coluna nenhuma no quadro — existia e era invisível.
+    let status = 'novo'
+    {
+      const { data: st } = await admin
+        .from('pipeline_stages')
+        .select('key')
+        .eq('workspace_id', workspaceId)
+        .eq('kind', 'open')
+        .order('position')
+        .limit(1)
+      if (st?.[0]?.key) status = st[0].key
+    }
+
+    // 3) Inserir o lead (captura origem de anúncio)
     const lead = {
       workspace_id: workspaceId,
       name,
@@ -51,7 +67,7 @@ Deno.serve(async (req) => {
       source: body.source && ['form', 'whatsapp', 'meta_ads', 'google_ads', 'manual', 'import'].includes(body.source)
         ? body.source
         : 'form',
-      status: 'novo',
+      status,
       notes: body.notes ?? body.message ?? null,
       service: body.service ?? null,
       value: body.value != null && !Number.isNaN(Number(body.value)) ? Number(body.value) : null,

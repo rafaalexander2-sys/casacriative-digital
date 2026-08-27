@@ -105,6 +105,15 @@ Para ver logs de build com erro: aba **Implantações** → deploy → **Detalhe
 - `ingest-lead` passa a aceitar `service`, `value`, `utm_term` e `utm_content`, e grava
   `entry_date` com a data real da chegada.
 
+- **Etapa inicial do lead do webhook:** `ingest-lead` usa a PRIMEIRA coluna aberta do
+  funil daquele espaço (`pipeline_stages`, menor `position`, `kind = 'open'`), não a
+  chave `novo` fixa. O quadro só mostra um lead se `leads.status` bater exatamente com
+  a `key` de uma coluna — com `novo` fixo, cliente que editou o funil recebia os leads
+  no banco e não os via em coluna nenhuma.
+- **Coluna "Sem etapa"** no Pipeline: aparece só quando há leads cujo `status` não
+  corresponde a nenhuma coluna. Antes eram omitidos em silêncio. Arrastar para uma
+  coluna real resolve.
+
 **Setup necessário (uma vez):** rodar `supabase/schema-lead-history.sql` no SQL Editor
 e fazer redeploy da Edge Function `ingest-lead`. Sem o SQL, a tela de Relatórios avisa
 e o resto do CRM continua a funcionar.
