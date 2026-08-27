@@ -1,0 +1,120 @@
+# Publica o site da DBP Cleaning na Vercel, a partir da main do repositório
+# rafaalexander2-sys/dbp-cleaning-site.
+#
+# Porquê: descobriu-se que a produção estava na commit de 16/07 e que as duas
+# commits seguintes nunca foram publicadas — incluindo a de 19/08, que é a que
+# entrega os leads ao CRM. Oito dias de leads do site que só geraram email.
+#
+# Corre só à mão: Actions → "Deploy site DBP (Vercel)" → Run workflow.
+# Segredo necessário: VERCEL_TOKEN.
+#
+# Isto é um penso rápido para destrancar a situação. A cura é a integração Git
+# da Vercel voltar a publicar sozinha a cada push — ver a nota no fim do job.
+
+name: Deploy site DBP (Vercel)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      PROJECT_ID: prj_drJQsNE4oKaWQSbJxJiBNeStGh8W
+
+    steps:
+      - name: Descobrir a ligacao ao GitHub do projeto
+        run: |
+          set -euo pipefail
+          curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v9/projects/$PROJECT_ID" > project.json
+
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import json
+          p = json.load(open('project.json'))
+          link = p.get('link') or {}
+          print(f"REPO_ID={link.get('repoId','')}")
+          PY
+
+          python3 - <<'PY'
+          import json
+          p = json.load(open('project.json'))
+          link = p.get('link') or {}
+          print("Projeto :", p.get('name'))
+          print("Ligado a:", f"{link.get('org')}/{link.get('repo')}", "repoId=", link.get('repoId'))
+          print("Branch  :", link.get('productionBranch') or '(por omissao)')
+          if not link.get('repoId'):
+              print("::warning::O projeto nao tem ligacao Git activa - e por isso que os pushes nao publicam.")
+          PY
+
+      - name: Publicar a main em producao
+        run: |
+          set -euo pipefail
+          if [ -z "${REPO_ID:-}" ]; then
+            echo "::error::Sem ligacao Git no projeto: nao da para publicar por aqui."
+            echo "Tem de se religar o repositorio em Vercel - Project - Settings - Git."
+            exit 1
+          fi
+
+          payload=$(python3 -c '
+          import json, os
+          print(json.dumps({
+            "name": "dbp-cleaning-site",
+            "project": os.environ["PROJECT_ID"],
+            "target": "production",
+            "gitSource": {"type": "github", "repoId": int(os.environ["REPO_ID"]), "ref": "main"},
+          }))')
+
+          curl -sS -X POST "https://api.vercel.com/v13/deployments" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$payload" > deploy.json
+
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import json
+          d = json.load(open('deploy.json'))
+          print(f"NEW_ID={d.get('id','')}")
+          PY
+
+          python3 - <<'PY'
+          import json, sys
+          d = json.load(open('deploy.json'))
+          if d.get('error'):
+              print("::error::", d['error'].get('message'))
+              sys.exit(1)
+          print("Deployment criado:", d.get('id'))
+          print("URL             :", d.get('url'))
+          print("Commit          :", (d.get('meta') or {}).get('githubCommitSha', '?')[:9])
+          PY
+
+      - name: Esperar ficar pronto
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 40); do
+            state=$(curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v13/deployments/$NEW_ID" \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin).get("readyState","?"))')
+            echo "[$i] $state"
+            case "$state" in
+              READY) echo "Publicado."; exit 0 ;;
+              ERROR|CANCELED) echo "::error::Deployment terminou em $state."; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "::error::Ainda nao ficou pronto ao fim de ~7 minutos."
+          exit 1
+
+      - name: Confirmar que a versao nova esta a servir
+        run: |
+          set -euo pipefail
+          sleep 5
+          curl -sS "https://www.dbpcleaningservices.com/" -o live.html
+          echo "Tamanho da pagina: $(wc -c < live.html) bytes"
+          echo "Proximo passo: submeter um lead de teste e confirmar que aparece no CRM."
+
+      - name: Nota sobre a causa de fundo
+        run: |
+          echo "Este workflow publica a pedido. Se os pushes na main do repositorio"
+          echo "da DBP continuarem a nao publicar sozinhos, a integracao Git da"
+          echo "Vercel esta desligada ou sem permissoes - e o problema volta."
