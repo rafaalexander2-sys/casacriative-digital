@@ -1,0 +1,109 @@
+# Diagnóstico: que versão do site da DBP está no ar, e o que dizem os logs.
+#
+# Existe porque os leads do site pararam de chegar ao CRM: uma chamada direta
+# ao ingest-lead funciona, mas a mesma submissão feita pelo site não cria o
+# lead. O código que faz essa entrega está no GitHub desde 19/08 — falta saber
+# se está mesmo a correr em produção.
+#
+# Corre só à mão: Actions → "Diagnostico Vercel" → Run workflow.
+#
+# Segredo necessário: VERCEL_TOKEN (GitHub → Settings → Secrets → Actions).
+#
+# ATENÇÃO: este repositório é PÚBLICO e os logs do Actions também. Por isso
+# aqui só saem nomes de projeto, SHAs de commit, estados e datas. Dos logs de
+# execução extraem-se apenas as linhas do marcador "CRM ingest failed", que
+# contêm um lead_id e nada de pessoal — nunca o log em bruto.
+
+name: Diagnostico Vercel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+    steps:
+      - name: Verificar segredo
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::Falta o segredo VERCEL_TOKEN."
+            echo "Gera em https://vercel.com/account/tokens e guarda em"
+            echo "GitHub - Settings - Secrets and variables - Actions"
+            exit 1
+          fi
+
+      - name: Qual projeto e qual versao esta no ar
+        run: |
+          set -euo pipefail
+          api () { curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" "https://api.vercel.com$1"; }
+
+          echo "=============================================="
+          echo "1) Projetos na conta"
+          echo "=============================================="
+          api "/v9/projects?limit=100" > projects.json
+          python3 - <<'PY'
+          import json
+          d = json.load(open('projects.json'))
+          for p in d.get('projects', []):
+              print(f"{p.get('name'):35} id={p.get('id')}  framework={p.get('framework')}")
+          PY
+
+          PROJ=$(python3 - <<'PY'
+          import json
+          d = json.load(open('projects.json'))
+          hit = [p for p in d.get('projects', []) if 'dbp' in (p.get('name') or '').lower()]
+          print(hit[0]['id'] if hit else '')
+          PY
+          )
+          if [ -z "$PROJ" ]; then
+            echo "::error::Nenhum projeto com 'dbp' no nome. Ve a lista acima e diz-me qual e."
+            exit 1
+          fi
+          echo "PROJ=$PROJ" >> "$GITHUB_ENV"
+
+          echo ""
+          echo "=============================================="
+          echo "2) Ultimos deployments de producao"
+          echo "=============================================="
+          api "/v6/deployments?projectId=$PROJ&target=production&limit=8" > deploys.json
+          python3 - <<'PY'
+          import json, datetime
+          d = json.load(open('deploys.json'))
+          for x in d.get('deployments', []):
+              m = x.get('meta') or {}
+              when = datetime.datetime.utcfromtimestamp(x.get('created', 0)/1000).isoformat()
+              print(f"{when}Z  state={x.get('state'):10} sha={ (m.get('githubCommitSha') or '?')[:9] }  "
+                    f"branch={m.get('githubCommitRef')}  msg={(m.get('githubCommitMessage') or '')[:60]}")
+          print()
+          top = (d.get('deployments') or [None])[0]
+          if top:
+              print("DEPLOYMENT_ATUAL:", top.get('uid') or top.get('id'))
+              print("COMMIT_ATUAL:", ((top.get('meta') or {}).get('githubCommitSha') or '?'))
+              open('current.txt','w').write(top.get('uid') or top.get('id'))
+          PY
+          echo "DEPLOY_ID=$(cat current.txt)" >> "$GITHUB_ENV"
+
+      - name: O commit que corrigiu o CRM esta no ar
+        run: |
+          set -euo pipefail
+          # 0f6e947 = "Move envio ao CRM da agencia pro servidor (api/lead.js)"
+          echo "Commit esperado (com sendToCrm): 0f6e947"
+          echo "Se o COMMIT_ATUAL acima for outro, a producao esta atrasada e"
+          echo "e por isso que os leads do site nao chegam ao CRM."
+
+      - name: Procurar falhas de entrega ao CRM nos logs
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          echo "So se imprimem linhas com o marcador do codigo (contem lead_id, nada pessoal)."
+          curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v1/deployments/$DEPLOY_ID/runtime-logs?limit=200" \
+            > runtime.json || echo "(API de runtime-logs indisponivel neste plano)"
+          grep -o 'CRM ingest failed[^"]*' runtime.json | head -40 \
+            || echo "Nenhuma linha 'CRM ingest failed' encontrada nos logs disponiveis."
+          echo ""
+          echo "Nota: a Vercel so guarda logs de execucao por pouco tempo."
+          echo "Ausencia de linhas aqui nao prova que a entrega funcionou."
