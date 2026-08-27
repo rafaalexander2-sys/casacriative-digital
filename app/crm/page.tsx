@@ -241,6 +241,16 @@ function MotionStyles() {
 
         /* alvos de toque decentes */
         .cc-nav { padding: 13px 12px !important }
+
+        /* Salvar/Apagar colados ao fundo do modal: num formulario longo era
+           preciso rolar ate ao fim so para gravar */
+        .cc-actions {
+          position: sticky; bottom: 0; z-index: 2;
+          background: ${C.panel};
+          margin: 0 -16px 8px !important;
+          padding: 10px 16px calc(6px + env(safe-area-inset-bottom));
+          border-top: 1px solid ${C.border};
+        }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -966,6 +976,11 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
   const [selected, setSelected] = useState<Activity | null>(null)
   const [cal, setCal] = useState<{ connected: boolean; email?: string | null }>({ connected: false })
+  // Sete colunas nao cabem em 390px. No telemovel a grade mostra um dia de
+  // cada vez e as setas andam de dia em dia.
+  const { isMobile } = useContext(NavCtx)
+  const dayCount = isMobile ? 1 : 7
+  const step = dayCount
 
   const load = useCallback(() => {
     if (!wsId) return
@@ -976,19 +991,19 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
   useEffect(() => { load() }, [load])
   useEffect(() => { if (wsId) hasGoogleCalendar(wsId).then(setCal).catch(() => setCal({ connected: false })) }, [wsId])
 
-  const days = Array.from({ length: 7 }, (_, i) => new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i))
+  const days = Array.from({ length: dayCount }, (_, i) => new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i))
 
   // Puxa os compromissos reais do Google pra semana visível
   useEffect(() => {
     if (!wsId || !cal.connected) { setGEvents([]); return }
     const from = new Date(weekStart)
-    const to = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7)
+    const to = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + dayCount)
     setGLoading(true); setGErr('')
     listGoogleEvents(wsId, from, to)
       .then(setGEvents)
       .catch(e => { setGEvents([]); setGErr(e.message) })
       .finally(() => setGLoading(false))
-  }, [wsId, cal.connected, weekStart])
+  }, [wsId, cal.connected, weekStart, dayCount])
 
   const doneKeys = stages.filter(s => s.kind === 'done').map(s => s.key)
 
@@ -1028,7 +1043,9 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
   const semTempo = pending.filter(a => !activityWindow(a)).length
   const gCount = allBlocks.filter(b => b.kind === 'google').length
   const isToday = (d: Date) => { const n = new Date(); return d.getDate() === n.getDate() && d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear() }
-  const fmtRange = `${days[0].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${days[6].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
+  const fmtRange = dayCount === 1
+    ? days[0].toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
+    : `${days[0].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${days[days.length - 1].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
 
   return (
     <>
@@ -1036,9 +1053,9 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
         <>
           {gLoading && <Spinner dark />}
           {clashes.length > 0 && <Stat label="Choques" value={String(clashes.length)} color="#dc2626" />}
-          <button onClick={() => setWeekStart(w => new Date(w.getFullYear(), w.getMonth(), w.getDate() - 7))} style={{ ...btnGhost, width: 'auto', padding: '9px 12px' }}>‹</button>
-          <button onClick={() => setWeekStart(startOfWeek(new Date()))} style={{ ...btnGhost, width: 'auto', padding: '9px 14px' }}>Hoje</button>
-          <button onClick={() => setWeekStart(w => new Date(w.getFullYear(), w.getMonth(), w.getDate() + 7))} style={{ ...btnGhost, width: 'auto', padding: '9px 12px' }}>›</button>
+          <button aria-label="Anterior" onClick={() => setWeekStart(w => new Date(w.getFullYear(), w.getMonth(), w.getDate() - step))} style={{ ...btnGhost, width: 'auto', padding: '9px 12px' }}>‹</button>
+          <button onClick={() => setWeekStart(dayCount === 1 ? new Date() : startOfWeek(new Date()))} style={{ ...btnGhost, width: 'auto', padding: '9px 14px' }}>Hoje</button>
+          <button aria-label="Seguinte" onClick={() => setWeekStart(w => new Date(w.getFullYear(), w.getMonth(), w.getDate() + step))} style={{ ...btnGhost, width: 'auto', padding: '9px 12px' }}>›</button>
         </>
       } />
 
@@ -1073,9 +1090,9 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
         {loading ? (
           <div className="cc-skel" style={{ height: 320 }} />
         ) : (
-          <div style={{ minWidth: 760 }}>
+          <div style={{ minWidth: dayCount === 1 ? 0 : 760 }}>
             {/* cabeçalho dos dias */}
-            <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, 1fr)', gap: 6, marginBottom: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `52px repeat(${dayCount}, 1fr)`, gap: 6, marginBottom: 6 }}>
               <div />
               {days.map(d => (
                 <div key={d.toISOString()} style={{ textAlign: 'center', padding: '6px 0', borderRadius: 8, background: isToday(d) ? 'rgba(196,122,74,0.12)' : 'transparent' }}>
@@ -1087,7 +1104,7 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
 
             {/* eventos de dia inteiro do Google */}
             {allDayPerDay.some(l => l.length > 0) && (
-              <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, 1fr)', gap: 6, marginBottom: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: `52px repeat(${dayCount}, 1fr)`, gap: 6, marginBottom: 6 }}>
                 <div style={{ fontSize: 9, color: C.muted, textAlign: 'right', paddingRight: 6, paddingTop: 4 }}>dia todo</div>
                 {allDayPerDay.map((list, i) => (
                   <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -1103,7 +1120,7 @@ function AgendaView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; onErr
             )}
 
             {/* grade */}
-            <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, 1fr)', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `52px repeat(${dayCount}, 1fr)`, gap: 6 }}>
               {/* coluna das horas */}
               <div style={{ position: 'relative', height: hours.length * HOUR_PX }}>
                 {hours.map((h, i) => (
@@ -1799,7 +1816,7 @@ function LeadDetail({ lead, stages, onClose, onSaved, onDeleted }: {
         </div>
         <textarea value={f.notes} onChange={e => setF({ ...f, notes: e.target.value })} placeholder="Anotações (resumo)" rows={2} style={{ ...input, resize: 'vertical', marginBottom: 8 }} />
         {err && <p style={{ color: '#dc2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+        <div className="cc-actions" style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
           <button onClick={() => { if (confirm(`Apagar o lead "${lead.name}"?`)) { deleteLead(lead.id).then(() => onDeleted(lead.id)) } }} style={{ ...btnGhost, width: 'auto', padding: '10px 14px', color: '#dc2626' }}>Apagar</button>
           <button onClick={save} disabled={busy} className="cc-btn" style={{ ...btn, marginLeft: 'auto', width: 'auto', padding: '10px 22px' }}>{busy ? <Spinner /> : 'Salvar'}</button>
         </div>
