@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, createContext, useContext } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { INGEST_URL, SUPABASE_ANON } from '@/lib/track'
@@ -150,6 +150,24 @@ function Center({ children }: { children: React.ReactNode }) {
 }
 
 // ---- Motion: keyframes + utilitários (injetado uma vez) ----
+// Largura a partir da qual o layout de telemovel entra. Comeca em `false` e
+// so decide depois de montar, para o HTML estatico e o do browser baterem certo.
+function useIsMobile(max = 820) {
+  const [is, setIs] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${max}px)`)
+    const on = () => setIs(mq.matches)
+    on()
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [max])
+  return is
+}
+
+// A Topbar e usada por todas as vistas; em vez de passar o handler do menu por
+// props ate cada uma, viaja por contexto.
+const NavCtx = createContext<{ isMobile: boolean; openNav: () => void }>({ isMobile: false, openNav: () => {} })
+
 function MotionStyles() {
   return (
     <style>{`
@@ -193,6 +211,38 @@ function MotionStyles() {
       button:active:not(:disabled) { transform: translateY(1px) }
       input, select, textarea { transition: border-color .15s ease, box-shadow .15s ease }
       input:focus, select:focus, textarea:focus { border-color: ${C.brand}; box-shadow: 0 0 0 3px rgba(196,122,74,.14) }
+      /* ---------------- TELEMOVEL ----------------
+         O CRM foi desenhado para ecra largo. Aqui vao os ajustes que o tornam
+         usavel no telemovel sem duplicar componentes. */
+      @media (max-width: 820px) {
+        /* iOS da zoom em qualquer campo com menos de 16px; isso desalinha
+           a pagina toda e o utilizador fica preso com zoom. */
+        input, select, textarea { font-size: 16px !important }
+
+        /* modais quase de ecra inteiro: 24px de margem num ecra de 360px
+           deixava o conteudo numa coluna estreita demais */
+        .cc-overlay { padding: 0 !important; align-items: flex-end !important }
+        .cc-modal {
+          max-width: 100% !important;
+          width: 100% !important;
+          max-height: 92dvh !important;
+          border-radius: 16px 16px 0 0 !important;
+          padding: 18px 16px calc(18px + env(safe-area-inset-bottom)) !important;
+        }
+
+        /* colunas do quadro: uma de cada vez, com encaixe ao deslizar */
+        .cc-board { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch }
+        .cc-col { width: min(84vw, 300px) !important; scroll-snap-align: start }
+
+        /* o hover deixa de fazer sentido no toque e so causa saltos */
+        .cc-card:hover, .cc-task:hover { transform: none; box-shadow: 0 1px 2px rgba(20,30,50,.06) }
+        /* "Abrir >" so aparecia no hover: no toque ficava invisivel para sempre */
+        .cc-open { opacity: .75 }
+
+        /* alvos de toque decentes */
+        .cc-nav { padding: 13px 12px !important }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important }
       }
@@ -227,7 +277,7 @@ function SkeletonApp() {
 
 function SkeletonColumn() {
   return (
-    <div style={{ width: 264, flexShrink: 0, background: C.col, borderRadius: 12, padding: 12 }}>
+    <div className="cc-col" style={{ width: 264, flexShrink: 0, background: C.col, borderRadius: 12, padding: 12 }}>
       <div className="cc-skel" style={{ height: 16, width: 100, marginBottom: 14 }} />
       {[0, 1, 2].map(i => <div key={i} className="cc-skel" style={{ height: 64, marginBottom: 8, background: '#e3e6ea', borderRadius: 8 }} />)}
     </div>
@@ -287,6 +337,8 @@ function App({ session }: { session: Session }) {
   const [canManage, setCanManage] = useState(false)
   const [notifs, setNotifs] = useState<ActivityNotification[]>([])
   const [showNotifs, setShowNotifs] = useState(false)
+  const isMobile = useIsMobile()
+  const [navOpen, setNavOpen] = useState(false)
   const [err, setErr] = useState('')
 
   const unread = notifs.filter(n => !n.read_at).length
@@ -352,9 +404,30 @@ function App({ session }: { session: Session }) {
   ]
 
   return (
-    <main style={{ display: 'flex', height: '100vh', background: C.bg, color: C.text, fontFamily: 'Outfit, system-ui, sans-serif', overflow: 'hidden' }}>
-      {/* SIDEBAR */}
-      <aside style={{ width: 224, flexShrink: 0, background: C.panel, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', padding: '18px 14px' }}>
+    <NavCtx.Provider value={{ isMobile, openNav: () => setNavOpen(true) }}>
+    <main style={{ display: 'flex', height: '100dvh', background: C.bg, color: C.text, fontFamily: 'Outfit, system-ui, sans-serif', overflow: 'hidden' }}>
+      {/* fundo escuro da gaveta, so no telemovel */}
+      {isMobile && navOpen && (
+        <div onClick={() => setNavOpen(false)} className="cc-overlay"
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,20,30,.45)', zIndex: 70 }} />
+      )}
+
+      {/* SIDEBAR — fixa no computador, gaveta deslizante no telemovel */}
+      <aside style={{
+        width: 224, flexShrink: 0, background: C.panel, borderRight: `1px solid ${C.border}`,
+        display: 'flex', flexDirection: 'column', padding: '18px 14px',
+        ...(isMobile ? {
+          position: 'fixed' as const, top: 0, bottom: 0, left: 0, zIndex: 71,
+          width: 'min(82vw, 268px)', overflowY: 'auto' as const,
+          transform: navOpen ? 'none' : 'translateX(-102%)',
+          transition: 'transform .24s cubic-bezier(.2,0,0,1)',
+          boxShadow: navOpen ? '0 0 40px rgba(15,20,30,.28)' : 'none',
+        } : null),
+      }}>
+        {isMobile && (
+          <button onClick={() => setNavOpen(false)} aria-label="Fechar menu"
+            style={{ alignSelf: 'flex-end', background: 'none', border: 'none', color: C.muted, fontSize: 26, lineHeight: 1, cursor: 'pointer', padding: '0 4px 6px' }}>×</button>
+        )}
         <div style={{ fontSize: 20, fontWeight: 800, padding: '0 8px 16px' }}>
           <span style={{ color: C.brand }}>CRM</span> <span style={{ color: C.text }}>Casa Criative</span>
         </div>
@@ -368,7 +441,7 @@ function App({ session }: { session: Session }) {
         {/* nav */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {nav.filter(n => (!n.agency || isAgency) && (!n.requiresActivities || ws?.activities_enabled)).map(n => (
-            <button key={n.id} onClick={() => setView(n.id)} className="cc-nav" style={{
+            <button key={n.id} onClick={() => { setView(n.id); setNavOpen(false) }} className="cc-nav" style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
               fontSize: 14, fontFamily: 'inherit', textAlign: 'left',
               background: view === n.id ? 'rgba(196,122,74,0.12)' : 'transparent',
@@ -423,6 +496,7 @@ function App({ session }: { session: Session }) {
         />
       )}
     </main>
+    </NavCtx.Provider>
   )
 }
 
@@ -522,12 +596,12 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
       } />
 
       <div style={{ flex: 1, overflow: 'hidden', padding: 16 }}>
-        <div style={{ display: 'flex', gap: 12, height: '100%', overflowX: 'auto', paddingBottom: 4 }}>
+        <div className="cc-board" style={{ display: 'flex', gap: 12, height: '100%', overflowX: 'auto', paddingBottom: 4 }}>
           {stages.map(stage => {
             const col = leads.filter(l => l.status === stage.key)
             const colVal = col.reduce((s, l) => s + (l.value ?? 0), 0)
             return (
-              <div key={stage.id} onDragOver={e => e.preventDefault()} onDrop={() => onDrop(stage)}
+              <div key={stage.id} className="cc-col" onDragOver={e => e.preventDefault()} onDrop={() => onDrop(stage)}
                 style={{ width: 264, flexShrink: 0, background: C.col, borderRadius: 12, display: 'flex', flexDirection: 'column', maxHeight: '100%' }}>
                 <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: `2px solid ${stage.color}` }}>
                   <span style={{ width: 8, height: 8, borderRadius: 4, background: stage.color }} />
@@ -560,7 +634,7 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
             )
           })}
           {orphans.length > 0 && (
-            <div style={{ width: 264, flexShrink: 0, background: '#fdf1dc', borderRadius: 12, display: 'flex', flexDirection: 'column', maxHeight: '100%', border: '1px solid #f0d9ae' }}>
+            <div className="cc-col" style={{ width: 264, flexShrink: 0, background: '#fdf1dc', borderRadius: 12, display: 'flex', flexDirection: 'column', maxHeight: '100%', border: '1px solid #f0d9ae' }}>
               <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '2px solid #a35c07' }}>
                 <span style={{ width: 8, height: 8, borderRadius: 4, background: '#a35c07' }} />
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#7a4405' }}>Sem etapa</span>
@@ -714,7 +788,7 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
         </>
       } />
       <div style={{ flex: 1, overflow: 'hidden', padding: 16 }}>
-        <div style={{ display: 'flex', gap: 12, height: '100%', overflowX: 'auto', paddingBottom: 4 }}>
+        <div className="cc-board" style={{ display: 'flex', gap: 12, height: '100%', overflowX: 'auto', paddingBottom: 4 }}>
           {stages.map(stage => {
             const col = sortActivities(items.filter(a => a.status === stage.key))
             const isDone = stage.kind === 'done'
@@ -796,12 +870,12 @@ function ActivitiesView({ wsId, leads, onErr }: { wsId: string; leads: Lead[]; o
       </div>
 
       {showAdd && (
-        <ActivityModal wsId={wsId} leads={leads} calConnected={cal.connected} firstStage={stages[0]?.key}
+        <ActivityModal wsId={wsId} leads={leads} calConnected={cal.connected} firstStage={stages[0]?.key} stages={stages}
           onClose={() => setShowAdd(false)}
           onSaved={a => { setItems(ls => [a, ...ls]); setShowAdd(false); loadChecks() }} />
       )}
       {selected && (
-        <ActivityModal wsId={wsId} leads={leads} calConnected={cal.connected} activity={selected}
+        <ActivityModal wsId={wsId} leads={leads} calConnected={cal.connected} activity={selected} stages={stages}
           onClose={() => setSelected(null)}
           onSaved={a => { setItems(ls => ls.map(x => x.id === a.id ? a : x)); setSelected(null); loadChecks() }}
           onDeleted={id => { setItems(ls => ls.filter(x => x.id !== id)); setSelected(null); loadChecks() }} />
@@ -1171,11 +1245,15 @@ function toLocalInput(iso: string): string {
 // Item de checklist ainda não salvo (atividade nova) — só existe no estado local
 type DraftItem = { key: string; title: string; done: boolean }
 
-function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClose, onSaved, onDeleted }: {
+function ActivityModal({ wsId, leads, calConnected, activity, firstStage, stages, onClose, onSaved, onDeleted }: {
   wsId: string; leads: Lead[]; calConnected: boolean; activity?: Activity; firstStage?: string
+  stages?: ActivityStage[]
   onClose: () => void; onSaved: (a: Activity) => void; onDeleted?: (id: string) => void
 }) {
   const [f, setF] = useState({
+    // coluna do quadro: arrastar so funciona com rato, entao tem de dar
+    // para mudar aqui tambem
+    status: activity?.status ?? firstStage ?? '',
     title: activity?.title ?? '', description: activity?.description ?? '',
     priority: (activity?.priority ?? 'normal') as ActivityPriority,
     recurrence: (activity?.recurrence ?? 'none') as ActivityRecurrence,
@@ -1305,7 +1383,8 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
         assigned_to: f.assigned_to || null,
         assigned_user_id: assignMode === 'member' ? (f.assigned_user_id || null) : null,
       }
-      let saved = activity ? await updateActivity(activity.id, patch) : await createActivity(wsId, { ...patch, ...(firstStage ? { status: firstStage } : {}) })
+      const withStatus = f.status ? { ...patch, status: f.status } : patch
+      let saved = activity ? await updateActivity(activity.id, withStatus) : await createActivity(wsId, { ...withStatus, ...(f.status ? {} : firstStage ? { status: firstStage } : {}) })
 
       // Marcou alguém novo? Deixa o aviso pra pessoa ver quando entrar
       const antes = activity?.assigned_user_id ?? null
@@ -1358,6 +1437,19 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, onClos
           <input placeholder="Título *" required value={f.title} onChange={e => setF({ ...f, title: e.target.value })} style={{ ...input, fontSize: 15, fontWeight: 600 }} />
           <textarea placeholder="Descrição" value={f.description} onChange={e => setF({ ...f, description: e.target.value })} rows={2} style={{ ...input, resize: 'vertical' }} />
         </div>
+
+        {/* Coluna do quadro — para mudar sem arrastar (essencial no telemovel) */}
+        {stages && stages.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <p style={fieldLabel}>Coluna</p>
+            <select value={f.status} onChange={e => setF({ ...f, status: e.target.value })} style={input}>
+              {!stages.some(x => x.key === f.status) && f.status && (
+                <option value={f.status}>{f.status} (coluna inexistente)</option>
+              )}
+              {stages.map(x => <option key={x.id} value={x.key}>{x.label}</option>)}
+            </select>
+          </div>
+        )}
 
         {/* Prioridade */}
         <div>
@@ -1642,12 +1734,35 @@ function LeadDetail({ lead, stages, onClose, onSaved, onDeleted }: {
   }
   const when = (iso: string) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
+  // Mudar de etapa sem arrastar. Arrastar so funciona com rato: no telemovel
+  // nao havia forma nenhuma de mover um lead.
+  const moveTo = async (key: string) => {
+    const stage = stages.find(s => s.key === key)
+    if (!stage || stage.key === lead.status) return
+    setBusy(true); setErr('')
+    try {
+      const u = await updateLeadStatus(lead, stage)
+      onSaved(u)
+      loadEvents()
+      getLeadSpans(lead.id).then(setSpans).catch(() => {})
+    } catch (e: any) { setErr(e.message) }
+    setBusy(false)
+  }
+
   return (
     <div onClick={onClose} className="cc-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(15,20,30,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, zIndex: 50 }}>
       <div onClick={e => e.stopPropagation()} className="cc-modal" style={{ width: '100%', maxWidth: 560, maxHeight: '88vh', overflow: 'auto', background: C.panel, borderRadius: 16, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
           <span style={{ fontSize: 11, color: C.muted }}>Etapa atual: <b style={{ color: C.text }}>{stageLabel}</b></span>
-          <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 20 }}>×</button>
+          <button onClick={onClose} aria-label="Fechar" style={{ marginLeft: 'auto', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 26, lineHeight: 1, padding: '4px 6px' }}>×</button>
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <p style={fieldLabel}>Mover para</p>
+          <select value={lead.status} disabled={busy} onChange={e => moveTo(e.target.value)} style={input}>
+            {!stages.some(s => s.key === lead.status) && <option value={lead.status}>{lead.status} (etapa inexistente)</option>}
+            {stages.map(s => <option key={s.id} value={s.key}>{s.label}</option>)}
+          </select>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
@@ -1946,7 +2061,7 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
         )}
 
         {/* ---------------- visão geral ---------------- */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(148px, 1fr))', gap: 12, marginBottom: 24 }}>
           <Card title="Leads no período" value={String(total)} />
           <Card title="Em aberto" value={String(open.length)} sub={BRL(openVal) + ' em pipeline'} />
           <Card title="Ganhos" value={String(won.length)} sub={BRL(wonVal)} color="#16a34a" />
@@ -1960,7 +2075,7 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
         <p style={{ fontSize: 12.5, color: C.muted, marginBottom: 12 }}>
           Da chegada da pessoa até o fecho. {estimated > 0 && `${estimated} ficha${estimated > 1 ? 's' : ''} com data de entrada deduzida ficam de fora da conta.`}
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(148px, 1fr))', gap: 12, marginBottom: 20 }}>
           <Card title="Ciclo mediano (ganhos)" value={wonCycles.length ? `${median(wonCycles).toFixed(1)} d` : '—'} sub={`${wonCycles.length} caso${wonCycles.length === 1 ? '' : 's'}`} />
           <Card title="Ciclo médio (ganhos)" value={wonCycles.length ? `${(wonCycles.reduce((a, b) => a + b, 0) / wonCycles.length).toFixed(1)} d` : '—'} />
           <Card title="Mais rápido / mais lento" value={wonCycles.length ? `${Math.min(...wonCycles).toFixed(0)} / ${Math.max(...wonCycles).toFixed(0)} d` : '—'} />
@@ -2044,8 +2159,8 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
 
       {/* lista de quem está parado, ao clicar num número */}
       {drill && (
-        <div onClick={() => setDrill(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,18,24,.42)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 60 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: C.panel, borderRadius: 14, width: 'min(520px, 100%)', maxHeight: '80vh', overflow: 'auto', padding: 20 }}>
+        <div onClick={() => setDrill(null)} className="cc-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(15,18,24,.42)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 60 }}>
+          <div onClick={e => e.stopPropagation()} className="cc-modal" style={{ background: C.panel, borderRadius: 14, width: 'min(520px, 100%)', maxWidth: 520, maxHeight: '80vh', overflow: 'auto', padding: 20 }}>
             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>{drill.title}</h3>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr><th style={th}>Lead</th><th style={{ ...th, textAlign: 'right' }}>Parado há</th></tr></thead>
@@ -2413,13 +2528,27 @@ function AddLead({ firstStage, onClose, onCreate }: { firstStage?: string; onClo
 
 // ================================================================ UI helpers
 function Topbar({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
+  const { isMobile, openNav } = useContext(NavCtx)
   return (
-    <header style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', borderBottom: `1px solid ${C.border}`, background: C.panel, minHeight: 60 }}>
-      <div>
-        <h1 style={{ fontSize: 18, fontWeight: 700 }}>{title}</h1>
-        {subtitle && <p style={{ fontSize: 12, color: C.muted }}>{subtitle}</p>}
+    <header style={{
+      display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 16,
+      padding: isMobile ? '10px 12px' : '14px 20px',
+      borderBottom: `1px solid ${C.border}`, background: C.panel, minHeight: 60,
+      flexWrap: isMobile ? 'wrap' : 'nowrap',
+    }}>
+      {isMobile && (
+        <button onClick={openNav} aria-label="Abrir menu"
+          style={{ background: 'none', border: `1px solid ${C.border}`, borderRadius: 9, color: C.text, fontSize: 17, lineHeight: 1, cursor: 'pointer', padding: '8px 11px', flexShrink: 0 }}>☰</button>
+      )}
+      <div style={{ minWidth: 0 }}>
+        <h1 style={{ fontSize: isMobile ? 16 : 18, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</h1>
+        {subtitle && <p style={{ fontSize: 12, color: C.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{subtitle}</p>}
       </div>
-      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 18 }}>{right}</div>
+      <div style={{
+        marginLeft: 'auto', display: 'flex', alignItems: 'center',
+        gap: isMobile ? 8 : 18,
+        ...(isMobile ? { width: '100%', order: 3, overflowX: 'auto' as const, paddingBottom: 2 } : null),
+      }}>{right}</div>
     </header>
   )
 }
