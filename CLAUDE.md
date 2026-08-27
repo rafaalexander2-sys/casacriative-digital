@@ -18,6 +18,23 @@ Qualquer agente, de qualquer modelo, DEVE seguir este padrão **antes de impleme
 
 > O deploy de produção é disparado pelo merge na `main` (ver seção de Deploy).
 
+## Deploy das Edge Functions: automático pelo GitHub
+
+`.github/workflows/deploy-edge-functions.yml` publica as funções do Supabase a
+cada push na `main` que toque em `supabase/functions/**` (ou à mão em Actions →
+"Deploy Edge Functions" → "Run workflow" — funciona pelo telemóvel).
+
+Antes era preciso copiar o código à mão no painel do Supabase; o repositório e a
+produção divergiam sem ninguém dar por isso.
+
+- Segredo necessário: `SUPABASE_ACCESS_TOKEN` (GitHub → Settings → Secrets and
+  variables → Actions). Gera-se em supabase.com/dashboard/account/tokens.
+- `ingest-lead` e `public-task` vão com `--no-verify-jwt` — são públicas. **Sem
+  esse sinalizador cada deploy volta a ligar a verificação de JWT e os leads do
+  site deixam de entrar.**
+- O último passo do workflow confirma que `ingest-lead` responde 400 (função
+  correu) e não 401 (gateway barrou), e falha o deploy se tiver ficado fechada.
+
 ## Deploy: Cloudflare Pages (NÃO é Hostinger)
 
 O site é servido pelo **Cloudflare Pages** (projeto `casacriative-digital2`,
