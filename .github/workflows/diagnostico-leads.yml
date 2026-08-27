@@ -1,0 +1,75 @@
+# Diagnóstico: onde é que os leads do site foram parar.
+#
+# Corre só à mão (Actions → Diagnóstico de leads → Run workflow), usando o
+# mesmo SUPABASE_ACCESS_TOKEN do deploy, via Management API.
+#
+# ATENÇÃO: este repositório é PÚBLICO e os logs do Actions também são.
+# Por isso as consultas aqui devolvem apenas contagens, chaves de etapa e
+# datas — nunca nome, email ou telefone de quem quer que seja.
+#
+# As consultas são fixas no ficheiro de propósito: não recebem entrada de
+# fora, para isto não virar uma porta de SQL arbitrário no repositório.
+
+name: Diagnostico de leads
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: mnmcxuumgbjyylsxsadv
+
+    steps:
+      - name: Consultar
+        run: |
+          set -euo pipefail
+
+          run_sql () {
+            echo ""
+            echo "=============================================="
+            echo "$1"
+            echo "=============================================="
+            payload=$(python3 -c 'import json,sys; print(json.dumps({"query": sys.argv[1]}))' "$2")
+            curl -sS -X POST \
+              "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "$payload" | python3 -m json.tool
+          }
+
+          run_sql "1) O lead das 00:03 e os testes estao no banco?" \
+          "select case when name ilike '%lucille%' then 'lead-real' else 'teste' end as quem,
+                  status, count(*) as quantos,
+                  min(created_at at time zone 'America/Sao_Paulo')::text as primeiro
+             from leads
+            where name ilike '%lucille%' or name ilike '%teste claude%'
+            group by 1, 2 order by 1, 2;"
+
+          run_sql "2) Etapas do funil da DBP (existe a chave 'novo'?)" \
+          "select s.key, s.position, s.kind
+             from pipeline_stages s
+             join workspaces w on w.id = s.workspace_id
+            where w.ingest_token = '8db3c710-b1e2-414c-b97a-e27ecdd6064a'
+            order by s.position;"
+
+          run_sql "3) Leads da DBP por etapa (chave vs coluna existente)" \
+          "select l.status,
+                  exists (select 1 from pipeline_stages p
+                           where p.workspace_id = l.workspace_id and p.key = l.status) as tem_coluna,
+                  count(*) as quantos
+             from leads l
+             join workspaces w on w.id = l.workspace_id
+            where w.ingest_token = '8db3c710-b1e2-414c-b97a-e27ecdd6064a'
+            group by 1, 2 order by 3 desc;"
+
+          run_sql "4) Leads da DBP por dia, ultimos 30 dias" \
+          "select (l.created_at at time zone 'America/Sao_Paulo')::date::text as dia,
+                  count(*) as quantos
+             from leads l
+             join workspaces w on w.id = l.workspace_id
+            where w.ingest_token = '8db3c710-b1e2-414c-b97a-e27ecdd6064a'
+              and l.created_at > now() - interval '30 days'
+            group by 1 order by 1;"
