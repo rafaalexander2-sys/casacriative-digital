@@ -95,6 +95,20 @@ Para ver logs de build com erro: aba **Implantações** → deploy → **Detalhe
 - `cc_perplexity_key` — Perplexity API (geração de mensagens com IA)
 - `cc_apify_key` — Apify (scraping Instagram por hashtag)
 
+## CRM no telemóvel
+
+- `useIsMobile()` (≤820px) + contexto `NavCtx` em `app/crm/page.tsx`. A sidebar de
+  224px vira **gaveta deslizante** aberta pelo ☰ da `Topbar`; escolher uma vista fecha-a.
+- **Arrastar cards só funciona com rato.** Por isso o modal do lead tem "Mover para"
+  e o modal da tarefa tem "Coluna" — é assim que se muda de etapa no telemóvel.
+  Não remover esses seletores a pensar que são redundantes.
+- Bloco `@media (max-width: 820px)` em `MotionStyles`: campos a 16px (abaixo disso o
+  iOS dá zoom e desalinha tudo), modais quase de ecrã inteiro colados em baixo
+  (`.cc-modal`), colunas do quadro com encaixe ao deslizar (`.cc-board` / `.cc-col`),
+  e o `.cc-open` ("Abrir ›") deixa de depender de hover — no toque nunca aparecia.
+- Modal novo? Põe-lhe `className="cc-overlay"` e `className="cc-modal"`, senão fica
+  com 24px de margem num ecrã de 360px.
+
 ## CRM — Histórico de movimentação e relatórios
 
 - **Base:** `lead_stage_history` (`supabase/schema-lead-history.sql`) — uma linha por
