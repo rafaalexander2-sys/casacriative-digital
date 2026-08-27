@@ -502,6 +502,14 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
   const ganho = leads.filter(l => wonKeys.includes(l.status)).reduce((s, l) => s + (l.value ?? 0), 0)
   const emAberto = leads.filter(l => !closedKeys.includes(l.status)).length
 
+  // Leads cuja etapa não corresponde a nenhuma coluna do funil.
+  // Antes eram simplesmente omitidos do quadro: existiam no banco e não
+  // apareciam em lado nenhum. Um lead perdido em silêncio é pior do que um
+  // erro visível, por isso ganham uma coluna própria em vez de sumirem.
+  const orphans = stages.length > 0
+    ? leads.filter(l => !stages.some(st => st.key === l.status))
+    : []
+
   return (
     <>
       <Topbar title="Pipeline" right={
@@ -551,6 +559,35 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
               </div>
             )
           })}
+          {orphans.length > 0 && (
+            <div style={{ width: 264, flexShrink: 0, background: '#fdf1dc', borderRadius: 12, display: 'flex', flexDirection: 'column', maxHeight: '100%', border: '1px solid #f0d9ae' }}>
+              <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '2px solid #a35c07' }}>
+                <span style={{ width: 8, height: 8, borderRadius: 4, background: '#a35c07' }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#7a4405' }}>Sem etapa</span>
+                <span style={{ fontSize: 12, color: '#a35c07', marginLeft: 'auto' }}>{orphans.length}</span>
+              </div>
+              <p style={{ fontSize: 11, color: '#7a4405', padding: '8px 14px 0', lineHeight: 1.45 }}>
+                Chegaram numa etapa que não existe neste funil. Arraste para a coluna certa.
+              </p>
+              <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
+                {orphans.map(lead => (
+                  <div key={lead.id} draggable onDragStart={() => setDragId(lead.id)} onClick={() => setSelected(lead)} className="cc-card cc-fade-up" title="Abrir para editar"
+                    style={{ background: C.panel, borderRadius: 8, padding: 12, cursor: 'pointer', border: '1px solid #f0d9ae' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'baseline' }}>
+                      <b style={{ fontSize: 14 }}>{lead.name}</b>
+                      <span className="cc-open" style={{ fontSize: 11, color: C.brand, fontWeight: 600, whiteSpace: 'nowrap' }}>Abrir ›</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: 'rgba(196,122,74,0.12)', color: C.brandDark }}>{SOURCE_LABELS[lead.source]}</span>
+                      <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: '#fbe6c4', color: '#7a4405' }} title="Chave da etapa que veio gravada">{lead.status}</span>
+                    </div>
+                    {lead.service && <p style={{ fontSize: 11, color: C.muted, marginTop: 6 }}>{lead.service}</p>}
+                    {(lead.phone || lead.email) && <p style={{ fontSize: 11, color: '#9aa1ab', marginTop: 4 }}>{lead.phone || lead.email}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {stages.length === 0 && <p style={{ fontSize: 13, color: C.muted, padding: 20 }}>Sem etapas. Rode o SQL schema-stages.sql.</p>}
         </div>
       </div>
