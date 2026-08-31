@@ -48,6 +48,16 @@ jobs:
             where name ilike '%lucille%' or name ilike '%teste claude%'
             group by 1, 2 order by 1, 2;"
 
+          run_sql "1b) Leads de teste: EM QUE ESPACO cairam" \
+          "select left(w.name, 4) || '...' as espaco_mascarado,
+                  w.is_agency,
+                  l.status,
+                  count(*) as quantos,
+                  max(l.created_at at time zone 'America/Sao_Paulo')::text as ultimo
+             from leads l join workspaces w on w.id = l.workspace_id
+            where l.name ilike '%teste%claude%' or l.name ilike '%zz teste%'
+            group by 1, 2, 3 order by 5 desc;"
+
           run_sql "2) Etapas do funil da DBP (existe a chave 'novo'?)" \
           "select s.key, s.position, s.kind
              from pipeline_stages s
