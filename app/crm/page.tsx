@@ -2528,6 +2528,15 @@ function IngestBox({ workspace }: { workspace: Workspace }) {
   return (
     <div style={{ marginTop: 22, borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
       <p style={label}>Captação de leads (webhook)</p>
+      <div style={{ background: 'rgba(196,122,74,0.10)', border: `1px solid rgba(196,122,74,.32)`, borderRadius: 8, padding: '9px 12px', marginBottom: 10 }}>
+        <p style={{ fontSize: 13, color: C.text }}>
+          Token de <b>{workspace.name}</b>{workspace.is_agency ? ' (o espaço da própria agência)' : ''}.
+        </p>
+        <p style={{ fontSize: 11.5, color: C.brandDark, marginTop: 3 }}>
+          Confirme o nome antes de copiar: o token é o que decide em que quadro o lead cai.
+          Colado no cliente errado, os leads entram no espaço errado sem dar erro nenhum.
+        </p>
+      </div>
       <p style={{ fontSize: 13, color: C.muted, marginBottom: 10 }}>Use isto para ligar formulários/landing pages deste cliente. Todo lead cai direto aqui.</p>
       {!token && <p style={{ fontSize: 12, color: '#dc2626', marginBottom: 8 }}>Rode o SQL <b>schema-ingest.sql</b> no Supabase para gerar o token.</p>}
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
