@@ -95,6 +95,26 @@ Para ver logs de build com erro: aba **Implantações** → deploy → **Detalhe
 - `cc_perplexity_key` — Perplexity API (geração de mensagens com IA)
 - `cc_apify_key` — Apify (scraping Instagram por hashtag)
 
+## Conversões offline para o Google Ads
+
+`ReportsView` → "Conversões para o Google Ads" gera o CSV de importação de
+conversões (`buildGoogleAdsConversionsCsv` em `lib/crm-export.ts`). Fecha o
+ciclo: o Google sabe do clique e do formulário, mas não sabe quais leads
+fecharam — sem isso o lance automático optimiza por volume, não por receita.
+
+- **Qualificado** = primeira vez que o lead saiu da etapa de entrada para uma
+  mais à frente. **Convertido** = `won_at`, com o valor.
+- Só entram leads com `gclid`. Linhas `seed` do histórico ficam de fora (data
+  não confiável).
+- **A primeira linha é `Parameters:TimeZone=...` e os cabeçalhos só vêm na
+  segunda.** Pôr cabeçalho na primeira linha faz o Google recusar o ficheiro.
+- **Separador é vírgula e o decimal é PONTO** — ao contrário dos outros CSVs do
+  CRM, que usam `;` e vírgula decimal para o Excel pt-BR. Misturar os dois
+  parte as colunas.
+- Os nomes das acções de conversão são editáveis e ficam em `localStorage`
+  (`cc_gads_conv`): têm de bater exactamente com os do Google Ads, senão o
+  ficheiro é aceite e as linhas ignoradas em silêncio.
+
 ## Leads dos formulários do Google Ads (sem passar pelo site)
 
 `ingest-lead` aceita também o formato próprio do Google Ads (detectado por

@@ -286,3 +286,95 @@ export function exportAll(data: ExportData, wsName: string) {
   setTimeout(() => downloadFile(fileName('movimentos', wsName, r), buildMovesCsv(data)), 400)
   setTimeout(() => downloadFile(fileName('resumo-etapas', wsName, r), buildStageSummaryCsv(data)), 800)
 }
+
+// ============================================================
+// Conversões offline para o Google Ads
+//
+// Fecha o ciclo: o Google sabe que houve um clique e um formulário, mas não
+// sabe quais leads viraram negócio. Sem isso, o lance automático optimiza para
+// volume de formulário — e paga caro por lead que nunca fecha.
+//
+// Formato oficial (support.google.com/google-ads/answer/7014069): a PRIMEIRA
+// linha declara o fuso e os cabeçalhos só vêm na segunda. Enviar cabeçalho na
+// primeira linha é o erro clássico que faz o upload ser recusado.
+// ============================================================
+
+export interface ConversionNames {
+  /** Tem de bater EXACTAMENTE com o nome da acção de conversão no Google Ads */
+  qualified: string
+  converted: string
+  currency: string
+}
+
+/** 'aaaa-mm-dd hh:mm:ss' no fuso declarado no cabeçalho Parameters. */
+function gAdsTime(iso: string): string {
+  const p = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).formatToParts(new Date(iso))
+  const g = (t: string) => p.find(x => x.type === t)?.value ?? '00'
+  return `${g('year')}-${g('month')}-${g('day')} ${g('hour')}:${g('minute')}:${g('second')}`
+}
+
+export function buildGoogleAdsConversionsCsv(
+  { leads, stages, spans }: ExportData,
+  names: ConversionNames,
+): string {
+  const abertas = stages.filter(s => s.kind === 'open').sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+  const primeira = abertas[0]
+  const posOf = new Map(stages.map((s, i) => [s.key, s.position ?? i]))
+
+  const byLead = new Map<string, LeadStageSpan[]>()
+  for (const sp of spans) {
+    const arr = byLead.get(sp.lead_id) ?? []
+    arr.push(sp)
+    byLead.set(sp.lead_id, arr)
+  }
+
+  const linhas: string[][] = []
+
+  for (const l of leads) {
+    // Sem gclid o Google não consegue ligar a conversão ao clique — a linha
+    // seria recusada. Melhor não a enviar do que sujar o relatório de erros.
+    if (!l.gclid) continue
+
+    // QUALIFICADO: a primeira vez que saiu da etapa de entrada para uma etapa
+    // mais à frente. Linhas 'seed' ficam de fora: a data delas não é confiável.
+    const sps = (byLead.get(l.id) ?? [])
+      .filter(x => x.origin !== 'seed')
+      .sort((a, b) => a.entered_at.localeCompare(b.entered_at))
+
+    const avancou = sps.find(x =>
+      primeira && x.status !== primeira.key &&
+      (posOf.get(x.status) ?? 0) > (posOf.get(primeira.key) ?? 0))
+
+    if (avancou) {
+      linhas.push([l.gclid, names.qualified, gAdsTime(avancou.entered_at), l.id, '', names.currency])
+    }
+
+    // CONVERTIDO: fechou. Vai com o valor, que é o que permite ao Google
+    // optimizar por receita em vez de por quantidade.
+    if (l.won_at) {
+      // Ponto decimal, NÃO vírgula: este ficheiro é separado por vírgulas, e o
+      // nosso num() usa vírgula (correcto nos outros CSVs, fatal neste).
+      const valor = l.value != null && !Number.isNaN(l.value) ? l.value.toFixed(2) : ''
+      linhas.push([l.gclid, names.converted, gAdsTime(l.won_at), l.id, valor, names.currency])
+    }
+  }
+
+  const BOM = String.fromCharCode(0xfeff)
+  const sep = ','   // o Google exige vírgula, ao contrário dos nossos CSVs
+  const esc = (v: string) => (/[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v)
+
+  return BOM + [
+    `Parameters:TimeZone=${TZ}`,
+    ['Google Click ID', 'Conversion Name', 'Conversion Time', 'Order ID', 'Conversion Value', 'Conversion Currency'].join(sep),
+    ...linhas.map(r => r.map(esc).join(sep)),
+  ].join('\r\n')
+}
+
+/** Quantas linhas sairiam — para avisar antes de baixar um ficheiro vazio. */
+export function countGoogleAdsConversions(data: ExportData): number {
+  const csv = buildGoogleAdsConversionsCsv(data, { qualified: 'x', converted: 'x', currency: 'BRL' })
+  return Math.max(0, csv.split('\r\n').length - 2)
+}
