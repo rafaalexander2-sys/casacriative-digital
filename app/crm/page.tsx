@@ -64,7 +64,7 @@ import {
   getStageHistory,
   getLeadSpans,
 } from '@/lib/crm-api'
-import { exportAll, downloadFile, type ExportData } from '@/lib/crm-export'
+import { exportAll, downloadFile, buildGoogleAdsConversionsCsv, countGoogleAdsConversions, fileName, type ExportData } from '@/lib/crm-export'
 import {
   SOURCE_LABELS,
   ROLE_LABELS,
@@ -2031,6 +2031,22 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
   const nameOf = new Map(leads.map(l => [l.id, l.name]))
   const [drill, setDrill] = useState<{ title: string; rows: LeadStageSpan[] } | null>(null)
 
+  // Nomes das acções de conversão: têm de bater EXACTAMENTE com os do Google
+  // Ads, e cada conta pode ter-lhes chamado outra coisa. Ficam guardados no
+  // browser para não os reescrever a cada exportação.
+  const [gads, setGads] = useState({ qualified: 'Qualified lead', converted: 'Converted lead', currency: 'BRL' })
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('cc_gads_conv')
+      if (raw) setGads(g => ({ ...g, ...JSON.parse(raw) }))
+    } catch {}
+  }, [])
+  const saveGads = (patch: Partial<typeof gads>) => {
+    const next = { ...gads, ...patch }
+    setGads(next)
+    try { localStorage.setItem('cc_gads_conv', JSON.stringify(next)) } catch {}
+  }
+
   const bySource = (Object.keys(SOURCE_LABELS) as LeadSource[])
     .map(s => ({ s, n: periodLeads.filter(l => l.source === s).length })).filter(x => x.n > 0)
   const maxSource = Math.max(1, ...bySource.map(x => x.n))
@@ -2038,6 +2054,10 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
   const exportData = (): ExportData => ({
     leads: periodLeads, stages, spans, history, range, people,
   })
+
+  const convCount = spans.length || periodLeads.length
+    ? countGoogleAdsConversions({ leads: periodLeads, stages, spans, history, range, people })
+    : 0
 
   const th: React.CSSProperties = { textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '.05em', padding: '8px 10px', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap' }
   const td: React.CSSProperties = { fontSize: 13, padding: '9px 10px', borderBottom: `1px solid ${C.border}` }
@@ -2158,6 +2178,51 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
           </table>
         </div>
         {loading && <p style={{ fontSize: 12.5, color: C.muted, marginTop: -18, marginBottom: 22 }}>A carregar o histórico…</p>}
+
+        {/* ---------------- conversões para o Google Ads ---------------- */}
+        <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 4px' }}>Conversões para o Google Ads</h3>
+        <p style={{ fontSize: 12.5, color: C.muted, marginBottom: 12, maxWidth: 640 }}>
+          Devolve ao Google quais leads avançaram e quais fecharam. Sem isto o lance automático
+          optimiza por volume de formulário e paga caro por lead que nunca fecha.
+          Só entram leads com <code>gclid</code> — sem ele o Google não liga a conversão ao clique.
+        </p>
+        <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14, maxWidth: 640, marginBottom: 26 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10, marginBottom: 12 }}>
+            <div>
+              <p style={fieldLabel}>Nome da conversão “qualificado”</p>
+              <input value={gads.qualified} onChange={e => saveGads({ qualified: e.target.value })} style={input} />
+            </div>
+            <div>
+              <p style={fieldLabel}>Nome da conversão “convertido”</p>
+              <input value={gads.converted} onChange={e => saveGads({ converted: e.target.value })} style={input} />
+            </div>
+            <div>
+              <p style={fieldLabel}>Moeda</p>
+              <select value={gads.currency} onChange={e => saveGads({ currency: e.target.value })} style={input}>
+                <option value="BRL">BRL — real</option>
+                <option value="USD">USD — dólar</option>
+                <option value="EUR">EUR — euro</option>
+              </select>
+            </div>
+          </div>
+          <p style={{ fontSize: 11.5, color: C.muted, marginBottom: 12 }}>
+            Os nomes têm de ser iguais aos das acções de conversão criadas no Google Ads,
+            senão o ficheiro é aceite e as linhas ignoradas.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => downloadFile(fileName('conversoes-google-ads', ws?.name ?? 'crm', range), buildGoogleAdsConversionsCsv(exportData(), gads))}
+              disabled={convCount === 0}
+              style={{ ...btn, flex: 'none', width: 'auto', padding: '9px 16px', fontSize: 13, opacity: convCount === 0 ? .5 : 1 }}>
+              Exportar conversões
+            </button>
+            <span style={{ fontSize: 12.5, color: C.muted }}>
+              {convCount === 0
+                ? 'Nenhuma conversão com gclid no período escolhido.'
+                : `${convCount} ${convCount === 1 ? 'linha' : 'linhas'} no período escolhido.`}
+            </span>
+          </div>
+        </div>
 
         <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 12px' }}>Por origem</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 560 }}>
