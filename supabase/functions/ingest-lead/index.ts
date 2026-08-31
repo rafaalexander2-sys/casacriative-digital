@@ -22,23 +22,79 @@ Deno.serve(async (req) => {
       auth: { persistSession: false },
     })
 
-    const body = await req.json().catch(() => ({}))
+    const raw = await req.json().catch(() => ({}))
+
+    // ------------------------------------------------------------------
+    // Formulários de lead do Google Ads
+    // O Google manda um formato próprio e NÃO deixa configurar cabeçalhos —
+    // por isso esta função tem de aceitar um POST simples. A "Chave" que se
+    // preenche no painel do Google viaja em `google_key`: usamo-la como o
+    // token do espaço, o que valida e roteia de uma vez só.
+    // Docs: developers.google.com/google-ads/webhook/docs/implementation
+    // ------------------------------------------------------------------
+    const isGoogleForm = Array.isArray(raw?.user_column_data)
+    let body = raw
+
+    if (isGoogleForm) {
+      const cols: Record<string, string> = {}
+      for (const c of raw.user_column_data ?? []) {
+        if (c?.column_id) cols[String(c.column_id)] = String(c.string_value ?? '').trim()
+      }
+
+      // Campos que não têm coluna própria no CRM vão para as anotações, com
+      // o rótulo que o próprio Google deu — não se perde nada do formulário.
+      const conhecidos = new Set(['FULL_NAME', 'FIRST_NAME', 'LAST_NAME', 'EMAIL', 'WORK_EMAIL', 'PHONE_NUMBER', 'COMPANY_NAME'])
+      const extras = (raw.user_column_data ?? [])
+        .filter((c: any) => c?.column_id && !conhecidos.has(String(c.column_id)) && String(c.string_value ?? '').trim())
+        .map((c: any) => `${c.column_name ?? c.column_id}: ${c.string_value}`)
+
+      const nome = cols.FULL_NAME
+        || [cols.FIRST_NAME, cols.LAST_NAME].filter(Boolean).join(' ').trim()
+        || cols.EMAIL || cols.PHONE_NUMBER
+
+      body = {
+        token: raw.google_key,
+        name: nome,
+        email: cols.EMAIL || cols.WORK_EMAIL || null,
+        phone: cols.PHONE_NUMBER || null,
+        company: cols.COMPANY_NAME || null,
+        source: 'google_ads',
+        gclid: raw.gcl_id ?? null,
+        utm_source: 'google',
+        utm_medium: 'cpc',
+        utm_campaign: raw.campaign_id != null ? String(raw.campaign_id) : null,
+        notes: extras.length ? extras.join('\n') : null,
+        external_id: raw.lead_id ? String(raw.lead_id) : null,
+        _google: true,
+        _is_test: raw.is_test === true,
+      }
+    }
+
+    // Respostas no formato que cada lado espera: o Google quer {} em 200 e
+    // {"message": ...} em erro; o resto do sistema já usa {ok:true}/{error}.
+    const ok = () => (isGoogleForm ? json({}) : json({ ok: true }))
+    const fail = (msg: string, code: number) =>
+      isGoogleForm ? json({ message: msg }, code) : json({ error: msg }, code)
+
     // honeypot anti-bot: se veio preenchido, finge sucesso e ignora
     if (body._gotcha) return json({ ok: true })
 
+    // Teste do botão "Enviar dados do teste": confirma a ligação sem sujar o CRM
+    if (body._is_test) return ok()
+
     const name = String(body.name ?? '').trim()
-    if (!name) return json({ error: 'name é obrigatório.' }, 400)
+    if (!name) return fail('name é obrigatório.', 400)
 
     // 1) Descobrir o espaço de destino
     let workspaceId: string | undefined
     if (body.token) {
       const { data } = await admin.from('workspaces').select('id').eq('ingest_token', body.token).limit(1)
       workspaceId = data?.[0]?.id
-      if (!workspaceId) return json({ error: 'Token inválido.' }, 401)
+      if (!workspaceId) return fail('Token inválido.', 401)
     } else {
       const { data } = await admin.from('workspaces').select('id').eq('is_agency', true).limit(1)
       workspaceId = data?.[0]?.id
-      if (!workspaceId) return json({ error: 'Nenhum espaço da agência configurado.' }, 500)
+      if (!workspaceId) return fail('Nenhum espaço da agência configurado.', 500)
     }
 
     // 2) Etapa inicial: a PRIMEIRA coluna do funil DESTE espaço.
@@ -83,10 +139,27 @@ Deno.serve(async (req) => {
       entry_date: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
       entry_date_estimated: false,
     }
-    const { error } = await admin.from('leads').insert(lead)
-    if (error) return json({ error: error.message }, 500)
+    // Dedup: o Google reenvia o mesmo lead quando recebe 5xx. Sem isto, uma
+    // falha temporária transformava-se em cartões repetidos no quadro.
+    const externalId = body.external_id ? String(body.external_id) : null
+    if (externalId) {
+      const { data: jaExiste } = await admin
+        .from('leads').select('id')
+        .eq('workspace_id', workspaceId).eq('external_id', externalId).limit(1)
+      if (jaExiste?.[0]) return ok()
+    }
 
-    return json({ ok: true })
+    let { error } = await admin.from('leads').insert({ ...lead, external_id: externalId })
+
+    // Se a coluna external_id ainda não existir no banco, grava sem ela em vez
+    // de perder o lead — o dedup passa a valer quando o SQL for aplicado.
+    if (error && /external_id/i.test(error.message)) {
+      ;({ error } = await admin.from('leads').insert(lead))
+    }
+    // 5xx faz o Google tentar de novo; 4xx não. Um erro de escrita é nosso.
+    if (error) return fail(error.message, 500)
+
+    return ok()
   } catch (e) {
     return json({ error: String((e as Error)?.message ?? e) }, 500)
   }

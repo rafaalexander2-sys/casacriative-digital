@@ -95,6 +95,35 @@ Para ver logs de build com erro: aba **Implantações** → deploy → **Detalhe
 - `cc_perplexity_key` — Perplexity API (geração de mensagens com IA)
 - `cc_apify_key` — Apify (scraping Instagram por hashtag)
 
+## Leads dos formulários do Google Ads (sem passar pelo site)
+
+`ingest-lead` aceita também o formato próprio do Google Ads (detectado por
+`user_column_data` no corpo). Serve os "formulários de lead" das campanhas —
+o lead entra no CRM sem tocar no site do cliente.
+
+- **O Google não deixa configurar cabeçalhos.** Por isso a função tem de
+  continuar a aceitar um POST simples: o deploy automático usa `--no-verify-jwt`
+  e é isso que mantém este caminho aberto.
+- **A "Chave" do painel do Google é o token do espaço.** Viaja em `google_key`
+  e serve de validação e de roteamento ao mesmo tempo — não há outro campo onde
+  coubesse o token.
+- Mapeamento: `FULL_NAME` (ou `FIRST_NAME`+`LAST_NAME`) → nome, `EMAIL`/
+  `WORK_EMAIL` → e-mail, `PHONE_NUMBER` → telefone, `COMPANY_NAME` → empresa.
+  Qualquer outra coluna do formulário vai para as anotações com o rótulo que o
+  Google deu. `gcl_id` → `gclid`, `campaign_id` → `utm_campaign`.
+- **Respostas no formato que o Google espera:** `{}` em 200, `{"message": ...}`
+  em erro. 5xx faz o Google reenviar, 4xx não — por isso erro de escrita é 5xx.
+- `is_test: true` (botão "Enviar dados do teste") responde 200 sem criar lead.
+- **Dedup por `external_id`** (`supabase/schema-lead-dedup.sql`): guarda o
+  `lead_id` do Google com índice único por espaço, para o reenvio não duplicar
+  o cartão. Se a coluna ainda não existir, a função grava sem ela em vez de
+  perder o lead.
+
+Configuração no Google Ads: campanha → Recursos → formulário de lead →
+"Exportar leads" → **Integração com o webhook**. URL =
+`https://mnmcxuumgbjyylsxsadv.supabase.co/functions/v1/ingest-lead`,
+Chave = o token do espaço (aparece em Clientes, no CRM).
+
 ## CRM no telemóvel
 
 - `useIsMobile()` (≤820px) + contexto `NavCtx` em `app/crm/page.tsx`. A sidebar de
