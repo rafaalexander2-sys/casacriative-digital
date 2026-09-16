@@ -1,11 +1,17 @@
-# Diagnóstico: onde é que os leads do site foram parar.
+# Diagnóstico de atribuição dos leads.
 #
-# Corre só à mão (Actions → Diagnóstico de leads → Run workflow), usando o
-# mesmo SUPABASE_ACCESS_TOKEN do deploy, via Management API.
+# Corre só à mão (Actions → Diagnostico de leads → Run workflow), usando o
+# SUPABASE_ACCESS_TOKEN do deploy, via Management API.
 #
 # ATENÇÃO: este repositório é PÚBLICO e os logs do Actions também são.
-# Por isso as consultas aqui devolvem apenas contagens, chaves de etapa e
-# datas — nunca nome, email ou telefone de quem quer que seja.
+# Por isso:
+#   - as consultas devolvem contagens, chaves de etapa, datas e valores de
+#     campanha — nunca nome, e-mail ou telefone de quem quer que seja;
+#   - os nomes dos espaços saem mascarados aos 4 primeiros caracteres;
+#   - NENHUM token de ingestão aparece aqui. Um token de ingestão é uma chave
+#     de escrita: quem o tiver consegue injectar leads no quadro do cliente.
+#     Havia três cópias do token da DBP neste ficheiro — foram removidas, e
+#     esse token deve ser rodado.
 #
 # As consultas são fixas no ficheiro de propósito: não recebem entrada de
 # fora, para isto não virar uma porta de SQL arbitrário no repositório.
@@ -40,46 +46,53 @@ jobs:
               -d "$payload" | python3 -m json.tool
           }
 
-          run_sql "1) O lead das 00:03 e os testes estao no banco?" \
-          "select case when name ilike '%lucille%' then 'lead-real' else 'teste' end as quem,
-                  status, count(*) as quantos,
-                  min(created_at at time zone 'America/Sao_Paulo')::text as primeiro
-             from leads
-            where name ilike '%lucille%' or name ilike '%teste claude%'
-            group by 1, 2 order by 1, 2;"
-
-          run_sql "1b) Leads de teste: EM QUE ESPACO cairam" \
-          "select left(w.name, 4) || '...' as espaco_mascarado,
-                  w.is_agency,
-                  l.status,
-                  count(*) as quantos,
-                  max(l.created_at at time zone 'America/Sao_Paulo')::text as ultimo
+          # ----------------------------------------------------------------
+          # A pergunta do brief: dos leads com gclid, POR QUE CAMINHO entraram?
+          # 'veio_da_ui' distingue lead digitado a mao (o app grava um evento
+          # 'created') de lead que entrou por webhook (nao grava).
+          # ----------------------------------------------------------------
+          run_sql "A) Leads COM gclid: por que caminho entraram" \
+          "select left(w.name, 4) || '...' as espaco,
+                  l.source,
+                  exists (select 1 from lead_events e
+                           where e.lead_id = l.id and e.type = 'created') as veio_da_ui,
+                  l.utm_source, l.utm_medium, l.utm_campaign,
+                  (l.created_at at time zone 'America/Sao_Paulo')::date::text as dia
              from leads l join workspaces w on w.id = l.workspace_id
-            where l.name ilike '%teste%claude%' or l.name ilike '%zz teste%'
-            group by 1, 2, 3 order by 5 desc;"
+            where l.gclid is not null and l.gclid <> ''
+            order by l.created_at;"
 
-          run_sql "2) Etapas do funil da DBP (existe a chave 'novo'?)" \
-          "select s.key, s.position, s.kind
-             from pipeline_stages s
-             join workspaces w on w.id = s.workspace_id
-            where w.ingest_token = '8db3c710-b1e2-414c-b97a-e27ecdd6064a'
-            order by s.position;"
+          run_sql "B) Cobertura de atribuicao por espaco" \
+          "select left(w.name, 4) || '...' as espaco,
+                  count(*) as leads,
+                  count(*) filter (where l.gclid is not null and l.gclid <> '')       as com_gclid,
+                  count(*) filter (where l.fbclid is not null and l.fbclid <> '')     as com_fbclid,
+                  count(*) filter (where l.utm_source is not null and l.utm_source <> '') as com_utm,
+                  count(*) filter (where l.email is not null and l.email <> '')       as com_email,
+                  count(*) filter (where l.phone is not null and l.phone <> '')       as com_telefone
+             from leads l join workspaces w on w.id = l.workspace_id
+            group by 1 order by 2 desc;"
 
-          run_sql "3) Leads da DBP por etapa (chave vs coluna existente)" \
-          "select l.status,
-                  exists (select 1 from pipeline_stages p
-                           where p.workspace_id = l.workspace_id and p.key = l.status) as tem_coluna,
+          run_sql "C) Como o campo Origem esta distribuido, por espaco" \
+          "select left(w.name, 4) || '...' as espaco, l.source, count(*) as quantos
+             from leads l join workspaces w on w.id = l.workspace_id
+            group by 1, 2 order by 1, 3 desc;"
+
+          run_sql "D) Caminho de entrada de TODOS os leads (UI vs webhook)" \
+          "select left(w.name, 4) || '...' as espaco,
+                  exists (select 1 from lead_events e
+                           where e.lead_id = l.id and e.type = 'created') as veio_da_ui,
                   count(*) as quantos
-             from leads l
-             join workspaces w on w.id = l.workspace_id
-            where w.ingest_token = '8db3c710-b1e2-414c-b97a-e27ecdd6064a'
-            group by 1, 2 order by 3 desc;"
+             from leads l join workspaces w on w.id = l.workspace_id
+            group by 1, 2 order by 1, 3 desc;"
 
-          run_sql "4) Leads da DBP por dia, ultimos 30 dias" \
-          "select (l.created_at at time zone 'America/Sao_Paulo')::date::text as dia,
-                  count(*) as quantos
-             from leads l
-             join workspaces w on w.id = l.workspace_id
-            where w.ingest_token = '8db3c710-b1e2-414c-b97a-e27ecdd6064a'
-              and l.created_at > now() - interval '30 days'
-            group by 1 order by 1;"
+          run_sql "E) Contratos fechados: ha valor e ha gclid?" \
+          "select left(w.name, 4) || '...' as espaco,
+                  count(*) as ganhos,
+                  count(*) filter (where l.value is not null)  as com_valor,
+                  count(*) filter (where l.gclid is not null and l.gclid <> '') as com_gclid,
+                  min((l.won_at at time zone 'America/Sao_Paulo')::date)::text as primeiro,
+                  max((l.won_at at time zone 'America/Sao_Paulo')::date)::text as ultimo
+             from leads l join workspaces w on w.id = l.workspace_id
+            where l.won_at is not null
+            group by 1 order by 2 desc;"
