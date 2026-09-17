@@ -1,0 +1,62 @@
+# Apaga os cartões de teste do CRM.
+#
+# Porquê: provar que o webhook e o gatilho de atribuição funcionam obriga a
+# criar leads a sério — teste com `is_test: true` responde 200 e não grava
+# nada, portanto não prova nada. Esses cartões ficam no quadro do cliente e
+# alguém tem de os tirar à mão, um a um, no telemóvel.
+#
+# Só apaga leads cujo nome começa por "ZZ TESTE" — a convenção usada em todos
+# os testes. O filtro é fixo no ficheiro: este workflow não aceita entrada de
+# fora, para não virar um "apagar o que eu mandar" num repositório público.
+#
+# Corre só à mão: Actions → "Limpar cartoes de teste" → Run workflow.
+
+name: Limpar cartoes de teste
+
+on:
+  workflow_dispatch:
+
+jobs:
+  limpar:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: mnmcxuumgbjyylsxsadv
+
+    steps:
+      - name: Apagar
+        run: |
+          set -euo pipefail
+
+          run_sql () {
+            echo ""
+            echo "=============================================="
+            echo "$1"
+            echo "=============================================="
+            payload=$(python3 -c 'import json,sys; print(json.dumps({"query": sys.argv[1]}))' "$2")
+            curl -sS -X POST \
+              "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "$payload" | python3 -m json.tool
+          }
+
+          # Mostrar antes de apagar: se o filtro alguma vez apanhar algo que
+          # não devia, fica no log o que foi levado.
+          run_sql "O que vai ser apagado" \
+          "select left(w.name, 4) || '...' as espaco, l.name,
+                  (l.created_at at time zone 'America/Sao_Paulo')::date::text as dia
+             from leads l join workspaces w on w.id = l.workspace_id
+            where l.name like 'ZZ TESTE%' order by l.created_at;"
+
+          run_sql "Apagar os cartoes de teste" \
+          "delete from leads where name like 'ZZ TESTE%'
+            returning id;"
+
+          # As referências de teste ficam órfãs; levá-las também.
+          run_sql "Apagar as referencias de teste" \
+          "delete from lead_refs where ref in ('R3FT9K','W7KQ2M') returning ref;"
+
+          run_sql "Confirmar que nao sobrou nenhum" \
+          "select count(*) as cartoes_de_teste_restantes
+             from leads where name like 'ZZ TESTE%';"
