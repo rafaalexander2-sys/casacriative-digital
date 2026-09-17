@@ -57,6 +57,10 @@ jobs:
       - name: Deploy public-task (publica)
         run: supabase functions deploy public-task --project-ref "$PROJECT_REF" --no-verify-jwt
 
+      # Chamada pelo servidor do site do cliente, sem sessão: publica.
+      - name: Deploy lead-ref (publica)
+        run: supabase functions deploy lead-ref --project-ref "$PROJECT_REF" --no-verify-jwt
+
       # Privadas: exigem utilizador autenticado no CRM.
       - name: Deploy google-calendar
         run: supabase functions deploy google-calendar --project-ref "$PROJECT_REF"
