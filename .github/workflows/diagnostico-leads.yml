@@ -96,3 +96,31 @@ jobs:
              from leads l join workspaces w on w.id = l.workspace_id
             where l.won_at is not null
             group by 1 order by 2 desc;"
+
+          # ----------------------------------------------------------------
+          # F) O gatilho da referencia (schema-lead-refs.sql) resolveu?
+          # Nao basta o SQL dizer "Success": o que interessa e o lead sair do
+          # webhook ja com gclid/utms preenchidos a partir do codigo colado.
+          # Os cartoes de teste chamam-se "ZZ TESTE ..." e sao descartaveis.
+          # ----------------------------------------------------------------
+          run_sql "F) Cartoes de teste: o codigo de referencia resolveu a atribuicao" \
+          "select left(w.name, 4) || '...' as espaco,
+                  l.name, l.ref_code, l.gclid, l.fbclid, l.source,
+                  l.utm_source, l.utm_campaign, l.landing_page
+             from leads l join workspaces w on w.id = l.workspace_id
+            where l.name like 'ZZ TESTE%'
+            order by l.created_at;"
+
+          run_sql "G) Referencias registadas e se ja foram reclamadas" \
+          "select left(w.name, 4) || '...' as espaco,
+                  r.ref, r.gclid, r.fbclid, r.utm_campaign, r.page, r.cta,
+                  (r.used_by is not null) as reclamada
+             from lead_refs r join workspaces w on w.id = r.workspace_id
+            order by r.created_at desc limit 20;"
+
+          run_sql "H) Saude da atribuicao por semana (vista lead_attrib_health)" \
+          "select left(w.name, 4) || '...' as espaco, h.semana::text, h.leads,
+                  h.com_ref, h.com_clique_google, h.com_clique_meta, h.pct_google
+             from lead_attrib_health h join workspaces w on w.id = h.workspace_id
+            where h.semana >= (current_date - interval '60 days')
+            order by h.semana desc, h.leads desc;"
