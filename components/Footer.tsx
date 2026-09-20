@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { openConsentPreferences } from '@/lib/consent'
 
 const links = [
   { label: 'Quem Somos',            href: '/quem-somos' },
@@ -12,6 +13,11 @@ const links = [
   { label: 'Design Gráfico',        href: '/design-grafico' },
   { label: 'Blog',                  href: '/blog' },
   { label: 'Contato',               href: '/contato' },
+]
+
+const legal = [
+  { label: 'Política de Privacidade', href: '/politica-de-privacidade' },
+  { label: 'Termos de Uso',           href: '/termos-de-uso' },
 ]
 
 const socials = [
@@ -101,6 +107,18 @@ export default function Footer() {
           </div>
         </div>
         <div style={{ height: 1, background: 'linear-gradient(90deg,transparent,#c47a4a,#f0d5b0,#c47a4a,transparent)', marginBottom: 24 }} />
+        <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 14 }}>
+          {legal.map(l => (
+            <Link key={l.label} href={l.href} style={{ fontSize: 11, color: '#6e6e73', textDecoration: 'none' }}>{l.label}</Link>
+          ))}
+          <button
+            type="button"
+            onClick={openConsentPreferences}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, color: '#6e6e73' }}
+          >
+            Preferências de cookies
+          </button>
+        </div>
         <p style={{ fontSize: 11, color: '#3a3a3c', textAlign: 'center' }}>© 2025 Casa Criative Digital. Todos os direitos reservados. Curitiba, PR.</p>
       </div>
     </footer>

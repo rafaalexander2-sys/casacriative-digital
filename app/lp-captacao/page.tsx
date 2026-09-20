@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { openConsentPreferences } from "@/lib/consent";
 import "./lp.css";
 
 const WORKER_URL = "https://casacriative-form.rafaalexander2.workers.dev";
@@ -504,8 +506,9 @@ export default function LandingPage() {
             <Image src="/logo.webp" alt="Casa Criative Digital" width={100} height={28} style={{ height: 28, width: "auto", opacity: 0.6 }} />
             <p>© {new Date().getFullYear()} Casa Criative Digital. Todos os direitos reservados.</p>
             <div className="footer-links">
-              <a href="#">Privacidade</a>
-              <a href="#">Termos</a>
+              <Link href="/politica-de-privacidade">Privacidade</Link>
+              <Link href="/termos-de-uso">Termos</Link>
+              <button type="button" onClick={openConsentPreferences}>Cookies</button>
             </div>
           </div>
         </div>

@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import WhatsAppFloat from '@/components/WhatsAppFloat'
 import TrackParams from '@/components/TrackParams'
+import CookieConsent from '@/components/CookieConsent'
+import { CONSENT_BOOTSTRAP } from '@/lib/consent'
 import './globals.css'
 
 const GA_ID = 'G-ZRFLKP3RVT'
@@ -106,6 +108,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR">
       <head>
+        {/* Consent Mode v2: padrao negado ANTES do gtag.js carregar. */}
+        <script dangerouslySetInnerHTML={{ __html: CONSENT_BOOTSTRAP }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -118,10 +122,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <WhatsAppFloat />
+        <CookieConsent />
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
         <Script id="ga4" strategy="afterInteractive">{`
           window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
+          window.gtag = window.gtag || function(){dataLayer.push(arguments);};
           gtag('js', new Date());
           gtag('config', '${GA_ID}');
         `}</Script>
