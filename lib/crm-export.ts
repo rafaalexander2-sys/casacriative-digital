@@ -92,7 +92,10 @@ function ddd(phone?: string | null): string {
 }
 
 const paid = (l: Lead) =>
-  !!(l.gclid || l.fbclid || l.source === 'meta_ads' || l.source === 'google_ads' ||
+  // gbraid/wbraid contam: sao o que o Google manda quando o iOS impede o gclid.
+  // Ficarem de fora fazia passar por organico trafego pago de telemovel.
+  !!(l.gclid || l.gbraid || l.wbraid || l.fbclid ||
+     l.source === 'meta_ads' || l.source === 'google_ads' ||
      ['cpc', 'ppc', 'paid', 'paid_social'].includes((l.utm_medium ?? '').toLowerCase()))
 
 export interface ExportData {
@@ -125,7 +128,8 @@ export function buildLeadsCsv({ leads, stages, spans, range, people = {} }: Expo
     'Serviço', 'Cobrança', 'Valor', 'Contratos',
     'Etapa atual', 'Situação', 'Responsável',
     'Origem', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
-    'gclid', 'fbclid', 'Veio de anúncio pago',
+    'gclid', 'gbraid', 'wbraid', 'fbclid', 'Veio de anúncio pago',
+    'Código de referência', 'Página de entrada',
     'Data de entrada', 'Data de entrada estimada', 'Criado no sistema',
     'Ganho em', 'Perdido em', 'Motivo da perda', 'Data de fecho',
     'Dias até fechar', 'Dias no funil', 'Dias parado na etapa atual',
@@ -175,7 +179,8 @@ export function buildLeadsCsv({ leads, stages, spans, range, people = {} }: Expo
       l.assigned_to ? people[l.assigned_to] ?? l.assigned_to : '',
       SOURCE_PT[l.source] ?? l.source,
       l.utm_source, l.utm_medium, l.utm_campaign, l.utm_term, l.utm_content,
-      l.gclid, l.fbclid, yn(paid(l)),
+      l.gclid, l.gbraid, l.wbraid, l.fbclid, yn(paid(l)),
+      l.ref_code, l.landing_page,
       dateOnly(l.entry_date), yn(l.entry_date_estimated), dt(l.created_at),
       dtTime(l.won_at), dtTime(l.lost_at), l.lost_reason, dtTime(closedAt),
       num(daysToClose, 1), num(daysInFunnel, 1), num(current?.days_in_stage ?? null, 1),
@@ -285,6 +290,108 @@ export function exportAll(data: ExportData, wsName: string) {
   downloadFile(fileName('leads', wsName, r), buildLeadsCsv(data))
   setTimeout(() => downloadFile(fileName('movimentos', wsName, r), buildMovesCsv(data)), 400)
   setTimeout(() => downloadFile(fileName('resumo-etapas', wsName, r), buildStageSummaryCsv(data)), 800)
+  setTimeout(() => downloadFile(fileName('campanhas', wsName, r), buildCampaignsCsv(data)), 1200)
+}
+
+// ============================================================
+// Campanhas e criativos
+//
+// A pergunta e "que anuncio traz lead que fecha", nao "que anuncio traz
+// clique" - essa o Google e o Meta ja respondem sozinhos, e e a pergunta
+// errada: o criativo que traz mais clique costuma ser o que traz mais curioso.
+// Aqui cruza-se o criativo com o que aconteceu ao lead DEPOIS, que so o CRM
+// sabe.
+// ============================================================
+
+/** Por que campo agrupar. utm_content e onde costuma ir o criativo. */
+export type AttribKey = 'utm_campaign' | 'utm_content' | 'utm_term' | 'utm_source'
+
+export const ATTRIB_LABELS: Record<AttribKey, string> = {
+  utm_campaign: 'Campanha',
+  utm_content: 'Criativo',
+  utm_term: 'Palavra / conjunto',
+  utm_source: 'Origem',
+}
+
+export interface AttribRow {
+  /** Valor do agrupador. Vazio = o lead chegou sem essa etiqueta. */
+  key: string
+  leads: number
+  /** Saiu da etapa de entrada pelo menos uma vez. */
+  avancaram: number
+  fechados: number
+  perdidos: number
+  receita: number
+}
+
+/**
+ * Para cada lead, a primeira passagem por uma etapa mais a frente do que a de
+ * entrada. Partilhado com a exportacao de conversoes para o Google: se as duas
+ * contas divergissem, o relatorio no ecra e o ficheiro enviado discordariam.
+ */
+export function firstAdvanceByLead(
+  { stages, spans }: Pick<ExportData, 'stages' | 'spans'>,
+): Map<string, LeadStageSpan> {
+  const abertas = stages.filter(s => s.kind === 'open').sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+  const primeira = abertas[0]
+  const posOf = new Map(stages.map((s, i) => [s.key, s.position ?? i]))
+  const out = new Map<string, LeadStageSpan>()
+  if (!primeira) return out
+
+  const byLead = new Map<string, LeadStageSpan[]>()
+  for (const sp of spans) {
+    // 'seed' e o ponto de partida inventado na importacao: a data nao e
+    // confiavel e contaria como avanco que nunca existiu.
+    if (sp.origin === 'seed') continue
+    const arr = byLead.get(sp.lead_id) ?? []
+    arr.push(sp)
+    byLead.set(sp.lead_id, arr)
+  }
+  for (const [id, arr] of byLead) {
+    const a = arr
+      .sort((x, y) => x.entered_at.localeCompare(y.entered_at))
+      .find(x => x.status !== primeira.key && (posOf.get(x.status) ?? 0) > (posOf.get(primeira.key) ?? 0))
+    if (a) out.set(id, a)
+  }
+  return out
+}
+
+export function groupByAttrib(data: ExportData, by: AttribKey): AttribRow[] {
+  const avancou = firstAdvanceByLead(data)
+  const kindOf = new Map(data.stages.map(s => [s.key, s.kind]))
+  const m = new Map<string, AttribRow>()
+
+  for (const l of data.leads) {
+    const k = (l[by] ?? '').trim()
+    const r = m.get(k) ?? { key: k, leads: 0, avancaram: 0, fechados: 0, perdidos: 0, receita: 0 }
+    r.leads++
+    if (avancou.has(l.id)) r.avancaram++
+    if (l.won_at) { r.fechados++; r.receita += l.value ?? 0 }
+    else if (l.lost_at || kindOf.get(l.status) === 'lost') r.perdidos++
+    m.set(k, r)
+  }
+
+  // Sem etiqueta vai sempre no fim: e um balde, nao um criativo, e no topo da
+  // tabela dava a impressao de ser a campanha que mais traz lead.
+  return [...m.values()].sort((a, b) =>
+    (a.key === '' ? 1 : 0) - (b.key === '' ? 1 : 0) || b.leads - a.leads)
+}
+
+export function buildCampaignsCsv(data: ExportData): string {
+  const header = ['Agrupado por', 'Valor', 'Leads', 'Avançaram', '% que avança',
+                  'Fechados', '% que fecha', 'Perdidos', 'Receita', 'Receita por lead']
+  const rows: (string | number | null)[][] = []
+  for (const by of Object.keys(ATTRIB_LABELS) as AttribKey[]) {
+    for (const r of groupByAttrib(data, by)) {
+      rows.push([
+        ATTRIB_LABELS[by], r.key || '(sem etiqueta)',
+        r.leads, r.avancaram, num(100 * r.avancaram / Math.max(1, r.leads), 1),
+        r.fechados, num(100 * r.fechados / Math.max(1, r.leads), 1),
+        r.perdidos, num(r.receita), num(r.receita / Math.max(1, r.leads)),
+      ])
+    }
+  }
+  return toCsv(header, rows)
 }
 
 // ============================================================
@@ -389,16 +496,7 @@ export function planConversions(
   const { stageValues = {}, janelaDias = 90, agora = new Date() } = opts
   const limite = agora.getTime() - janelaDias * 86400000
 
-  const abertas = stages.filter(s => s.kind === 'open').sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-  const primeira = abertas[0]
-  const posOf = new Map(stages.map((s, i) => [s.key, s.position ?? i]))
-
-  const byLead = new Map<string, LeadStageSpan[]>()
-  for (const sp of spans) {
-    const arr = byLead.get(sp.lead_id) ?? []
-    arr.push(sp)
-    byLead.set(sp.lead_id, arr)
-  }
+  const avancoDe = firstAdvanceByLead({ stages, spans })
 
   const rows: ConversionRow[] = []
   const semClique: ConversionRow[] = []
@@ -429,13 +527,7 @@ export function planConversions(
 
     // QUALIFICADO: a primeira vez que saiu da etapa de entrada para uma etapa
     // mais à frente. Linhas 'seed' ficam de fora: a data delas não é confiável.
-    const sps = (byLead.get(l.id) ?? [])
-      .filter(x => x.origin !== 'seed')
-      .sort((a, b) => a.entered_at.localeCompare(b.entered_at))
-
-    const avancou = sps.find(x =>
-      primeira && x.status !== primeira.key &&
-      (posOf.get(x.status) ?? 0) > (posOf.get(primeira.key) ?? 0))
+    const avancou = avancoDe.get(l.id)
 
     if (avancou) {
       empurrar({

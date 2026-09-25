@@ -64,7 +64,7 @@ import {
   getStageHistory,
   getLeadSpans,
 } from '@/lib/crm-api'
-import { exportAll, downloadFile, planConversions, buildGoogleAdsConversionsCsv, buildEnhancedConversionsCsv, countConversions, CLICK_KINDS, fileName, type ExportData, type ClickKind, type StageValues } from '@/lib/crm-export'
+import { exportAll, downloadFile, planConversions, buildGoogleAdsConversionsCsv, buildEnhancedConversionsCsv, countConversions, groupByAttrib, ATTRIB_LABELS, CLICK_KINDS, fileName, type ExportData, type ClickKind, type StageValues, type AttribKey } from '@/lib/crm-export'
 import {
   SOURCE_LABELS,
   ROLE_LABELS,
@@ -1691,6 +1691,64 @@ function ActivityModal({ wsId, leads, calConnected, activity, firstStage, stages
 }
 
 // ================================================================ LEAD DETAIL + HISTÓRICO
+// ---- De onde veio o lead ----
+//
+// O Google manda o NUMERO da campanha em utm_campaign, nao o nome. Mostrar
+// "24047901353" sem dizer o que e faz parecer defeito; com a etiqueta certa,
+// e um numero que se procura no painel do Google Ads.
+const soDigitos = (v?: string | null) => !!v && /^\d{6,}$/.test(v.trim())
+
+function Atribuicao({ lead }: { lead: Lead }) {
+  const clique =
+    lead.gclid ? { rotulo: 'Clique Google (gclid)', v: lead.gclid } :
+    lead.gbraid ? { rotulo: 'Clique Google (gbraid)', v: lead.gbraid } :
+    lead.wbraid ? { rotulo: 'Clique Google (wbraid)', v: lead.wbraid } :
+    lead.fbclid ? { rotulo: 'Clique Meta (fbclid)', v: lead.fbclid } : null
+
+  const linhas: { rotulo: string; v?: string | null; destaque?: boolean }[] = [
+    { rotulo: soDigitos(lead.utm_campaign) ? 'Campanha (ID no Google Ads)' : 'Campanha', v: lead.utm_campaign, destaque: true },
+    { rotulo: 'Criativo / anúncio', v: lead.utm_content, destaque: true },
+    { rotulo: 'Palavra / conjunto', v: lead.utm_term },
+    { rotulo: 'Origem / meio', v: [lead.utm_source, lead.utm_medium].filter(Boolean).join(' / ') },
+    { rotulo: 'Página de entrada', v: lead.landing_page },
+    { rotulo: 'Código de referência', v: lead.ref_code },
+    ...(clique ? [{ rotulo: clique.rotulo, v: clique.v }] : []),
+  ].filter(x => !!x.v)
+
+  if (linhas.length === 0) {
+    return (
+      <>
+        <p style={label}>De onde veio</p>
+        <p style={{ fontSize: 12.5, color: C.muted, marginBottom: 18 }}>
+          Sem identificação de campanha. Acontece quando o lead foi cadastrado à mão sem o
+          código do WhatsApp, ou quando a pessoa chegou por um caminho sem etiqueta.
+        </p>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <p style={label}>De onde veio</p>
+      <div style={{ marginBottom: 18 }}>
+        {linhas.map(x => (
+          <div key={x.rotulo} style={{ display: 'flex', gap: 10, alignItems: 'baseline', padding: '5px 0', borderBottom: `1px solid ${C.border}` }}>
+            <span style={{ fontSize: 11.5, color: C.muted, flex: '0 0 40%' }}>{x.rotulo}</span>
+            <span
+              title={x.v ?? ''}
+              style={{
+                fontSize: x.destaque ? 13 : 12.5, fontWeight: x.destaque ? 600 : 400,
+                color: C.text, wordBreak: 'break-all',
+              }}>
+              {x.v}
+            </span>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
 function LeadDetail({ lead, stages, onClose, onSaved, onDeleted }: {
   lead: Lead; stages: PipelineStage[]
   onClose: () => void; onSaved: (l: Lead) => void; onDeleted: (id: string) => void
@@ -1820,6 +1878,8 @@ function LeadDetail({ lead, stages, onClose, onSaved, onDeleted }: {
           <button onClick={() => { if (confirm(`Apagar o lead "${lead.name}"?`)) { deleteLead(lead.id).then(() => onDeleted(lead.id)) } }} style={{ ...btnGhost, width: 'auto', padding: '10px 14px', color: '#dc2626' }}>Apagar</button>
           <button onClick={save} disabled={busy} className="cc-btn" style={{ ...btn, marginLeft: 'auto', width: 'auto', padding: '10px 22px' }}>{busy ? <Spinner /> : 'Salvar'}</button>
         </div>
+
+        <Atribuicao lead={lead} />
 
         {spans.length > 0 && (
           <>
@@ -2104,6 +2164,15 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
   const baixar = (base: string, conteudo: string) =>
     downloadFile(fileName(base, ws?.name ?? 'crm', range), conteudo)
 
+  // Que campanha / criativo traz lead que ANDA. O Google e o Meta ja dizem
+  // qual traz mais clique — e costuma ser o que traz mais curioso. O que só o
+  // CRM sabe é o que aconteceu ao lead depois.
+  const [attribBy, setAttribBy] = useState<AttribKey>('utm_campaign')
+  const attribRows = useMemo(
+    () => groupByAttrib({ leads: periodLeads, stages, spans, history, range, people }, attribBy),
+    [periodLeads, stages, spans, history, range, people, attribBy],
+  )
+
   const th: React.CSSProperties = { textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '.05em', padding: '8px 10px', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap' }
   const td: React.CSSProperties = { fontSize: 13, padding: '9px 10px', borderBottom: `1px solid ${C.border}` }
 
@@ -2223,6 +2292,63 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
           </table>
         </div>
         {loading && <p style={{ fontSize: 12.5, color: C.muted, marginTop: -18, marginBottom: 22 }}>A carregar o histórico…</p>}
+
+        {/* ---------------- campanhas e criativos ---------------- */}
+        <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 4px' }}>Campanhas e criativos</h3>
+        <p style={{ fontSize: 12.5, color: C.muted, marginBottom: 12, maxWidth: 640 }}>
+          O Google e o Meta dizem qual anúncio traz mais clique — e costuma ser o que traz mais
+          curioso. O que só o CRM sabe é o que aconteceu ao lead depois: quantos avançaram no
+          funil e quantos fecharam.
+        </p>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+          {(Object.keys(ATTRIB_LABELS) as AttribKey[]).map(k => (
+            <button key={k} onClick={() => setAttribBy(k)}
+              style={{
+                border: `1px solid ${attribBy === k ? C.brand : C.border}`,
+                background: attribBy === k ? C.brand : 'transparent',
+                color: attribBy === k ? '#fff' : C.text,
+                borderRadius: 999, padding: '5px 12px', fontSize: 12.5,
+                fontFamily: 'inherit', cursor: 'pointer',
+              }}>
+              {ATTRIB_LABELS[k]}
+            </button>
+          ))}
+        </div>
+        <div style={{ overflowX: 'auto', marginBottom: 26 }}>
+          <table style={{ width: '100%', maxWidth: 720, borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr>
+                <th style={th}>{ATTRIB_LABELS[attribBy]}</th>
+                <th style={{ ...th, textAlign: 'right' }}>Leads</th>
+                <th style={{ ...th, textAlign: 'right' }}>Avançaram</th>
+                <th style={{ ...th, textAlign: 'right' }}>Fechados</th>
+                <th style={{ ...th, textAlign: 'right' }}>% que fecha</th>
+                <th style={{ ...th, textAlign: 'right' }}>Receita</th>
+              </tr>
+            </thead>
+            <tbody>
+              {attribRows.map(r => {
+                const pct = Math.round(100 * r.fechados / Math.max(1, r.leads))
+                const semEtiqueta = r.key === ''
+                return (
+                  <tr key={r.key || '(sem)'}>
+                    <td style={{ ...td, color: semEtiqueta ? C.muted : C.text, fontWeight: semEtiqueta ? 400 : 600, wordBreak: 'break-all' }}>
+                      {semEtiqueta ? 'sem etiqueta' : r.key}
+                    </td>
+                    <td style={{ ...td, textAlign: 'right' }}>{r.leads}</td>
+                    <td style={{ ...td, textAlign: 'right' }}>{r.avancaram}</td>
+                    <td style={{ ...td, textAlign: 'right' }}>{r.fechados}</td>
+                    <td style={{ ...td, textAlign: 'right', fontWeight: r.fechados > 0 ? 700 : 400 }}>{pct}%</td>
+                    <td style={{ ...td, textAlign: 'right' }}>
+                      {r.receita > 0 ? r.receita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : '—'}
+                    </td>
+                  </tr>
+                )
+              })}
+              {attribRows.length === 0 && <tr><td style={td} colSpan={6}>Sem leads no período.</td></tr>}
+            </tbody>
+          </table>
+        </div>
 
         {/* ---------------- saúde do rastreamento ---------------- */}
         <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 4px' }}>Saúde do rastreamento</h3>
