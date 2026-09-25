@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, createContext, useContext } from 'react'
+import { useEffect, useState, useMemo, useCallback, createContext, useContext } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { INGEST_URL, SUPABASE_ANON } from '@/lib/track'
@@ -64,7 +64,7 @@ import {
   getStageHistory,
   getLeadSpans,
 } from '@/lib/crm-api'
-import { exportAll, downloadFile, buildGoogleAdsConversionsCsv, countGoogleAdsConversions, fileName, type ExportData } from '@/lib/crm-export'
+import { exportAll, downloadFile, planConversions, buildGoogleAdsConversionsCsv, buildEnhancedConversionsCsv, countConversions, CLICK_KINDS, fileName, type ExportData, type ClickKind, type StageValues } from '@/lib/crm-export'
 import {
   SOURCE_LABELS,
   ROLE_LABELS,
@@ -2034,7 +2034,7 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
   // Nomes das acções de conversão: têm de bater EXACTAMENTE com os do Google
   // Ads, e cada conta pode ter-lhes chamado outra coisa. Ficam guardados no
   // browser para não os reescrever a cada exportação.
-  const [gads, setGads] = useState({ qualified: 'Qualified lead', converted: 'Converted lead', currency: 'BRL' })
+  const [gads, setGads] = useState({ qualified: 'Qualified lead', converted: 'Converted lead', currency: 'BRL', ddi: '55' })
   useEffect(() => {
     try {
       const raw = localStorage.getItem('cc_gads_conv')
@@ -2047,6 +2047,24 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
     try { localStorage.setItem('cc_gads_conv', JSON.stringify(next)) } catch {}
   }
 
+  // Valor esperado de cada etapa. Guardado por espaço: o que uma consulta vale
+  // para a advogada não tem nada a ver com o que vale para a limpeza.
+  const svKey = `cc_gads_valores_${ws?.id ?? 'x'}`
+  const [stageValues, setStageValues] = useState<StageValues>({})
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(svKey)
+      setStageValues(raw ? JSON.parse(raw) : {})
+    } catch { setStageValues({}) }
+  }, [svKey])
+  const saveStageValue = (key: string, v: string) => {
+    const n = Number(String(v).replace(',', '.'))
+    const next = { ...stageValues }
+    if (!v.trim() || Number.isNaN(n) || n <= 0) delete next[key]; else next[key] = n
+    setStageValues(next)
+    try { localStorage.setItem(svKey, JSON.stringify(next)) } catch {}
+  }
+
   const bySource = (Object.keys(SOURCE_LABELS) as LeadSource[])
     .map(s => ({ s, n: periodLeads.filter(l => l.source === s).length })).filter(x => x.n > 0)
   const maxSource = Math.max(1, ...bySource.map(x => x.n))
@@ -2055,9 +2073,36 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
     leads: periodLeads, stages, spans, history, range, people,
   })
 
-  const convCount = spans.length || periodLeads.length
-    ? countGoogleAdsConversions({ leads: periodLeads, stages, spans, history, range, people })
-    : 0
+  // O plano decide UMA vez o que sobe; os quatro ficheiros são só formatações
+  // diferentes dele. Também é o que alimenta as contagens do painel, para não
+  // haver a hipótese de o número no ecrã discordar do ficheiro descarregado.
+  const plan = useMemo(
+    () => planConversions({ leads: periodLeads, stages, spans, history, range, people }, gads, { stageValues }),
+    [periodLeads, stages, spans, history, range, people, gads, stageValues],
+  )
+  const convCount = useMemo(() => countConversions(plan), [plan])
+
+  // Saúde do rastreamento, semana a semana. Sem medição a regressão volta em
+  // silêncio — foi o que aconteceu nos três meses em que a cobertura esteve
+  // em 1,4% sem ninguém dar por isso.
+  const health = useMemo(() => {
+    const semanas = new Map<string, { leads: number; ref: number; google: number; meta: number }>()
+    for (const l of periodLeads) {
+      const d = new Date(l.created_at)
+      const dow = (d.getUTCDay() + 6) % 7            // segunda = 0
+      const seg = new Date(d.getTime() - dow * 86400000).toISOString().slice(0, 10)
+      const b = semanas.get(seg) ?? { leads: 0, ref: 0, google: 0, meta: 0 }
+      b.leads++
+      if (l.ref_code) b.ref++
+      if (l.gclid || l.gbraid || l.wbraid) b.google++
+      if (l.fbclid) b.meta++
+      semanas.set(seg, b)
+    }
+    return [...semanas.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 12)
+  }, [periodLeads])
+
+  const baixar = (base: string, conteudo: string) =>
+    downloadFile(fileName(base, ws?.name ?? 'crm', range), conteudo)
 
   const th: React.CSSProperties = { textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '.05em', padding: '8px 10px', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap' }
   const td: React.CSSProperties = { fontSize: 13, padding: '9px 10px', borderBottom: `1px solid ${C.border}` }
@@ -2179,12 +2224,52 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
         </div>
         {loading && <p style={{ fontSize: 12.5, color: C.muted, marginTop: -18, marginBottom: 22 }}>A carregar o histórico…</p>}
 
+        {/* ---------------- saúde do rastreamento ---------------- */}
+        <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 4px' }}>Saúde do rastreamento</h3>
+        <p style={{ fontSize: 12.5, color: C.muted, marginBottom: 12, maxWidth: 640 }}>
+          De cada semana, quantos leads chegaram com identificação do clique. Se esta coluna
+          cair para zero, alguma coisa partiu no site — e é melhor ver aqui do que três meses
+          depois, ao tentar exportar as conversões.
+        </p>
+        <div style={{ overflowX: 'auto', marginBottom: 26 }}>
+          <table style={{ width: '100%', maxWidth: 640, borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr>
+                <th style={th}>Semana</th>
+                <th style={{ ...th, textAlign: 'right' }}>Leads</th>
+                <th style={{ ...th, textAlign: 'right' }}>Com código</th>
+                <th style={{ ...th, textAlign: 'right' }}>Clique Google</th>
+                <th style={{ ...th, textAlign: 'right' }}>Clique Meta</th>
+                <th style={{ ...th, textAlign: 'right' }}>Cobertura</th>
+              </tr>
+            </thead>
+            <tbody>
+              {health.map(([semana, b]) => {
+                const pct = Math.round((b.google + b.meta) / Math.max(1, b.leads) * 100)
+                return (
+                  <tr key={semana}>
+                    <td style={td}>{semana.split('-').reverse().join('/')}</td>
+                    <td style={{ ...td, textAlign: 'right' }}>{b.leads}</td>
+                    <td style={{ ...td, textAlign: 'right' }}>{b.ref}</td>
+                    <td style={{ ...td, textAlign: 'right' }}>{b.google}</td>
+                    <td style={{ ...td, textAlign: 'right' }}>{b.meta}</td>
+                    <td style={{ ...td, textAlign: 'right', fontWeight: 700, color: pct === 0 ? '#dc2626' : pct < 30 ? '#b45309' : C.text }}>
+                      {pct}%
+                    </td>
+                  </tr>
+                )
+              })}
+              {health.length === 0 && <tr><td style={td} colSpan={6}>Sem leads no período.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+
         {/* ---------------- conversões para o Google Ads ---------------- */}
         <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 4px' }}>Conversões para o Google Ads</h3>
         <p style={{ fontSize: 12.5, color: C.muted, marginBottom: 12, maxWidth: 640 }}>
           Devolve ao Google quais leads avançaram e quais fecharam. Sem isto o lance automático
           optimiza por volume de formulário e paga caro por lead que nunca fecha.
-          Só entram leads com <code>gclid</code> — sem ele o Google não liga a conversão ao clique.
+          Só sobem conversões dos últimos 90 dias — o Google ignora as mais antigas sem avisar.
         </p>
         <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: 12, padding: 14, maxWidth: 640, marginBottom: 26 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -2204,24 +2289,75 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
                 <option value="EUR">EUR — euro</option>
               </select>
             </div>
+            <div>
+              <p style={fieldLabel}>País do telefone</p>
+              <select value={gads.ddi} onChange={e => saveGads({ ddi: e.target.value })} style={input}>
+                <option value="55">Brasil (+55)</option>
+                <option value="1">EUA / Canadá (+1)</option>
+                <option value="351">Portugal (+351)</option>
+                <option value="34">Espanha (+34)</option>
+              </select>
+            </div>
           </div>
-          <p style={{ fontSize: 11.5, color: C.muted, marginBottom: 12 }}>
+          <p style={{ fontSize: 11.5, color: C.muted, marginBottom: 14 }}>
             Os nomes têm de ser iguais aos das acções de conversão criadas no Google Ads,
             senão o ficheiro é aceite e as linhas ignoradas.
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <button
-              onClick={() => downloadFile(fileName('conversoes-google-ads', ws?.name ?? 'crm', range), buildGoogleAdsConversionsCsv(exportData(), gads))}
-              disabled={convCount === 0}
-              style={{ ...btn, flex: 'none', width: 'auto', padding: '9px 16px', fontSize: 13, opacity: convCount === 0 ? .5 : 1 }}>
-              Exportar conversões
-            </button>
-            <span style={{ fontSize: 12.5, color: C.muted }}>
-              {convCount === 0
-                ? 'Nenhuma conversão com gclid no período escolhido.'
-                : `${convCount} ${convCount === 1 ? 'linha' : 'linhas'} no período escolhido.`}
-            </span>
+
+          {/* mapa etapa → valor */}
+          <p style={{ ...fieldLabel, marginBottom: 6 }}>Valor esperado por etapa</p>
+          <p style={{ fontSize: 11.5, color: C.muted, marginBottom: 10 }}>
+            Quanto vale, em média, um lead que chegou a cada etapa (valor do contrato × hipótese
+            de fechar a partir dali). Sem isto só o contrato fechado leva valor, e o Google fica
+            a aprender com meia dúzia de linhas por trimestre. Deixar vazio = sem valor.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8, marginBottom: 14 }}>
+            {stages.filter(st => st.kind !== 'lost').map(st => (
+              <div key={st.key}>
+                <p style={{ ...fieldLabel, fontSize: 11 }}>{st.label}</p>
+                <input
+                  value={stageValues[st.key] ?? ''}
+                  onChange={e => saveStageValue(st.key, e.target.value)}
+                  inputMode="decimal" placeholder="—" style={input} />
+              </div>
+            ))}
           </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {CLICK_KINDS.map(k => (
+              <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => baixar(`conversoes-google-ads-${k}`, buildGoogleAdsConversionsCsv(plan, gads, k as ClickKind))}
+                  disabled={convCount[k] === 0}
+                  style={{ ...btn, flex: 'none', width: 'auto', padding: '9px 16px', fontSize: 13, opacity: convCount[k] === 0 ? .5 : 1 }}>
+                  Exportar {k}
+                </button>
+                <span style={{ fontSize: 12.5, color: C.muted }}>
+                  {convCount[k] === 0 ? 'nenhuma linha' : `${convCount[k]} ${convCount[k] === 1 ? 'linha' : 'linhas'}`}
+                </span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <button
+                onClick={async () => baixar('conversoes-correspondencia-melhorada', await buildEnhancedConversionsCsv(plan, gads))}
+                disabled={convCount.enhanced === 0}
+                style={{ ...btn, flex: 'none', width: 'auto', padding: '9px 16px', fontSize: 13, opacity: convCount.enhanced === 0 ? .5 : 1 }}>
+                Exportar correspondência melhorada
+              </button>
+              <span style={{ fontSize: 12.5, color: C.muted }}>
+                {convCount.enhanced === 0 ? 'nenhuma linha' : `${convCount.enhanced} ${convCount.enhanced === 1 ? 'linha' : 'linhas'}`}
+              </span>
+            </div>
+          </div>
+
+          <p style={{ fontSize: 11.5, color: C.muted, marginTop: 12 }}>
+            São ficheiros separados de propósito: o Google não aceita gclid, gbraid e wbraid
+            misturados no mesmo upload. A correspondência melhorada é para os leads sem clique
+            identificado — a maioria, quando o atendimento é por WhatsApp — e leva o e-mail e o
+            telefone <strong>cifrados com SHA-256</strong>, nunca em claro.
+            {plan.foraDaJanela > 0 && ` ${plan.foraDaJanela} ${plan.foraDaJanela === 1 ? 'conversão ficou' : 'conversões ficaram'} de fora por ter mais de 90 dias.`}
+            {plan.semValor > 0 && ` ${plan.semValor} ${plan.semValor === 1 ? 'linha vai' : 'linhas vão'} sem valor.`}
+          </p>
         </div>
 
         <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 12px' }}>Por origem</h3>

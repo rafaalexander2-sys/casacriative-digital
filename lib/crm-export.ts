@@ -299,11 +299,68 @@ export function exportAll(data: ExportData, wsName: string) {
 // primeira linha é o erro clássico que faz o upload ser recusado.
 // ============================================================
 
+/** As três formas de identificar o clique. NUNCA no mesmo ficheiro. */
+export type ClickKind = 'gclid' | 'gbraid' | 'wbraid'
+
+/** O cabeçalho da coluna muda conforme o identificador. */
+const CLICK_HEADER: Record<ClickKind, string> = {
+  gclid: 'Google Click ID', gbraid: 'GBRAID', wbraid: 'WBRAID',
+}
+
+export const CLICK_KINDS: ClickKind[] = ['gclid', 'gbraid', 'wbraid']
+
 export interface ConversionNames {
   /** Tem de bater EXACTAMENTE com o nome da acção de conversão no Google Ads */
   qualified: string
   converted: string
   currency: string
+  /** Indicativo do país para normalizar o telefone (55 = Brasil, 1 = EUA). */
+  ddi?: string
+}
+
+/**
+ * Valor a atribuir a um lead que chegou a uma etapa mas ainda não fechou.
+ *
+ * Sem isto só o contrato fechado leva valor, e o Google fica a aprender com
+ * dez linhas por trimestre — pouco para qualquer optimização. Com o mapa, cada
+ * avanço no funil sobe com o valor ESPERADO daquela etapa (valor médio do
+ * contrato × probabilidade de fechar a partir dali) e o algoritmo passa a ter
+ * sinal semanal. Chave = `key` da etapa.
+ */
+export type StageValues = Record<string, number>
+
+export interface ConversionRow {
+  leadId: string
+  click: string | null
+  clickKind: ClickKind | null
+  email: string | null
+  phone: string | null
+  /** Nome da acção de conversão, como está no Google Ads. */
+  action: string
+  at: string
+  value: number | null
+}
+
+export interface ConversionPlan {
+  /** Linhas dentro da janela, com identificador de clique. */
+  rows: ConversionRow[]
+  /** Linhas de leads sem identificador de clique — vão por correspondência. */
+  semClique: ConversionRow[]
+  /** Quantas ficaram de fora por serem mais antigas do que a janela. */
+  foraDaJanela: number
+  /** Quantas linhas de conversão foram sem valor nenhum. */
+  semValor: number
+}
+
+export interface ConversionOptions {
+  stageValues?: StageValues
+  /**
+   * O Google recusa conversão com mais de 90 dias. Enviar na mesma não dá erro
+   * visível: o ficheiro é aceite e as linhas velhas são ignoradas em silêncio,
+   * o que é pior do que falhar.
+   */
+  janelaDias?: number
+  agora?: Date
 }
 
 /** 'aaaa-mm-dd hh:mm:ss' no fuso declarado no cabeçalho Parameters. */
@@ -316,10 +373,22 @@ function gAdsTime(iso: string): string {
   return `${g('year')}-${g('month')}-${g('day')} ${g('hour')}:${g('minute')}:${g('second')}`
 }
 
-export function buildGoogleAdsConversionsCsv(
+/**
+ * Decide o que vai subir para o Google, sem formatar nada ainda.
+ *
+ * Separado da escrita do CSV porque a mesma decisão alimenta três ficheiros
+ * diferentes (gclid, gbraid, wbraid) mais o de correspondência melhorada — e
+ * porque assim o painel consegue dizer quantas linhas sairiam sem gerar
+ * ficheiro nenhum.
+ */
+export function planConversions(
   { leads, stages, spans }: ExportData,
   names: ConversionNames,
-): string {
+  opts: ConversionOptions = {},
+): ConversionPlan {
+  const { stageValues = {}, janelaDias = 90, agora = new Date() } = opts
+  const limite = agora.getTime() - janelaDias * 86400000
+
   const abertas = stages.filter(s => s.kind === 'open').sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
   const primeira = abertas[0]
   const posOf = new Map(stages.map((s, i) => [s.key, s.position ?? i]))
@@ -331,12 +400,32 @@ export function buildGoogleAdsConversionsCsv(
     byLead.set(sp.lead_id, arr)
   }
 
-  const linhas: string[][] = []
+  const rows: ConversionRow[] = []
+  const semClique: ConversionRow[] = []
+  let foraDaJanela = 0
+  let semValor = 0
+
+  const empurrar = (r: ConversionRow) => {
+    if (new Date(r.at).getTime() < limite) { foraDaJanela++; return }
+    if (r.value == null) semValor++
+    if (r.clickKind) rows.push(r); else semClique.push(r)
+  }
 
   for (const l of leads) {
-    // Sem gclid o Google não consegue ligar a conversão ao clique — a linha
-    // seria recusada. Melhor não a enviar do que sujar o relatório de erros.
-    if (!l.gclid) continue
+    // gclid primeiro: é o identificador com maior taxa de correspondência.
+    // gbraid/wbraid só aparecem quando o iOS impediu o gclid.
+    const clickKind: ClickKind | null =
+      l.gclid ? 'gclid' : l.gbraid ? 'gbraid' : l.wbraid ? 'wbraid' : null
+    const click = clickKind ? String(l[clickKind]) : null
+
+    // Sem identificador de clique E sem e-mail/telefone não há como o Google
+    // ligar a conversão a nada: a linha só sujaria o relatório de erros.
+    if (!clickKind && !l.email && !l.phone) continue
+
+    const base = {
+      leadId: l.id, click, clickKind,
+      email: l.email ?? null, phone: l.phone ?? null,
+    }
 
     // QUALIFICADO: a primeira vez que saiu da etapa de entrada para uma etapa
     // mais à frente. Linhas 'seed' ficam de fora: a data delas não é confiável.
@@ -349,32 +438,120 @@ export function buildGoogleAdsConversionsCsv(
       (posOf.get(x.status) ?? 0) > (posOf.get(primeira.key) ?? 0))
 
     if (avancou) {
-      linhas.push([l.gclid, names.qualified, gAdsTime(avancou.entered_at), l.id, '', names.currency])
+      empurrar({
+        ...base, action: names.qualified, at: avancou.entered_at,
+        value: stageValues[avancou.status] ?? null,
+      })
     }
 
-    // CONVERTIDO: fechou. Vai com o valor, que é o que permite ao Google
-    // optimizar por receita em vez de por quantidade.
+    // CONVERTIDO: fechou. Vai com o valor real, que é o que permite ao Google
+    // optimizar por receita em vez de por quantidade. Se ninguém preencheu o
+    // valor, cai no mapa de etapas em vez de subir vazio.
     if (l.won_at) {
-      // Ponto decimal, NÃO vírgula: este ficheiro é separado por vírgulas, e o
-      // nosso num() usa vírgula (correcto nos outros CSVs, fatal neste).
-      const valor = l.value != null && !Number.isNaN(l.value) ? l.value.toFixed(2) : ''
-      linhas.push([l.gclid, names.converted, gAdsTime(l.won_at), l.id, valor, names.currency])
+      const real = l.value != null && !Number.isNaN(l.value) ? l.value : null
+      empurrar({
+        ...base, action: names.converted, at: l.won_at,
+        value: real ?? stageValues[l.status] ?? null,
+      })
     }
   }
 
-  const BOM = String.fromCharCode(0xfeff)
-  const sep = ','   // o Google exige vírgula, ao contrário dos nossos CSVs
-  const esc = (v: string) => (/[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v)
+  return { rows, semClique, foraDaJanela, semValor }
+}
 
+const BOM = String.fromCharCode(0xfeff)
+// O Google exige vírgula, ao contrário dos nossos outros CSVs.
+const escG = (v: string) => (/[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v)
+
+function csvGoogle(header: string[], rows: string[][]): string {
   return BOM + [
     `Parameters:TimeZone=${TZ}`,
-    ['Google Click ID', 'Conversion Name', 'Conversion Time', 'Order ID', 'Conversion Value', 'Conversion Currency'].join(sep),
-    ...linhas.map(r => r.map(esc).join(sep)),
+    header.join(','),
+    ...rows.map(r => r.map(escG).join(',')),
   ].join('\r\n')
 }
 
-/** Quantas linhas sairiam — para avisar antes de baixar um ficheiro vazio. */
-export function countGoogleAdsConversions(data: ExportData): number {
-  const csv = buildGoogleAdsConversionsCsv(data, { qualified: 'x', converted: 'x', currency: 'BRL' })
-  return Math.max(0, csv.split('\r\n').length - 2)
+/**
+ * Ponto decimal, NÃO vírgula: este ficheiro é separado por vírgulas, e o nosso
+ * num() usa vírgula decimal (correcto nos outros CSVs, fatal neste).
+ */
+const valorG = (v: number | null) => (v == null ? '' : v.toFixed(2))
+
+/** Um ficheiro por tipo de identificador — o Google não aceita misturados. */
+export function buildGoogleAdsConversionsCsv(
+  plan: ConversionPlan, names: ConversionNames, kind: ClickKind = 'gclid',
+): string {
+  const rows = plan.rows
+    .filter(r => r.clickKind === kind)
+    .map(r => [r.click!, r.action, gAdsTime(r.at), r.leadId, valorG(r.value), names.currency])
+
+  return csvGoogle(
+    [CLICK_HEADER[kind], 'Conversion Name', 'Conversion Time', 'Order ID', 'Conversion Value', 'Conversion Currency'],
+    rows,
+  )
+}
+
+// ---------- Correspondência melhorada (sem identificador de clique) ----------
+//
+// A maior parte dos leads dela é cadastrada à mão, depois de uma conversa no
+// WhatsApp: não há gclid nenhum. A correspondência melhorada resolve esses —
+// o Google cruza o e-mail/telefone com a conta de quem clicou.
+//
+// O dado pessoal NUNCA sai em claro: sobe o SHA-256 do valor normalizado. Sem
+// normalizar antes, o mesmo telefone escrito de duas maneiras dá dois hashes
+// diferentes e nenhum corresponde.
+
+async function sha256Hex(s: string): Promise<string> {
+  const c = globalThis.crypto?.subtle
+  if (!c) throw new Error('Este navegador não expõe crypto.subtle — sem ele não dá para gerar o hash, e enviar telefone em claro está fora de questão.')
+  const buf = await c.digest('SHA-256', new TextEncoder().encode(s))
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+/** E.164: "+" e só dígitos. O Google descarta o resto. */
+export function toE164(raw: string | null | undefined, ddi = '55'): string | null {
+  const d = String(raw ?? '').replace(/\D/g, '')
+  if (!d) return null
+  if (d.startsWith(ddi)) {
+    const nacional = d.slice(ddi.length)
+    // Brasil: 10 (fixo antigo) ou 11 (móvel com o 9). EUA: 10.
+    if (nacional.length >= 8 && nacional.length <= 11) return '+' + d
+  }
+  if (d.length >= 8 && d.length <= 11) return '+' + ddi + d
+  // Número que não bate com nenhum formato: não adivinhar. Hash de lixo não
+  // corresponde a ninguém e ainda conta como tentativa falhada no Google.
+  return null
+}
+
+const normEmail = (e: string | null | undefined): string | null => {
+  const s = String(e ?? '').trim().toLowerCase()
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s) ? s : null
+}
+
+export async function buildEnhancedConversionsCsv(
+  plan: ConversionPlan, names: ConversionNames,
+): Promise<string> {
+  const rows: string[][] = []
+  for (const r of plan.semClique) {
+    const email = normEmail(r.email)
+    const phone = toE164(r.phone, names.ddi ?? '55')
+    if (!email && !phone) continue
+    rows.push([
+      email ? await sha256Hex(email) : '',
+      phone ? await sha256Hex(phone) : '',
+      r.action, gAdsTime(r.at), r.leadId, valorG(r.value), names.currency,
+    ])
+  }
+  return csvGoogle(
+    ['Email', 'Phone Number', 'Conversion Name', 'Conversion Time', 'Order ID', 'Conversion Value', 'Conversion Currency'],
+    rows,
+  )
+}
+
+/** Quantas linhas sairiam de cada ficheiro — para avisar antes de baixar um vazio. */
+export function countConversions(plan: ConversionPlan): Record<ClickKind | 'enhanced', number> {
+  const out = { gclid: 0, gbraid: 0, wbraid: 0, enhanced: 0 }
+  for (const r of plan.rows) if (r.clickKind) out[r.clickKind]++
+  for (const r of plan.semClique) if (normEmail(r.email) || toE164(r.phone)) out.enhanced++
+  return out
 }
