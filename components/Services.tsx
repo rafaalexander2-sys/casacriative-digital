@@ -4,10 +4,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 const services = [
-  { tag: 'Tráfego Pago',          title: 'Performance que converte.',      desc: 'Google Ads e Meta Ads otimizados para máximo ROI.',   img: '/trafego.png' },
-  { tag: 'Sites & Landing Pages',  title: 'Design que vende.',             desc: 'Sites rápidos, responsivos e prontos para escalar.',  img: '/sites.png' },
-  { tag: 'SEO',                    title: 'Topo do Google, organicamente.', desc: 'Auditoria técnica, conteúdo e link building.',        img: '/seo.png' },
-  { tag: 'Social Media',           title: 'Conteúdo que conecta.',          desc: 'Estratégia editorial, design e produção.',            img: '/social.png' },
+  { tag: 'Tráfego Pago',          title: 'Performance que converte.',      desc: 'Google Ads e Meta Ads otimizados para máximo ROI.',   img: '/trafego.webp', href: '/gestao-de-anuncios-pagos' },
+  { tag: 'Sites & Landing Pages',  title: 'Design que vende.',             desc: 'Sites rápidos, responsivos e prontos para escalar.',  img: '/sites.webp',   href: '/sites-e-landing-pages' },
+  { tag: 'SEO',                    title: 'Topo do Google, organicamente.', desc: 'Auditoria técnica, conteúdo e link building.',        img: '/seo.webp',     href: '/seo-e-otimizacao-local' },
+  { tag: 'Social Media',           title: 'Conteúdo que conecta.',          desc: 'Estratégia editorial, design e produção.',            img: '/social.webp',  href: '/gestao-de-midias-e-conteudo' },
 ]
 
 
@@ -78,7 +78,7 @@ export default function Services() {
                   {s.desc}
                 </p>
                 <Link
-                  href="/servicos"
+                  href={s.href}
                   style={{ fontSize: 14, fontWeight: 500, textDecoration: 'none', color: 'var(--bronze-light)', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                 >
                   Saiba mais →
