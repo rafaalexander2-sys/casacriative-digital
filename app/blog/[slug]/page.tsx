@@ -47,7 +47,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) notFound()
 
   const related = getRelated(post.relacionados)
-  const wordCount = post.blocks.reduce((acc, b) => acc + (b.type === 'p' ? b.text.split(' ').length : 0), 0)
+  const wordCount = post.blocks.reduce((acc, b) => acc + (b.type === 'list' ? b.items.join(' ') : b.text).split(' ').length, 0)
   const readMin = Math.ceil(wordCount / 200)
 
   const articleJsonLd = {
@@ -237,8 +237,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <div className="r-related" style={{ gap: 16 }}>
               {related.map(r => (
                 <Link key={r.slug} href={`/blog/${r.slug}`} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: 'linear-gradient(160deg,rgba(255,255,255,0.04),rgba(120,70,40,0.06),rgba(0,0,0,0.5))', border: '0.5px solid rgba(255,210,160,0.1)', borderRadius: 14, overflow: 'hidden' }}>
-                  <div style={{ width: '100%', aspectRatio: '16/7', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#333' }}>{r.categoria}</span>
+                  <div style={{ width: '100%', aspectRatio: '16/7', background: 'linear-gradient(135deg,#111,#1a0f05)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                    {r.cover
+                      ? <img src={r.cover} alt={r.titulo} loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#333' }}>{r.categoria}</span>}
                   </div>
                   <div style={{ padding: '16px 18px 20px' }}>
                     <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c47a4a', marginBottom: 8, display: 'block' }}>{r.categoria}</span>
