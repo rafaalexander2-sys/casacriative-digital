@@ -2,7 +2,6 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 import { posts as localPosts } from '@/lib/posts'
-import { getWPPosts } from '@/lib/wp-posts'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -21,27 +20,15 @@ export const metadata: Metadata = {
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
 const categorias = ['Todos', 'Design Gráfico', 'Notícias', 'Social Media', 'Tráfego Pago']
 
-export default async function Blog() {
-  // Tenta WP primeiro; se vazio usa posts locais
-  const wpPosts = await getWPPosts()
-
-  const posts = wpPosts.length > 0
-    ? wpPosts.map(p => ({
-        categoria: p.categoria,
-        titulo: p.titulo,
-        desc: p.desc,
-        href: `/blog/${p.slug}`,
-        data: p.data,
-        cover: p.cover,
-      }))
-    : localPosts.map(p => ({
-        categoria: p.categoria,
-        titulo: p.titulo,
-        desc: p.desc,
-        href: `/blog/${p.slug}`,
-        data: p.data,
-        cover: p.cover ?? null,
-      }))
+export default function Blog() {
+  const posts = localPosts.map(p => ({
+    categoria: p.categoria,
+    titulo: p.titulo,
+    desc: p.desc,
+    href: `/blog/${p.slug}`,
+    data: p.data,
+    cover: p.cover ?? null,
+  }))
 
   return (
     <main style={{ background: '#000', minHeight: '100vh' }}>
