@@ -5,24 +5,16 @@ import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { getPost, getRelated, posts } from '@/lib/posts'
-import { getWPPost, getWPSlugs } from '@/lib/wp-posts'
 
 const BG = 'linear-gradient(135deg,#e8c49a 0%,#c47a4a 50%,#8b4513 100%)'
 
-export async function generateStaticParams() {
-  const localParams = posts.map(p => ({ slug: p.slug }))
-  const wpSlugs = await getWPSlugs()
-  const wpParams = wpSlugs
-    .filter(s => !posts.find(p => p.slug === s))
-    .map(s => ({ slug: s }))
-  return [...localParams, ...wpParams]
+export function generateStaticParams() {
+  return posts.map(p => ({ slug: p.slug }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  const wpPost = await getWPPost(slug)
-  const localPost = getPost(slug)
-  const post = wpPost ?? localPost
+  const post = getPost(slug)
   if (!post) return {}
   const url = `https://casacriative.com.br/blog/${slug}`
   return {
@@ -51,19 +43,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  // WP tem prioridade; cai para local se não encontrar
-  const wpPost = await getWPPost(slug)
-  const localPost = getPost(slug)
+  const post = getPost(slug)
+  if (!post) notFound()
 
-  if (!wpPost && !localPost) notFound()
-
-  const isWP = !!wpPost
-  const post = (wpPost ?? localPost)!
-
-  const related = !isWP ? getRelated((localPost as any).relacionados) : []
-  const wordCount = isWP
-    ? Math.round(wpPost!.content.replace(/<[^>]*>/g, '').split(' ').length)
-    : (localPost as any).blocks.filter((b: any) => b.type === 'p').reduce((acc: number, b: any) => acc + b.text.split(' ').length, 0)
+  const related = getRelated(post.relacionados)
+  const wordCount = post.blocks.reduce((acc, b) => acc + (b.type === 'p' ? b.text.split(' ').length : 0), 0)
   const readMin = Math.ceil(wordCount / 200)
 
   const articleJsonLd = {
@@ -179,15 +163,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {/* Conteúdo */}
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px 0' }}>
         <article>
-          {isWP ? (
-            // WordPress HTML content
-            <div
-              className="wp-content"
-              dangerouslySetInnerHTML={{ __html: wpPost!.content }}
-            />
-          ) : (
-            // Local blocks
-            (localPost as any).blocks.map((block: any, i: number) => {
+          {post.blocks.map((block, i) => {
               if (block.type === 'h2') return (
                 <h2 key={i} style={{ fontSize: 22, fontWeight: 700, color: '#f5f5f7', letterSpacing: '-0.5px', lineHeight: 1.25, marginTop: 48, marginBottom: 16 }}>
                   {block.text}
@@ -205,7 +181,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               )
               if (block.type === 'list') return (
                 <ul key={i} style={{ margin: '8px 0 20px', paddingLeft: 0, listStyle: 'none' }}>
-                  {block.items.map((item: string, j: number) => (
+                  {block.items.map((item, j) => (
                     <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '8px 0', borderBottom: '0.5px solid #111' }}>
                       <div style={{ width: 5, height: 5, borderRadius: '50%', background: BG, flexShrink: 0, marginTop: 8 }} />
                       <span style={{ fontSize: 14, fontWeight: 300, color: '#86868b', lineHeight: 1.65 }}>{item}</span>
@@ -221,8 +197,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 </blockquote>
               )
               return null
-            })
-          )}
+            })}
         </article>
 
         {/* CTA inline */}
@@ -254,7 +229,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
       </div>
 
-      {/* Posts relacionados (apenas posts locais) */}
+      {/* Posts relacionados */}
       {related.length > 0 && (
         <section style={{ borderTop: '0.5px solid #1d1d1f', padding: '56px 24px 80px' }}>
           <div style={{ maxWidth: 900, margin: '0 auto' }}>
