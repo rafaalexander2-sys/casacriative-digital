@@ -34,11 +34,21 @@ jobs:
             echo "$1"
             echo "=============================================="
             payload=$(python3 -c 'import json,sys; print(json.dumps({"query": sys.argv[1]}))' "$2")
-            curl -sS -X POST \
+            resp=$(curl -sS -w '\n%{http_code}' -X POST \
               "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" \
               -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "$payload" | python3 -m json.tool
+              -d "$payload")
+            code=$(printf '%s' "$resp" | tail -n1)
+            printf '%s' "$resp" | sed '$d' | python3 -m json.tool || true
+            # Falhar ALTO. Antes, um 401 em todas as consultas terminava com o
+            # workflow verde: o curl nao falha com resposta de erro em JSON, e
+            # o json.tool imprimia {"message": "Unauthorized"} como se fosse
+            # um resultado.
+            if [ "$code" -ge 300 ]; then
+              echo "::error::Consulta recusada (HTTP $code). 401 = o SUPABASE_ACCESS_TOKEN expirou ou foi revogado: gerar outro em supabase.com/dashboard/account/tokens e trocar o segredo no GitHub."
+              exit 1
+            fi
           }
 
           # Mostrar antes de apagar: se o filtro alguma vez apanhar algo que
