@@ -39,11 +39,21 @@ jobs:
             echo "$1"
             echo "=============================================="
             payload=$(python3 -c 'import json,sys; print(json.dumps({"query": sys.argv[1]}))' "$2")
-            curl -sS -X POST \
+            resp=$(curl -sS -w '\n%{http_code}' -X POST \
               "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" \
               -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
               -H "Content-Type: application/json" \
-              -d "$payload" | python3 -m json.tool
+              -d "$payload")
+            code=$(printf '%s' "$resp" | tail -n1)
+            printf '%s' "$resp" | sed '$d' | python3 -m json.tool || true
+            # Falhar ALTO. Antes, um 401 em todas as consultas terminava com o
+            # workflow verde: o curl nao falha com resposta de erro em JSON, e
+            # o json.tool imprimia {"message": "Unauthorized"} como se fosse
+            # um resultado.
+            if [ "$code" -ge 300 ]; then
+              echo "::error::Consulta recusada (HTTP $code). 401 = o SUPABASE_ACCESS_TOKEN expirou ou foi revogado: gerar outro em supabase.com/dashboard/account/tokens e trocar o segredo no GitHub."
+              exit 1
+            fi
           }
 
           # ----------------------------------------------------------------
@@ -124,3 +134,52 @@ jobs:
              from lead_attrib_health h join workspaces w on w.id = h.workspace_id
             where h.semana >= (current_date - interval '60 days')
             order by h.semana desc, h.leads desc;"
+
+          # ----------------------------------------------------------------
+          # I/J/K) "Teve 4 vendas este mes e o CRM mostra 1."
+          # O relatorio conta ganhos pela DATA DE ENTRADA do lead. Venda de
+          # setembro de um lead que chegou em agosto cai no relatorio de
+          # agosto. Estas consultas mostram, para o espaco da Dra. Cintia,
+          # cada venda com as TRES datas: entrada, won_at e a entrada na
+          # etapa de ganho segundo o historico (gatilho no banco).
+          # So prefixo do id do lead - nada de nome, e-mail ou telefone.
+          # ----------------------------------------------------------------
+          run_sql "I) Etapas do funil (espaco dra...)" \
+          "select s.position, s.key, s.label, s.kind
+             from pipeline_stages s join workspaces w on w.id = s.workspace_id
+            where w.name ilike 'dra%'
+            order by s.position;"
+
+          run_sql "J) Vendas: entrada x won_at x historico (espaco dra...)" \
+          "with ganho as (
+             select s.workspace_id, s.key from pipeline_stages s where s.kind = 'won'
+           ), hist as (
+             select h.lead_id, min(h.changed_at) as entrou_no_ganho, max(h.changed_at) as ultima_vez
+               from lead_stage_history h
+               join ganho g on g.workspace_id = h.workspace_id and g.key = h.to_status
+              group by h.lead_id
+           )
+           select left(l.id::text, 8) as lead,
+                  l.status,
+                  (select kind from pipeline_stages p where p.workspace_id = l.workspace_id and p.key = l.status) as tipo_etapa,
+                  l.entry_date::text as entrada,
+                  (l.created_at at time zone 'America/Sao_Paulo')::date::text as criado,
+                  (l.won_at at time zone 'America/Sao_Paulo')::date::text as won_at,
+                  (h.entrou_no_ganho at time zone 'America/Sao_Paulo')::date::text as historico_ganho,
+                  l.contracts_count as contratos,
+                  (l.value is not null) as tem_valor
+             from leads l
+             join workspaces w on w.id = l.workspace_id
+             left join hist h on h.lead_id = l.id
+            where w.name ilike 'dra%'
+              and (l.won_at is not null or h.lead_id is not null or coalesce(l.contracts_count, 0) > 0
+                   or l.status in (select key from ganho g where g.workspace_id = l.workspace_id))
+            order by coalesce(l.won_at, h.entrou_no_ganho, l.created_at) desc;"
+
+          run_sql "K) Vendas por mes: pela data de ENTRADA vs pela data de FECHO (espaco dra...)" \
+          "select to_char(date_trunc('month', coalesce(l.entry_date::timestamp, l.created_at at time zone 'America/Sao_Paulo')), 'YYYY-MM') as mes_entrada,
+                  to_char(date_trunc('month', l.won_at at time zone 'America/Sao_Paulo'), 'YYYY-MM') as mes_fecho,
+                  count(*) as vendas
+             from leads l join workspaces w on w.id = l.workspace_id
+            where w.name ilike 'dra%' and l.won_at is not null
+            group by 1, 2 order by 2 desc, 1 desc;"

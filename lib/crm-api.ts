@@ -155,12 +155,20 @@ export async function createLead(
 }
 
 // ---- Mudar etapa (arrastar no Kanban) ----
-export async function updateLeadStatus(lead: Lead, stage: PipelineStage): Promise<Lead> {
+export async function updateLeadStatus(lead: Lead, stage: PipelineStage, from?: PipelineStage): Promise<Lead> {
   const now = new Date().toISOString()
+  // Andar entre duas colunas de ganho (ex.: "Contrato assinado" -> "Processo
+  // protocolado") nao e uma venda nova: a data da venda e a primeira. Antes,
+  // cada arrasto regravava won_at com a hora do movimento, e a venda mudava de
+  // mes sozinha - uma venda de agosto aparecia em setembro, ou sumia de agosto.
+  // Sem saber a etapa de origem, confia-se no won_at que ja existe: a app
+  // limpa-o sempre que o lead sai do ganho.
+  const wasWon = from ? from.kind === 'won' : lead.won_at != null
+  const wasLost = from ? from.kind === 'lost' : lead.lost_at != null
   const patch: Partial<Lead> = {
     status: stage.key,
-    won_at: stage.kind === 'won' ? now : null,
-    lost_at: stage.kind === 'lost' ? now : null,
+    won_at: stage.kind === 'won' ? (wasWon && lead.won_at ? lead.won_at : now) : null,
+    lost_at: stage.kind === 'lost' ? (wasLost && lead.lost_at ? lead.lost_at : now) : null,
   }
   const { data, error } = await supabase
     .from('leads')

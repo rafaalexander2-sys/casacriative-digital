@@ -578,7 +578,12 @@ function PipelineView({ wsId, leads, setLeads, stages, leadsLoading, canManage, 
     const lead = leads.find(l => l.id === dragId); setDragId(null)
     if (!lead || lead.status === stage.key) return
     setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, status: stage.key } : l))
-    try { await updateLeadStatus(lead, stage) } catch (e: any) { onErr(e.message) }
+    try {
+      // Guardar o que o banco devolveu, e nao so o status: o won_at novo tem de
+      // estar no estado local, senao o arrasto seguinte parte de uma data velha.
+      const u = await updateLeadStatus(lead, stage, stages.find(s => s.key === lead.status))
+      setLeads(ls => ls.map(l => l.id === u.id ? u : l))
+    } catch (e: any) { onErr(e.message) }
   }
 
   const wonKeys = stages.filter(s => s.kind === 'won').map(s => s.key)
@@ -1758,7 +1763,7 @@ function LeadDetail({ lead, stages, onClose, onSaved, onDeleted }: {
     if (!stage || stage.key === lead.status) return
     setBusy(true); setErr('')
     try {
-      const u = await updateLeadStatus(lead, stage)
+      const u = await updateLeadStatus(lead, stage, stages.find(s => s.key === lead.status))
       onSaved(u)
       loadEvents()
       getLeadSpans(lead.id).then(setSpans).catch(() => {})
@@ -1980,9 +1985,39 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
   const dayOf = (l: Lead) => (l.entry_date ?? l.created_at).slice(0, 10)
   const periodLeads = leads.filter(l => dayOf(l) >= range.from && dayOf(l) <= range.to)
 
+  // Vendas e perdas do período: pela data em que FECHARAM, não pela data em
+  // que o lead chegou. Contar ganhos pela entrada respondia outra pergunta —
+  // "dos que chegaram este mês, quantos já fecharam?" — e escondia a venda de
+  // setembro de quem chegou em agosto. Com um ciclo de semanas, é a maioria:
+  // num mês com quatro vendas, o relatório mostrava uma.
+  //
+  // Quem está numa coluna de ganho sem won_at (importação, SQL à mão) usa a
+  // entrada nessa coluna segundo o histórico, que é escrito por gatilho no
+  // banco e não depende do caminho por onde o lead mudou de etapa. As linhas
+  // 'seed' ficam de fora: a data delas foi deduzida, não observada.
+  const closedAtHist = (keys: string[]) => {
+    const m = new Map<string, string>()
+    for (const h of history) {
+      if (h.origin === 'seed' || !keys.includes(h.to_status)) continue
+      if (!m.has(h.lead_id)) m.set(h.lead_id, h.changed_at)   // history vem por changed_at
+    }
+    return m
+  }
+  const wonHist = closedAtHist(wonKeys)
+  const lostHist = closedAtHist(lostKeys)
+  const wonDate = (l: Lead) => l.won_at ?? wonHist.get(l.id) ?? null
+  const lostDate = (l: Lead) => l.lost_at ?? lostHist.get(l.id) ?? null
+  // won_at é UTC; o filtro é em dias de São Paulo. Sem converter, uma venda
+  // fechada às 22h do dia 30 caía no mês seguinte.
+  const inRange = (iso: string | null) => {
+    if (!iso) return false
+    const d = isoDay(new Date(iso))
+    return d >= range.from && d <= range.to
+  }
+
   const total = periodLeads.length
-  const won = periodLeads.filter(l => wonKeys.includes(l.status))
-  const lost = periodLeads.filter(l => lostKeys.includes(l.status))
+  const won = leads.filter(l => wonKeys.includes(l.status) && inRange(wonDate(l)))
+  const lost = leads.filter(l => lostKeys.includes(l.status) && inRange(lostDate(l)))
   const open = periodLeads.filter(l => !closedKeys.includes(l.status))
   const wonVal = won.reduce((s, l) => s + (l.value ?? 0), 0)
   const openVal = open.reduce((s, l) => s + (l.value ?? 0), 0)
@@ -1991,7 +2026,7 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
 
   // ---- ciclo de vendas: da chegada da pessoa até fechar ----
   const cycleDays = (l: Lead): number | null => {
-    const close = l.won_at ?? l.lost_at
+    const close = wonDate(l) ?? lostDate(l)
     if (!close) return null
     const zero = l.entry_date ? new Date(`${l.entry_date}T00:00:00`) : new Date(l.created_at)
     // fichas cuja data de entrada foi deduzida por nós não entram na conta
@@ -2051,13 +2086,16 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
     .map(s => ({ s, n: periodLeads.filter(l => l.source === s).length })).filter(x => x.n > 0)
   const maxSource = Math.max(1, ...bySource.map(x => x.n))
 
-  const exportData = (): ExportData => ({
-    leads: periodLeads, stages, spans, history, range, people,
-  })
+  // A exportação leva quem CHEGOU e quem FECHOU no período. Só pela entrada,
+  // a venda de setembro de um lead de agosto não aparecia no ficheiro de
+  // setembro — o mesmo erro que o relatório tinha, agora em CSV.
+  const exportData = (): ExportData => {
+    const ids = new Set([...periodLeads, ...won, ...lost].map(l => l.id))
+    return { leads: leads.filter(l => ids.has(l.id)), stages, spans, history, range, people }
+  }
 
-  const convCount = spans.length || periodLeads.length
-    ? countGoogleAdsConversions({ leads: periodLeads, stages, spans, history, range, people })
-    : 0
+  // Mesma fonte do ficheiro: o número no ecrã não pode discordar do que baixa.
+  const convCount = spans.length || periodLeads.length ? countGoogleAdsConversions(exportData()) : 0
 
   const th: React.CSSProperties = { textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '.05em', padding: '8px 10px', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap' }
   const td: React.CSSProperties = { fontSize: 13, padding: '9px 10px', borderBottom: `1px solid ${C.border}` }
@@ -2099,13 +2137,18 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
 
         {/* ---------------- visão geral ---------------- */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(148px, 1fr))', gap: 12, marginBottom: 24 }}>
-          <Card title="Leads no período" value={String(total)} />
+          <Card title="Leads que chegaram" value={String(total)} />
           <Card title="Em aberto" value={String(open.length)} sub={BRL(openVal) + ' em pipeline'} />
-          <Card title="Ganhos" value={String(won.length)} sub={BRL(wonVal)} color="#16a34a" />
+          <Card title="Vendas fechadas" value={String(won.length)} sub={BRL(wonVal)} color="#16a34a" />
           <Card title="Perdidos" value={String(lost.length)} color="#dc2626" />
           <Card title="Taxa de conversão" value={conv + '%'} />
           <Card title="Ticket médio" value={BRL(ticket)} />
         </div>
+        <p style={{ fontSize: 12, color: C.muted, marginTop: -14, marginBottom: 24, maxWidth: 640 }}>
+          <b>Leads</b> e <b>Em aberto</b> contam quem chegou no período. <b>Vendas</b>, <b>Perdidos</b>,
+          conversão e ciclo contam quem fechou no período — a venda de hoje de um lead que chegou
+          no mês passado entra aqui.
+        </p>
 
         {/* ---------------- ciclo de vendas ---------------- */}
         <h3 style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 4px' }}>Ciclo de vendas</h3>
