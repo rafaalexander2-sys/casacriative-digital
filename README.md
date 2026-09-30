@@ -86,6 +86,35 @@ sem ninguém dar por isso, porque não havia onde ver.
 
 ---
 
+## Que campanha e que criativo trazem lead que fecha
+
+Duas peças, alimentadas pelos mesmos utms:
+
+- **No cartão do lead**, o bloco *De onde veio*: campanha, criativo, palavra,
+  origem/meio, página de entrada, código de referência e o identificador do
+  clique. Só aparece o que existe; quando não existe nada, diz porquê em vez de
+  ficar em branco.
+- **Em Relatórios**, o painel *Campanhas e criativos*, com um botão por forma de
+  agrupar (campanha, criativo, palavra, origem): leads, quantos avançaram no
+  funil, quantos fecharam, a taxa de fecho e a receita. Sai também em CSV
+  (`campanhas`, o quarto ficheiro da exportação), com as quatro agregações.
+
+Duas coisas que confundem à primeira vista:
+
+- **O Google manda o número da campanha em `utm_campaign`, não o nome** (por
+  exemplo `24047901353`). O cartão etiqueta-o como *Campanha (ID no Google Ads)*
+  para não parecer defeito — é o número que se procura no painel do Google.
+- **`utm_content` é onde costuma ir o criativo**, mas só se as ligações do
+  anúncio forem etiquetadas assim. Anúncio sem etiqueta cai na linha
+  *sem etiqueta*, que fica sempre no fim da tabela: é um balde, não um criativo,
+  e no topo daria a impressão de ser a campanha que mais traz lead.
+
+A coluna que interessa é **% que fecha**, não *Leads*. O criativo que traz mais
+clique costuma ser o que traz mais curioso — essa conta o Google e o Meta já
+fazem sozinhos. O que só o CRM sabe é o que aconteceu ao lead depois.
+
+---
+
 ## Conversões offline para o Google Ads
 
 CRM → **Relatórios** → *Conversões para o Google Ads*. O período escolhido no
