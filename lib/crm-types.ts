@@ -56,6 +56,16 @@ export interface Lead {
   entry_date_estimated?: boolean
   lost_reason?: string | null
   contracts_count?: number
+
+  // ---- Atribuição do clique (schema-lead-refs.sql) ----
+  // O Google usa gbraid/wbraid no lugar do gclid quando o iOS restringe
+  // cookies, e cada um sobe para o Google num ficheiro SEPARADO: as três
+  // colunas são mutuamente exclusivas no mesmo upload.
+  gbraid?: string | null
+  wbraid?: string | null
+  /** Código colado pelo atendimento que ligou este lead ao clique. */
+  ref_code?: string | null
+  landing_page?: string | null
 }
 
 // ---- Histórico de movimentação (schema-lead-history.sql) ----
