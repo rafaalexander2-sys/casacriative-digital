@@ -2222,9 +2222,13 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
   // qual traz mais clique — e costuma ser o que traz mais curioso. O que só o
   // CRM sabe é o que aconteceu ao lead depois.
   const [attribBy, setAttribBy] = useState<AttribKey>('utm_campaign')
+  // Aqui a conta é por CHEGADA, de propósito: a pergunta é "dos leads que esta
+  // campanha trouxe, quantos fecharam?", e a resposta vale até hoje. O
+  // histórico tem de ser o completo — com os períodos do filtro, um lead que
+  // avançou depois do fim do período aparecia como fechado sem ter avançado.
   const attribRows = useMemo(
-    () => groupByAttrib({ leads: periodLeads, stages, spans, history, range, people }, attribBy),
-    [periodLeads, stages, spans, history, range, people, attribBy],
+    () => groupByAttrib({ leads: periodLeads, stages, spans: allSpans, history, range, people }, attribBy),
+    [periodLeads, stages, allSpans, history, range, people, attribBy],
   )
 
   const th: React.CSSProperties = { textAlign: 'left', fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '.05em', padding: '8px 10px', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap' }
@@ -2358,6 +2362,9 @@ function ReportsView({ ws, leads, stages }: { ws?: Workspace; leads: Lead[]; sta
           O Google e o Meta dizem qual anúncio traz mais clique — e costuma ser o que traz mais
           curioso. O que só o CRM sabe é o que aconteceu ao lead depois: quantos avançaram no
           funil e quantos fecharam.
+          {' '}A conta é por chegada: dos leads que cada campanha trouxe no período, quantos
+          fecharam até hoje. Por isso a soma pode não bater com o cartão de vendas lá em cima,
+          que conta as vendas fechadas no período.
         </p>
         <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
           {(Object.keys(ATTRIB_LABELS) as AttribKey[]).map(k => (
